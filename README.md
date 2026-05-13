@@ -1,36 +1,70 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Quantum Electronics — Frontend
 
-## Getting Started
+Next.js 16 (App Router, TypeScript, Tailwind v4) visualization for the
+`/Users/gimhangyeol/졸작` FastAPI backend. Renders the `OutlookReport`
+payload (score breakdown, quant / financial / LLM signals, ML prediction,
+position context, evidence) in a Binance-inspired dark theme.
 
-First, run the development server:
+## Quick Start
+
+The backend (`uvicorn web.main:app`) must be running first on
+`http://127.0.0.1:8000`. Then:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install     # one-time
+npm run dev     # → http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+`npm run dev` and `npm run build` both pin webpack because Turbopack 16
+panics on the non-ASCII path `졸작_프론트` (`turbopack-core/src/ident.rs:354`).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Environment
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Variable | Default | Purpose |
+|---|---|---|
+| `NEXT_PUBLIC_API_URL` | `http://127.0.0.1:8000` | FastAPI base URL used by `src/lib/api.ts` |
 
-## Learn More
+The backend allowlists `http://localhost:3000` for CORS by default; if you
+serve the frontend from a different origin, set `OUTLOOK_CORS_ORIGINS` on
+the backend side (comma-separated).
 
-To learn more about Next.js, take a look at the following resources:
+## Design System
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Implements the documented Binance design language in CSS-only Tailwind v4
+tokens (`src/app/globals.css`):
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- Canvas `#0b0e11`, surface card `#1e2329`, primary yellow `#FCD535`.
+- BinanceNova → Inter, BinancePlex → JetBrains Mono (numbers).
+- Trading green `#0ecb81` / red `#f6465d` as text color only.
+- Radius scale: md 6 / lg 8 / xl 12 / pill 9999.
 
-## Deploy on Vercel
+## Layout
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```
+src/
+├── app/
+│   ├── globals.css        — Binance @theme tokens + base typography
+│   ├── layout.tsx         — Inter + JetBrains Mono via next/font/google
+│   └── page.tsx           — single-page outlook view
+├── components/
+│   ├── OutlookForm.tsx
+│   ├── ScoreBreakdown.tsx
+│   ├── QuantSignalsTable.tsx
+│   ├── MLPredictionCard.tsx
+│   ├── PositionContextCard.tsx
+│   ├── EvidenceList.tsx
+│   └── ErrorsBanner.tsx
+└── lib/
+    ├── api.ts             — typed fetch client + OutlookReport types
+    └── format.ts          — KRW / pct / probability formatters
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Sample Calls
+
+```bash
+# Plain outlook
+curl http://localhost:3000
+
+# Backend directly (after CORS preflight)
+curl "http://127.0.0.1:8000/outlook/stock/005930?avg_price=80000&quantity=10&held_since=2024-01-15"
+```
