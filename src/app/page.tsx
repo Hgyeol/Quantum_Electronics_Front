@@ -3,12 +3,13 @@
 import { useState } from "react";
 import { fetchOutlook, type OutlookQueryInput, type OutlookReport } from "@/lib/api";
 import OutlookForm from "@/components/OutlookForm";
-import ScoreBreakdown from "@/components/ScoreBreakdown";
+import FinalVerdictCard from "@/components/FinalVerdictCard";
 import QuantSignalsTable from "@/components/QuantSignalsTable";
 import PositionContextCard from "@/components/PositionContextCard";
-import MLPredictionCard from "@/components/MLPredictionCard";
 import EvidenceList from "@/components/EvidenceList";
 import ErrorsBanner from "@/components/ErrorsBanner";
+// MLPredictionCard 임시 비공개 — 학습 데이터 universe 한계가 큼.
+// 재공개 시 import만 되살리고 아래 렌더 블록 복구.
 
 export default function Home() {
   const [report, setReport] = useState<OutlookReport | null>(null);
@@ -30,7 +31,7 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen">
+    <main className="min-h-screen flex flex-col">
       <header className="border-b border-hairline-on-dark">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
           <div className="flex items-baseline gap-3">
@@ -43,7 +44,7 @@ export default function Home() {
         </div>
       </header>
 
-      <div className="max-w-6xl mx-auto px-6 py-10 space-y-8">
+      <div className="flex-1 max-w-6xl w-full mx-auto px-6 py-10 space-y-8">
         <section>
           <h1 className="text-4xl font-bold text-on-dark mb-2 leading-tight">
             KOSPI 종목 전망
@@ -77,21 +78,21 @@ export default function Home() {
               </div>
             </div>
 
-            <ScoreBreakdown score={report.score} summary={report.summary} />
+            <FinalVerdictCard
+              score={report.score}
+              ai={report.ai_signals[0]}
+              autoSummary={report.summary}
+            />
 
-            <div className="grid lg:grid-cols-2 gap-8">
-              {report.ml_prediction && (
-                <MLPredictionCard prediction={report.ml_prediction} />
-              )}
-              {report.position_context && (
-                <PositionContextCard ctx={report.position_context} />
-              )}
-            </div>
+            {report.position_context && (
+              <PositionContextCard ctx={report.position_context} />
+            )}
 
             <QuantSignalsTable
               quant={report.quant_signals}
               financial={report.financial_signals}
               ai={report.ai_signals}
+              evidence={report.evidence}
             />
 
             <EvidenceList evidence={report.evidence} />
@@ -101,7 +102,7 @@ export default function Home() {
         )}
       </div>
 
-      <footer className="bg-surface-soft-light text-body-on-light mt-20">
+      <footer className="bg-surface-soft-light text-body-on-light">
         <div className="max-w-6xl mx-auto px-6 py-10 text-sm text-muted">
           <p>© Quantum Electronics — 정보 제공용이며 투자 권유가 아닙니다.</p>
         </div>
