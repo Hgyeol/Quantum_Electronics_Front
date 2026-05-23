@@ -4,6 +4,9 @@ import { useState } from "react";
 import { fetchOutlook, type OutlookQueryInput, type OutlookReport } from "@/lib/api";
 import OutlookForm from "@/components/OutlookForm";
 import FinalVerdictCard from "@/components/FinalVerdictCard";
+import MarketQuoteCard from "@/components/MarketQuoteCard";
+import SignalBreakdownPanel from "@/components/SignalBreakdownPanel";
+import TechnicalIndicatorsPanel from "@/components/TechnicalIndicatorsPanel";
 import QuantSignalsTable from "@/components/QuantSignalsTable";
 import PositionContextCard from "@/components/PositionContextCard";
 import EvidenceList from "@/components/EvidenceList";
@@ -45,15 +48,6 @@ export default function Home() {
       </header>
 
       <div className="flex-1 max-w-6xl w-full mx-auto px-6 py-10 space-y-8">
-        <section>
-          <h1 className="text-4xl font-bold text-on-dark mb-2 leading-tight">
-            KOSPI 종목 전망
-          </h1>
-          <p className="text-muted text-base">
-            퀀트·재무·LLM 신호 + 학습 모델 예측 + 포지션 컨텍스트를 한 호출에.
-          </p>
-        </section>
-
         <OutlookForm onSubmit={handleSubmit} loading={loading} />
 
         {error && (
@@ -78,11 +72,25 @@ export default function Home() {
               </div>
             </div>
 
+            {report.market_quote && (
+              <MarketQuoteCard
+                quote={report.market_quote}
+                stockName={report.stock_name}
+              />
+            )}
+
             <FinalVerdictCard
               score={report.score}
               ai={report.ai_signals[0]}
               autoSummary={report.summary}
             />
+
+            <SignalBreakdownPanel
+              quant={report.quant_signals}
+              ai={report.ai_signals}
+            />
+
+            <TechnicalIndicatorsPanel stockCode={report.stock_code} />
 
             {report.position_context && (
               <PositionContextCard ctx={report.position_context} />

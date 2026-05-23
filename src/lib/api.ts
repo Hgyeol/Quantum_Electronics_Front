@@ -68,6 +68,17 @@ export interface MLPrediction {
   top_contributions: MLFeatureContribution[];
 }
 
+export interface MarketQuote {
+  price: number;
+  change: number;
+  change_rate: number;
+  high?: number | null;
+  low?: number | null;
+  volume?: number | null;
+  w52_high?: number | null;
+  w52_low?: number | null;
+}
+
 export interface PositionContext {
   avg_price: number;
   quantity: number;
@@ -100,6 +111,7 @@ export interface OutlookReport {
   financial_signals: FinancialSignal[];
   ml_prediction?: MLPrediction | null;
   position_context?: PositionContext | null;
+  market_quote?: MarketQuote | null;
   evidence: Evidence[];
   errors: AnalysisError[];
 }
@@ -109,6 +121,48 @@ export interface OutlookQueryInput {
   avg_price?: number;
   quantity?: number;
   held_since?: string; // ISO date YYYY-MM-DD
+}
+
+export interface IndicatorParameter {
+  name: string;
+  default: string | number | boolean | null;
+  required: boolean;
+}
+
+export interface IndicatorDefinition {
+  id: string;
+  label: string;
+  function_name: string;
+  category: string;
+  parameters: IndicatorParameter[];
+  uses_benchmark: boolean;
+}
+
+export interface IndicatorPoint {
+  date: string;
+  value: number | string | null;
+}
+
+export interface IndicatorValue {
+  id: string;
+  label: string;
+  category: string;
+  value: number | string | null;
+  series: IndicatorPoint[];
+  parameters: Record<string, string | number | boolean | null>;
+  uses_default_benchmark: boolean;
+  error?: string | null;
+}
+
+export interface IndicatorCatalogResponse {
+  indicators: IndicatorDefinition[];
+}
+
+export interface IndicatorCalculationResponse {
+  stock_code: string;
+  days: number;
+  indicators: IndicatorValue[];
+  errors: AnalysisError[];
 }
 
 const API_BASE =
@@ -146,4 +200,40 @@ export async function fetchOutlook({
     throw new Error(detail);
   }
   return (await response.json()) as OutlookReport;
+}
+
+export async function fetchIndicatorCatalog(): Promise<IndicatorDefinition[]> {
+  const response = await fetch(`${API_BASE}/technical/indicators`, {
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}`);
+  }
+  const payload = (await response.json()) as IndicatorCatalogResponse;
+  return payload.indicators;
+}
+
+export async function fetchTechnicalIndicators({
+  code,
+  ids,
+  days = 260,
+}: {
+  code: string;
+  ids?: string[];
+  days?: number;
+}): Promise<IndicatorCalculationResponse> {
+  const params = new URLSearchParams();
+  params.set("days", String(days));
+  if (ids && ids.length > 0) {
+    params.set("ids", ids.join(","));
+  }
+
+  const response = await fetch(
+    `${API_BASE}/technical/indicators/${encodeURIComponent(code)}?${params.toString()}`,
+    { cache: "no-store" },
+  );
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}`);
+  }
+  return (await response.json()) as IndicatorCalculationResponse;
 }
