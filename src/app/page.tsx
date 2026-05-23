@@ -11,8 +11,8 @@ import QuantSignalsTable from "@/components/QuantSignalsTable";
 import PositionContextCard from "@/components/PositionContextCard";
 import EvidenceList from "@/components/EvidenceList";
 import ErrorsBanner from "@/components/ErrorsBanner";
+import ChartAnalysisCard from "@/components/ChartAnalysisCard";
 // MLPredictionCard 임시 비공개 — 학습 데이터 universe 한계가 큼.
-// 재공개 시 import만 되살리고 아래 렌더 블록 복구.
 
 export default function Home() {
   const [report, setReport] = useState<OutlookReport | null>(null);
@@ -91,6 +91,11 @@ export default function Home() {
             />
 
             <TechnicalIndicatorsPanel stockCode={report.stock_code} />
+
+            <ChartAnalysisCard
+              stockCode={report.stock_code}
+              stockName={report.stock_name}
+            />
 
             {report.position_context && (
               <PositionContextCard ctx={report.position_context} />

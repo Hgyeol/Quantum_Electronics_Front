@@ -165,6 +165,59 @@ export interface IndicatorCalculationResponse {
   errors: AnalysisError[];
 }
 
+// ── Chart Analysis ──────────────────────────────────────────────────────────
+
+export interface SupportResistanceLevel {
+  price: number;
+  level_type: "support" | "resistance";
+  strength: "weak" | "medium" | "strong";
+  touch_count: number;
+  last_tested_date: string | null;
+}
+
+export interface TechnicalIndicators {
+  rsi: number | null;
+  rsi_zone: "oversold" | "neutral" | "overbought";
+  macd: number | null;
+  macd_signal: number | null;
+  macd_histogram: number | null;
+  macd_crossover: "bullish" | "bearish" | "none";
+  bb_upper: number | null;
+  bb_middle: number | null;
+  bb_lower: number | null;
+  bb_position: "above_upper" | "near_upper" | "middle" | "near_lower" | "below_lower";
+  stoch_k: number | null;
+  stoch_d: number | null;
+  stoch_zone: "oversold" | "neutral" | "overbought";
+}
+
+export interface EntryExitSignal {
+  action: "buy" | "hold" | "sell";
+  confidence: "low" | "medium" | "high";
+  entry_zone_low: number | null;
+  entry_zone_high: number | null;
+  primary_target: number | null;
+  secondary_target: number | null;
+  stop_loss: number | null;
+  risk_reward_ratio: number | null;
+  reasoning: string[];
+}
+
+export interface ChartAnalysis {
+  stock_code: string;
+  stock_name: string | null;
+  generated_at: string;
+  current_price: number;
+  analysis_period_days: number;
+  support_levels: SupportResistanceLevel[];
+  resistance_levels: SupportResistanceLevel[];
+  indicators: TechnicalIndicators;
+  signal: EntryExitSignal;
+  disclaimer: string;
+}
+
+// ── API Base ─────────────────────────────────────────────────────────────────
+
 const API_BASE =
   process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000";
 
@@ -200,6 +253,20 @@ export async function fetchOutlook({
     throw new Error(detail);
   }
   return (await response.json()) as OutlookReport;
+}
+
+export async function fetchChartAnalysis(code: string, days = 120): Promise<ChartAnalysis> {
+  const url = `${API_BASE}/chart/${encodeURIComponent(code)}?days=${days}`;
+  const response = await fetch(url, { cache: "no-store" });
+  if (!response.ok) {
+    let detail = `HTTP ${response.status}`;
+    try {
+      const payload = await response.json();
+      if (payload?.detail) detail = String(payload.detail);
+    } catch { /* ignore */ }
+    throw new Error(detail);
+  }
+  return (await response.json()) as ChartAnalysis;
 }
 
 export async function fetchIndicatorCatalog(): Promise<IndicatorDefinition[]> {
