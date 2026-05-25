@@ -167,12 +167,22 @@ export interface IndicatorCalculationResponse {
 
 // ── Chart Analysis ──────────────────────────────────────────────────────────
 
+export interface OHLCVBar {
+  date: string; // YYYY-MM-DD
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: number;
+}
+
 export interface SupportResistanceLevel {
   price: number;
   level_type: "support" | "resistance";
   strength: "weak" | "medium" | "strong";
   touch_count: number;
   last_tested_date: string | null;
+  source?: string;
 }
 
 export interface TechnicalIndicators {
@@ -209,6 +219,7 @@ export interface ChartAnalysis {
   generated_at: string;
   current_price: number;
   analysis_period_days: number;
+  ohlcv: OHLCVBar[];
   support_levels: SupportResistanceLevel[];
   resistance_levels: SupportResistanceLevel[];
   indicators: TechnicalIndicators;
