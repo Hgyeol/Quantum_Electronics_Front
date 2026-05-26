@@ -4,7 +4,7 @@ import { useState } from "react";
 import { fetchOutlook, type OutlookQueryInput, type OutlookReport } from "@/lib/api";
 import { useWatchlist } from "@/lib/watchlist";
 import OutlookForm from "@/components/OutlookForm";
-import WatchlistBar from "@/components/WatchlistBar";
+import WatchlistTable from "@/components/WatchlistTable";
 import FinalVerdictCard from "@/components/FinalVerdictCard";
 import MarketQuoteCard from "@/components/MarketQuoteCard";
 import SignalBreakdownPanel from "@/components/SignalBreakdownPanel";
@@ -50,15 +50,16 @@ export default function Home() {
         </div>
       </header>
 
-      {/* ── 관심종목 티커 ────────────────────────────────── */}
-      <WatchlistBar
-        codes={watchlist.codes}
-        onSelect={(code) => handleSubmit({ code })}
-        onRemove={watchlist.remove}
-      />
-
       {/* ── 메인 ─────────────────────────────────────────── */}
       <main className="flex-1 max-w-5xl w-full mx-auto px-5 py-7 space-y-4">
+        {/* 관심종목 테이블 */}
+        <WatchlistTable
+          codes={watchlist.codes}
+          onSelect={(code) => handleSubmit({ code })}
+          onRemove={watchlist.remove}
+          activeCode={report?.stock_code ?? null}
+        />
+
         {/* 검색폼 */}
         <div className="bg-surface-card-dark rounded-xl shadow-card p-5">
           <OutlookForm onSubmit={handleSubmit} loading={loading} />
