@@ -67,14 +67,16 @@ export default function WatchlistTable({
 }: Props) {
   const [items, setItems] = useState<WatchlistItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const [fetched, setFetched] = useState(false);
 
   useEffect(() => {
-    if (codes.length === 0) { setItems([]); return; }
+    if (codes.length === 0) { setItems([]); setFetched(false); return; }
     setLoading(true);
+    setFetched(false);
     fetchWatchlist(codes)
       .then(setItems)
       .catch(() => {})
-      .finally(() => setLoading(false));
+      .finally(() => { setLoading(false); setFetched(true); });
   }, [codes.join(",")]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (codes.length === 0) return null;
@@ -154,40 +156,44 @@ export default function WatchlistTable({
 
                     {/* 현재가 */}
                     <span className="text-right">
-                      {!item ? (
+                      {loading && !fetched ? (
                         <span className="inline-block w-16 h-3.5 rounded bg-surface-elevated-dark animate-pulse" />
-                      ) : (
+                      ) : item ? (
                         <span className="font-mono tabular text-[15px] font-semibold text-on-dark">
                           {item.price.toLocaleString("ko-KR")}
                           <span className="text-[11px] text-muted font-normal ml-0.5">원</span>
                         </span>
+                      ) : (
+                        <span className="font-mono text-sm text-muted">—</span>
                       )}
                     </span>
 
                     {/* 등락률 뱃지 */}
                     <span className="flex justify-end">
-                      {!item ? (
+                      {loading && !fetched ? (
                         <span className="inline-block w-14 h-7 rounded-lg bg-surface-elevated-dark animate-pulse" />
-                      ) : (
+                      ) : item ? (
                         <span
                           className={`inline-flex items-center gap-0.5 font-mono tabular text-sm font-semibold px-2.5 py-1 rounded-lg ${badgeBg}`}
                         >
                           {glyph && <span className="text-[10px]">{glyph}</span>}
-                          {flat
-                            ? "0.00%"
-                            : `${Math.abs(item.change_rate).toFixed(2)}%`}
+                          {flat ? "0.00%" : `${Math.abs(item.change_rate).toFixed(2)}%`}
                         </span>
+                      ) : (
+                        <span className="font-mono text-sm text-muted px-2.5 py-1">—</span>
                       )}
                     </span>
 
                     {/* 거래대금 */}
                     <span className="text-right">
-                      {!item ? (
+                      {loading && !fetched ? (
                         <span className="inline-block w-12 h-3 rounded bg-surface-elevated-dark animate-pulse" />
-                      ) : (
+                      ) : item ? (
                         <span className="font-mono tabular text-sm text-muted-strong">
                           {formatEok(item.volume, item.price)}
                         </span>
+                      ) : (
+                        <span className="font-mono text-sm text-muted">—</span>
                       )}
                     </span>
 
