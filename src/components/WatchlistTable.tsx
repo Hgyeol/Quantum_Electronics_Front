@@ -8,7 +8,7 @@ const WS_BASE = (process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000")
 
 interface Props {
   codes: string[];
-  onSelect: (code: string) => void;
+  onSelect: (code: string, name?: string | null) => void;
   onRemove: (code: string) => void;
   activeCode?: string | null;
 }
@@ -205,7 +205,7 @@ export default function WatchlistTable({
                 >
                   <div
                     className="grid grid-cols-[2.5rem_1fr_6.5rem_6rem_5.5rem_2rem] gap-4 items-center px-6 py-4 hover:bg-canvas-dark transition-colors cursor-pointer"
-                    onClick={() => onSelect(code)}
+                    onClick={() => onSelect(code, item?.stock_name)}
                   >
                     {/* 순위 */}
                     <span className="text-sm font-mono font-semibold text-muted-strong text-center select-none">

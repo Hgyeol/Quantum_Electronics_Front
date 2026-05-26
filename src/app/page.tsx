@@ -24,6 +24,7 @@ const QUICK_PICKS = [
 
 export default function Home() {
   const [selectedCode, setSelectedCode] = useState<string | null>(null);
+  const [selectedName, setSelectedName] = useState<string | null>(null);
   const [report, setReport] = useState<OutlookReport | null>(null);
   const [outlookLoading, setOutlookLoading] = useState(false);
   const [outlookError, setOutlookError] = useState<string | null>(null);
@@ -31,8 +32,9 @@ export default function Home() {
   const [query, setQuery] = useState("");
   const watchlist = useWatchlist();
 
-  function handleSelectStock(code: string) {
+  function handleSelectStock(code: string, name?: string | null) {
     setSelectedCode(code);
+    setSelectedName(name ?? null);
     setReport(null);
     setOutlookError(null);
     setSearchError(null);
@@ -42,7 +44,7 @@ export default function Home() {
     e.preventDefault();
     const trimmed = query.trim();
     if (!trimmed) return;
-    // 6자리 숫자면 종목코드로 바로 사용
+    // 6자리 숫자면 종목코드로 바로 사용 (이름은 차트 로드 후 채워짐)
     if (/^\d{6}$/.test(trimmed)) {
       handleSelectStock(trimmed);
       return;
@@ -54,7 +56,7 @@ export default function Home() {
         setSearchError(`"${trimmed}" 종목을 찾을 수 없습니다.`);
         return;
       }
-      handleSelectStock(results[0].stock_code);
+      handleSelectStock(results[0].stock_code, results[0].corp_name);
     } catch {
       setSearchError("종목 검색 중 오류가 발생했습니다.");
     }
@@ -76,6 +78,7 @@ export default function Home() {
 
   function handleBack() {
     setSelectedCode(null);
+    setSelectedName(null);
     setReport(null);
     setOutlookError(null);
     setSearchError(null);
@@ -83,6 +86,8 @@ export default function Home() {
 
   const isDetail = selectedCode !== null;
   const inWatchlist = selectedCode ? watchlist.has(selectedCode) : false;
+  // report > selectedName > code 순으로 표시 이름 결정
+  const displayName = report?.stock_name ?? selectedName ?? selectedCode;
 
   return (
     <div className="min-h-screen flex flex-col bg-canvas-dark">
@@ -106,7 +111,7 @@ export default function Home() {
 
           {isDetail && (
             <span className="text-sm font-semibold text-on-dark truncate hidden sm:block">
-              {report?.stock_name ?? selectedCode}
+              {displayName}
             </span>
           )}
 
@@ -146,7 +151,7 @@ export default function Home() {
               <button
                 key={p.code}
                 type="button"
-                onClick={() => handleSelectStock(p.code)}
+                onClick={() => handleSelectStock(p.code, p.name)}
                 className="text-[13px] text-muted-strong hover:text-on-dark transition-colors cursor-pointer"
               >
                 {p.name}
@@ -180,10 +185,10 @@ export default function Home() {
           <div className="bg-surface-card-dark rounded-xl shadow-card p-5">
             <div className="flex items-start justify-between mb-3">
               <div>
-                <h1 className="text-xl font-bold text-ink">
-                  {report?.stock_name ?? selectedCode}
-                </h1>
-                <span className="text-sm text-muted font-mono">{selectedCode}</span>
+                <h1 className="text-xl font-bold text-ink">{displayName}</h1>
+                {selectedName && selectedName !== selectedCode && (
+                  <span className="text-sm text-muted font-mono">{selectedCode}</span>
+                )}
               </div>
               <div className="flex items-center gap-2">
                 <button
@@ -221,7 +226,11 @@ export default function Home() {
           </div>
 
           {/* 차트 분석 */}
-          <ChartAnalysisCard stockCode={selectedCode} stockName={report?.stock_name ?? null} />
+          <ChartAnalysisCard
+            stockCode={selectedCode}
+            stockName={report?.stock_name ?? selectedName ?? null}
+            onNameResolved={(name) => setSelectedName((prev) => prev ?? name)}
+          />
 
           {/* 전망 로드 에러 */}
           {outlookError && (

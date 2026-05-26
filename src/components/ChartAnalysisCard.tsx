@@ -172,9 +172,10 @@ function LevelsTable({ data }: { data: ChartAnalysis }) {
 interface Props {
   stockCode: string;
   stockName?: string | null;
+  onNameResolved?: (name: string) => void;
 }
 
-export default function ChartAnalysisCard({ stockCode, stockName }: Props) {
+export default function ChartAnalysisCard({ stockCode, stockName, onNameResolved }: Props) {
   const [data, setData] = useState<ChartAnalysis | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -184,10 +185,13 @@ export default function ChartAnalysisCard({ stockCode, stockName }: Props) {
     setError(null);
     setData(null);
     fetchChartAnalysis(stockCode)
-      .then(setData)
+      .then((d) => {
+        setData(d);
+        if (d.stock_name) onNameResolved?.(d.stock_name);
+      })
       .catch((e: unknown) => setError(e instanceof Error ? e.message : String(e)))
       .finally(() => setLoading(false));
-  }, [stockCode]);
+  }, [stockCode]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <section className="rounded-xl bg-surface-card-dark border border-hairline-on-dark shadow-card p-6 space-y-6">
