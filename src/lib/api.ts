@@ -236,6 +236,7 @@ export interface WatchlistItem {
   change: number;
   change_rate: number;
   volume: number;
+  trade_value: number; // 누적 거래대금 (원, ACML_TR_PBMN)
 }
 
 // ── API Base ─────────────────────────────────────────────────────────────────

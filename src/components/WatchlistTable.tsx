@@ -1,7 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { fetchWatchlist, type WatchlistItem } from "@/lib/api";
+
+const WS_BASE = (process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000")
+  .replace(/^http/, "ws");
 
 interface Props {
   codes: string[];
@@ -33,12 +36,11 @@ function StockAvatar({ name, code }: { name: string | null; code: string }) {
   );
 }
 
-function formatEok(volume: number, price: number): string {
-  const krw = volume * price;
-  const eok = krw / 1e8;
+function formatTradeValue(tradeValue: number): string {
+  const eok = tradeValue / 1e8;
   if (eok >= 10000) return `${(eok / 10000).toFixed(1)}조`; // 1조 = 10,000억
   if (eok >= 1) return `${Math.round(eok)}억`;
-  const man = krw / 1e4;
+  const man = tradeValue / 1e4;
   if (man >= 1) return `${Math.round(man)}만`;
   return "—";
 }
@@ -68,7 +70,12 @@ export default function WatchlistTable({
   const [items, setItems] = useState<WatchlistItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [fetched, setFetched] = useState(false);
+  const [wsConnected, setWsConnected] = useState(false);
+  const wsRef = useRef<WebSocket | null>(null);
 
+  const codesKey = codes.join(",");
+
+  // 초기 REST 조회
   useEffect(() => {
     if (codes.length === 0) { setItems([]); setFetched(false); return; }
     setLoading(true);
@@ -77,7 +84,47 @@ export default function WatchlistTable({
       .then(setItems)
       .catch(() => {})
       .finally(() => { setLoading(false); setFetched(true); });
-  }, [codes.join(",")]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [codesKey]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // WebSocket 실시간 구독
+  useEffect(() => {
+    if (codes.length === 0) return;
+
+    const ws = new WebSocket(`${WS_BASE}/ws/watchlist?codes=${codesKey}`);
+    wsRef.current = ws;
+
+    ws.onopen = () => setWsConnected(true);
+    ws.onclose = () => setWsConnected(false);
+    ws.onerror = () => setWsConnected(false);
+
+    ws.onmessage = (e) => {
+      try {
+        const tick = JSON.parse(e.data) as {
+          stock_code: string;
+          price: number;
+          change: number;
+          change_rate: number;
+          volume: number;
+          trade_value: number;
+        };
+        setItems((prev) =>
+          prev.map((item) =>
+            item.stock_code === tick.stock_code
+              ? { ...item, price: tick.price, change: tick.change, change_rate: tick.change_rate, volume: tick.volume, trade_value: tick.trade_value }
+              : item,
+          ),
+        );
+      } catch {
+        // ignore malformed message
+      }
+    };
+
+    return () => {
+      ws.close();
+      wsRef.current = null;
+      setWsConnected(false);
+    };
+  }, [codesKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (codes.length === 0) return null;
 
@@ -86,11 +133,16 @@ export default function WatchlistTable({
       {/* Header */}
       <header className="px-6 py-4 border-b border-hairline-on-dark flex items-center justify-between">
         <h2 className="text-sm font-semibold text-on-dark">관심종목</h2>
-        <div className="flex items-center gap-3">
-          <span className="text-xs text-muted font-mono">
-            {codes.length}개 종목
-          </span>
-          <span className="text-xs text-muted">장중 기준</span>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-muted font-mono">{codes.length}개 종목</span>
+          {wsConnected ? (
+            <span className="flex items-center gap-1 text-xs text-trading-up font-semibold">
+              <span className="w-1.5 h-1.5 rounded-full bg-trading-up animate-pulse inline-block" />
+              실시간
+            </span>
+          ) : (
+            <span className="text-xs text-muted">장중 기준</span>
+          )}
         </div>
       </header>
 
@@ -190,7 +242,7 @@ export default function WatchlistTable({
                         <span className="inline-block w-12 h-3 rounded bg-surface-elevated-dark animate-pulse" />
                       ) : item ? (
                         <span className="font-mono tabular text-sm text-muted-strong">
-                          {formatEok(item.volume, item.price)}
+                          {formatTradeValue(item.trade_value)}
                         </span>
                       ) : (
                         <span className="font-mono text-sm text-muted">—</span>
