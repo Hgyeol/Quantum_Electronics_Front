@@ -9,6 +9,8 @@ import {
   ColorType,
   CrosshairMode,
   PriceScaleMode,
+  type Logical,
+  type LogicalRangeChangeEventHandler,
 } from "lightweight-charts";
 import type { OHLCVBar, SupportResistanceLevel } from "@/lib/api";
 
@@ -129,12 +131,35 @@ export default function StockPriceChart({ ohlcv, supports, resistances, currentP
 
     chart.timeScale().fitContent();
 
+    // 데이터 범위 밖으로 스크롤 방지
+    const barCount = ohlcv.length;
+    let clamping = false;
+    const onRangeChange: LogicalRangeChangeEventHandler = (range) => {
+      if (!range || clamping) return;
+      const width = range.to - range.from;
+      let from = range.from as number;
+      let to = range.to as number;
+      if (from < 0) { from = 0; to = width; }
+      if (to > barCount - 1) { to = barCount - 1; from = Math.max(0, to - width); }
+      if (from !== (range.from as number) || to !== (range.to as number)) {
+        clamping = true;
+        chart.timeScale().setVisibleLogicalRange({ from: from as Logical, to: to as Logical });
+        clamping = false;
+      }
+    };
+    chart.timeScale().subscribeVisibleLogicalRangeChange(onRangeChange);
+
     const ro = new ResizeObserver(() => {
       chart.applyOptions({ width: container.clientWidth });
     });
     ro.observe(container);
 
-    return () => { ro.disconnect(); chart.remove(); chartRef.current = null; };
+    return () => {
+      chart.timeScale().unsubscribeVisibleLogicalRangeChange(onRangeChange);
+      ro.disconnect();
+      chart.remove();
+      chartRef.current = null;
+    };
   }, [ohlcv, supports, resistances, currentPrice]);
 
   if (ohlcv.length === 0) return null;
