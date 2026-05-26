@@ -86,43 +86,66 @@ export default function WatchlistTable({
       .finally(() => { setLoading(false); setFetched(true); });
   }, [codesKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // WebSocket 실시간 구독
+  // WebSocket 실시간 구독 (실패 시 10초 폴링 폴백)
   useEffect(() => {
     if (codes.length === 0) return;
 
-    const ws = new WebSocket(`${WS_BASE}/ws/watchlist?codes=${codesKey}`);
-    wsRef.current = ws;
+    let pollTimer: ReturnType<typeof setInterval> | null = null;
+    let ws: WebSocket | null = null;
+    let wsOk = false;
 
-    ws.onopen = () => setWsConnected(true);
-    ws.onclose = () => setWsConnected(false);
-    ws.onerror = () => setWsConnected(false);
-
-    ws.onmessage = (e) => {
-      try {
-        const tick = JSON.parse(e.data) as {
-          stock_code: string;
-          price: number;
-          change: number;
-          change_rate: number;
-          volume: number;
-          trade_value: number;
-        };
-        setItems((prev) =>
-          prev.map((item) =>
-            item.stock_code === tick.stock_code
-              ? { ...item, price: tick.price, change: tick.change, change_rate: tick.change_rate, volume: tick.volume, trade_value: tick.trade_value }
-              : item,
-          ),
-        );
-      } catch {
-        // ignore malformed message
-      }
+    const startPolling = () => {
+      if (pollTimer) return;
+      pollTimer = setInterval(() => {
+        fetchWatchlist(codes).then(setItems).catch(() => {});
+      }, 10_000);
     };
 
+    try {
+      ws = new WebSocket(`${WS_BASE}/ws/watchlist?codes=${codesKey}`);
+      wsRef.current = ws;
+
+      ws.onopen = () => { wsOk = true; setWsConnected(true); };
+
+      ws.onclose = () => {
+        setWsConnected(false);
+        if (!wsOk) startPolling(); // WebSocket이 연결조차 안 됐으면 폴링
+      };
+
+      ws.onerror = () => {
+        setWsConnected(false);
+      };
+
+      ws.onmessage = (e) => {
+        try {
+          const tick = JSON.parse(e.data) as {
+            stock_code: string;
+            price: number;
+            change: number;
+            change_rate: number;
+            volume: number;
+            trade_value: number;
+          };
+          setItems((prev) =>
+            prev.map((item) =>
+              item.stock_code === tick.stock_code
+                ? { ...item, price: tick.price, change: tick.change, change_rate: tick.change_rate, volume: tick.volume, trade_value: tick.trade_value }
+                : item,
+            ),
+          );
+        } catch {
+          // ignore malformed message
+        }
+      };
+    } catch {
+      startPolling();
+    }
+
     return () => {
-      ws.close();
+      ws?.close();
       wsRef.current = null;
       setWsConnected(false);
+      if (pollTimer) clearInterval(pollTimer);
     };
   }, [codesKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
