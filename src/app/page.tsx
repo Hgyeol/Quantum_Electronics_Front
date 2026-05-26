@@ -79,35 +79,35 @@ export default function Home() {
             </span>
           )}
 
-          <div className="w-px h-4 bg-hairline-on-dark shrink-0" />
-
-          {/* 검색 인풋 */}
-          <form
-            onSubmit={handleSearch}
-            className="flex items-center gap-2 flex-1 max-w-sm"
-          >
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="종목코드 · 종목명"
-              className="flex-1 min-w-0 h-9 px-3 rounded-lg border border-hairline-on-dark bg-surface-elevated-dark text-sm text-on-dark placeholder:text-muted font-mono focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/50 transition-colors"
-            />
-            <button
-              type="submit"
-              disabled={loading}
-              className="h-9 px-4 rounded-lg bg-primary hover:bg-primary-active text-on-primary text-sm font-semibold disabled:bg-primary-disabled disabled:text-muted-strong transition-colors shrink-0 cursor-pointer"
-            >
-              {loading ? "…" : "조회"}
-            </button>
-          </form>
-
           {/* 상세 뷰일 때 종목명 */}
           {isDetail && report && (
             <span className="text-sm font-semibold text-on-dark truncate hidden sm:block">
               {report.stock_name ?? report.stock_code}
             </span>
           )}
+
+          <span className="flex-1" />
+
+          {/* 검색 인풋 (우측) */}
+          <form
+            onSubmit={handleSearch}
+            className="flex items-center gap-2 shrink-0"
+          >
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="종목코드 · 종목명"
+              className="w-48 h-9 px-3 rounded-lg border border-hairline-on-dark bg-surface-elevated-dark text-sm text-on-dark placeholder:text-muted font-mono focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/50 transition-colors"
+            />
+            <button
+              type="submit"
+              disabled={loading}
+              className="h-9 px-4 rounded-lg bg-primary hover:bg-primary-active text-on-primary text-sm font-semibold disabled:bg-primary-disabled disabled:text-muted-strong transition-colors cursor-pointer"
+            >
+              {loading ? "…" : "조회"}
+            </button>
+          </form>
         </div>
       </header>
 
