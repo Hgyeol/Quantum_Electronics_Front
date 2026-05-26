@@ -13,6 +13,7 @@ import PositionContextCard from "@/components/PositionContextCard";
 import EvidenceList from "@/components/EvidenceList";
 import ErrorsBanner from "@/components/ErrorsBanner";
 import ChartAnalysisCard from "@/components/ChartAnalysisCard";
+import RankingSection from "@/components/RankingSection";
 
 const QUICK_PICKS = [
   { code: "005930", name: "삼성전자" },
@@ -166,6 +167,8 @@ export default function Home() {
             onRemove={watchlist.remove}
             activeCode={null}
           />
+
+          <RankingSection onSelect={handleSelectStock} />
 
           {watchlist.codes.length === 0 && (
             <div className="bg-surface-card-dark rounded-xl shadow-card px-6 py-12 text-center">

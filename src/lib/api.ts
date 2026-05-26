@@ -292,6 +292,35 @@ export async function fetchChartAnalysis(code: string, days = 120): Promise<Char
   return (await response.json()) as ChartAnalysis;
 }
 
+// ── Ranking ──────────────────────────────────────────────────────────────────
+
+export interface RankItem {
+  rank: number;
+  stock_code: string;
+  stock_name: string;
+  price: number;
+  change: number;
+  change_rate: number;
+  volume: number;
+  trade_value: number;
+  extra_value: number;
+}
+
+export type RankSort = "volume" | "amount";
+export type RankInvestor = "foreign" | "institution";
+
+export async function fetchVolumeRanking(sort: RankSort): Promise<RankItem[]> {
+  const response = await fetch(`${API_BASE}/ranking/volume?sort=${sort}`, { cache: "no-store" });
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  return (await response.json()) as RankItem[];
+}
+
+export async function fetchForeignRanking(investor: RankInvestor): Promise<RankItem[]> {
+  const response = await fetch(`${API_BASE}/ranking/foreign?investor=${investor}`, { cache: "no-store" });
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  return (await response.json()) as RankItem[];
+}
+
 export interface StockSearchResult {
   stock_code: string;
   corp_name: string;
