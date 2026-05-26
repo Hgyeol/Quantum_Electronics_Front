@@ -1,7 +1,17 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { fetchWatchlist, type WatchlistItem } from "@/lib/api";
+import { fetchWatchlist, fetchVolumeRanking, fetchForeignRanking, type WatchlistItem } from "@/lib/api";
+
+type SortType = "default" | "volume" | "amount" | "foreign" | "institution";
+
+const SORT_TABS: { id: SortType; label: string }[] = [
+  { id: "default",     label: "기본" },
+  { id: "volume",      label: "거래량" },
+  { id: "amount",      label: "거래대금" },
+  { id: "foreign",     label: "외국인" },
+  { id: "institution", label: "기관" },
+];
 
 const WS_BASE = (process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000")
   .replace(/^http/, "ws");
@@ -71,9 +81,41 @@ export default function WatchlistTable({
   const [loading, setLoading] = useState(false);
   const [fetched, setFetched] = useState(false);
   const [wsConnected, setWsConnected] = useState(false);
+  const [sortBy, setSortBy] = useState<SortType>("default");
+  const [extraMap, setExtraMap] = useState<Map<string, number>>(new Map());
+  const [extraLoading, setExtraLoading] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
 
   const codesKey = codes.join(",");
+
+  // 외국인/기관 정렬 선택 시 랭킹 데이터 조회
+  useEffect(() => {
+    if (sortBy !== "foreign" && sortBy !== "institution") { setExtraMap(new Map()); return; }
+    setExtraLoading(true);
+    const fetchFn = sortBy === "foreign"
+      ? fetchForeignRanking("foreign", 100)
+      : fetchForeignRanking("institution", 100);
+    fetchFn
+      .then((ranking) => {
+        const map = new Map<string, number>();
+        ranking.forEach((r) => map.set(r.stock_code, r.extra_value));
+        setExtraMap(map);
+      })
+      .catch(() => {})
+      .finally(() => setExtraLoading(false));
+  }, [sortBy]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // 정렬된 codes 계산
+  const sortedCodes = (() => {
+    if (sortBy === "default") return codes;
+    return [...codes].sort((a, b) => {
+      const ia = items.find((i) => i.stock_code === a);
+      const ib = items.find((i) => i.stock_code === b);
+      if (sortBy === "volume") return (ib?.volume ?? 0) - (ia?.volume ?? 0);
+      if (sortBy === "amount") return (ib?.trade_value ?? 0) - (ia?.trade_value ?? 0);
+      return (extraMap.get(b) ?? 0) - (extraMap.get(a) ?? 0);
+    });
+  })();
 
   // 초기 REST 조회
   useEffect(() => {
@@ -154,18 +196,40 @@ export default function WatchlistTable({
   return (
     <section className="bg-surface-card-dark rounded-xl shadow-card overflow-hidden">
       {/* Header */}
-      <header className="px-6 py-4 border-b border-hairline-on-dark flex items-center justify-between">
-        <h2 className="text-sm font-semibold text-on-dark">관심종목</h2>
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-muted font-mono">{codes.length}개 종목</span>
-          {wsConnected ? (
-            <span className="flex items-center gap-1 text-xs text-trading-up font-semibold">
-              <span className="w-1.5 h-1.5 rounded-full bg-trading-up animate-pulse inline-block" />
-              실시간
-            </span>
-          ) : (
-            <span className="text-xs text-muted">장중 기준</span>
-          )}
+      <header className="px-6 pt-4 pb-0 border-b border-hairline-on-dark">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm font-semibold text-on-dark">관심종목</h2>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted font-mono">{codes.length}개 종목</span>
+            {wsConnected ? (
+              <span className="flex items-center gap-1 text-xs text-trading-up font-semibold">
+                <span className="w-1.5 h-1.5 rounded-full bg-trading-up animate-pulse inline-block" />
+                실시간
+              </span>
+            ) : (
+              <span className="text-xs text-muted">장중 기준</span>
+            )}
+          </div>
+        </div>
+        {/* 정렬 탭 */}
+        <div className="flex gap-0">
+          {SORT_TABS.map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              onClick={() => setSortBy(tab.id)}
+              className={`px-3 py-2 text-xs font-semibold border-b-2 transition-colors cursor-pointer ${
+                sortBy === tab.id
+                  ? "border-primary text-primary"
+                  : "border-transparent text-muted hover:text-muted-strong"
+              }`}
+            >
+              {tab.label}
+              {extraLoading && (tab.id === "foreign" || tab.id === "institution") && tab.id === sortBy && (
+                <span className="ml-1 w-2.5 h-2.5 border border-muted border-t-primary rounded-full animate-spin inline-block align-middle" />
+              )}
+            </button>
+          ))}
         </div>
       </header>
 
@@ -175,14 +239,16 @@ export default function WatchlistTable({
         <span className="text-[10px] uppercase tracking-widest text-muted">종목명</span>
         <span className="text-[10px] uppercase tracking-widest text-muted text-right">현재가</span>
         <span className="text-[10px] uppercase tracking-widest text-muted text-right">등락률</span>
-        <span className="text-[10px] uppercase tracking-widest text-muted text-right">거래대금</span>
+        <span className="text-[10px] uppercase tracking-widest text-muted text-right">
+          {sortBy === "volume" ? "거래량" : sortBy === "foreign" ? "외국인순매수" : sortBy === "institution" ? "기관순매수" : "거래대금"}
+        </span>
         <span />
       </div>
 
       <ul>
         {loading && items.length === 0
           ? codes.map((c) => <SkeletonRow key={c} />)
-          : codes.map((code, idx) => {
+          : sortedCodes.map((code, idx) => {
               const item = items.find((i) => i.stock_code === code);
               const isActive = activeCode === code;
               const up = item ? item.change_rate > 0 : null;
@@ -259,13 +325,19 @@ export default function WatchlistTable({
                       )}
                     </span>
 
-                    {/* 거래대금 */}
+                    {/* 거래량/거래대금/순매수 */}
                     <span className="text-right">
                       {loading && !fetched ? (
                         <span className="inline-block w-12 h-3 rounded bg-surface-elevated-dark animate-pulse" />
                       ) : item ? (
                         <span className="font-mono tabular text-sm text-muted-strong">
-                          {formatTradeValue(item.trade_value)}
+                          {sortBy === "volume"
+                            ? `${Math.round(item.volume / 1e4)}만주`
+                            : sortBy === "foreign" || sortBy === "institution"
+                              ? extraMap.has(code)
+                                ? `${(extraMap.get(code)!).toLocaleString("ko-KR")}주`
+                                : "—"
+                              : formatTradeValue(item.trade_value)}
                         </span>
                       ) : (
                         <span className="font-mono text-sm text-muted">—</span>

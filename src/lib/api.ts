@@ -309,14 +309,14 @@ export interface RankItem {
 export type RankSort = "volume" | "amount";
 export type RankInvestor = "foreign" | "institution";
 
-export async function fetchVolumeRanking(sort: RankSort): Promise<RankItem[]> {
-  const response = await fetch(`${API_BASE}/ranking/volume?sort=${sort}`, { cache: "no-store" });
+export async function fetchVolumeRanking(sort: RankSort, limit = 20): Promise<RankItem[]> {
+  const response = await fetch(`${API_BASE}/ranking/volume?sort=${sort}&limit=${limit}`, { cache: "no-store" });
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
   return (await response.json()) as RankItem[];
 }
 
-export async function fetchForeignRanking(investor: RankInvestor): Promise<RankItem[]> {
-  const response = await fetch(`${API_BASE}/ranking/foreign?investor=${investor}`, { cache: "no-store" });
+export async function fetchForeignRanking(investor: RankInvestor, limit = 20): Promise<RankItem[]> {
+  const response = await fetch(`${API_BASE}/ranking/foreign?investor=${investor}&limit=${limit}`, { cache: "no-store" });
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
   return (await response.json()) as RankItem[];
 }
