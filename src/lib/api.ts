@@ -292,6 +292,18 @@ export async function fetchChartAnalysis(code: string, days = 120): Promise<Char
   return (await response.json()) as ChartAnalysis;
 }
 
+export interface StockSearchResult {
+  stock_code: string;
+  corp_name: string;
+}
+
+export async function searchStocks(q: string): Promise<StockSearchResult[]> {
+  const url = `${API_BASE}/search?q=${encodeURIComponent(q)}`;
+  const response = await fetch(url, { cache: "no-store" });
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  return (await response.json()) as StockSearchResult[];
+}
+
 export async function fetchWatchlist(codes: string[]): Promise<WatchlistItem[]> {
   if (codes.length === 0) return [];
   const url = `${API_BASE}/watchlist?codes=${codes.join(",")}`;

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { fetchOutlook, type OutlookQueryInput, type OutlookReport } from "@/lib/api";
+import { fetchOutlook, searchStocks, type OutlookQueryInput, type OutlookReport } from "@/lib/api";
 import { useWatchlist } from "@/lib/watchlist";
 import WatchlistTable from "@/components/WatchlistTable";
 import FinalVerdictCard from "@/components/FinalVerdictCard";
@@ -38,11 +38,26 @@ export default function Home() {
     setSearchError(null);
   }
 
-  function handleSearch(e: FormEvent) {
+  async function handleSearch(e: FormEvent) {
     e.preventDefault();
     const trimmed = query.trim();
     if (!trimmed) return;
-    handleSelectStock(trimmed);
+    // 6자리 숫자면 종목코드로 바로 사용
+    if (/^\d{6}$/.test(trimmed)) {
+      handleSelectStock(trimmed);
+      return;
+    }
+    // 종목명이면 서버에서 코드 조회
+    try {
+      const results = await searchStocks(trimmed);
+      if (results.length === 0) {
+        setSearchError(`"${trimmed}" 종목을 찾을 수 없습니다.`);
+        return;
+      }
+      handleSelectStock(results[0].stock_code);
+    } catch {
+      setSearchError("종목 검색 중 오류가 발생했습니다.");
+    }
   }
 
   async function handleLoadOutlook(input?: OutlookQueryInput) {
