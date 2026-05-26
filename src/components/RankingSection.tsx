@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   fetchVolumeRanking,
   fetchForeignRanking,
@@ -17,6 +17,10 @@ const TABS: { id: TabId; label: string }[] = [
   { id: "foreign",     label: "외국인 순매수" },
   { id: "institution", label: "기관 순매수" },
 ];
+
+// 거래량/거래대금만 15초 폴링, 외국인/기관은 하루 4회 가집계라 폴링 불필요
+const POLL_INTERVAL_MS = 15_000;
+const REALTIME_TABS = new Set<TabId>(["volume", "amount"]);
 
 function formatNumber(n: number): string {
   if (n >= 1e8) return `${(n / 1e8).toFixed(0)}억`;
@@ -38,16 +42,20 @@ export default function RankingSection({ onSelect }: Props) {
   const [activeTab, setActiveTab] = useState<TabId>("volume");
   const [items, setItems] = useState<RankItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // 탭별 캐시
-  const [cache, setCache] = useState<Partial<Record<TabId, RankItem[]>>>({});
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const cacheRef = useRef<Partial<Record<TabId, RankItem[]>>>({});
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const loadTab = useCallback(async (tab: TabId) => {
-    if (cache[tab]) {
-      setItems(cache[tab]!);
-      return;
+  const fetchData = useCallback(async (tab: TabId, isRefresh = false) => {
+    if (isRefresh) {
+      setRefreshing(true);
+    } else {
+      const cached = cacheRef.current[tab];
+      if (cached) { setItems(cached); return; }
+      setLoading(true);
     }
-    setLoading(true);
     setError(null);
     try {
       let data: RankItem[];
@@ -56,19 +64,31 @@ export default function RankingSection({ onSelect }: Props) {
       } else {
         data = await fetchForeignRanking(tab as RankInvestor);
       }
-      setCache((prev) => ({ ...prev, [tab]: data }));
+      cacheRef.current[tab] = data;
       setItems(data);
+      setLastUpdated(new Date());
     } catch {
-      setError("데이터를 불러오지 못했습니다.");
-      setItems([]);
+      if (!isRefresh) setError("데이터를 불러오지 못했습니다.");
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
-  }, [cache]);
+  }, []);
 
+  // 탭 변경 시 초기 로드 + 폴링 설정
   useEffect(() => {
-    loadTab(activeTab);
-  }, [activeTab]); // eslint-disable-line react-hooks/exhaustive-deps
+    fetchData(activeTab);
+
+    if (REALTIME_TABS.has(activeTab)) {
+      timerRef.current = setInterval(() => {
+        fetchData(activeTab, true);
+      }, POLL_INTERVAL_MS);
+    }
+
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, [activeTab, fetchData]);
 
   function extraLabel(tab: TabId): string {
     if (tab === "volume") return "거래량";
@@ -87,7 +107,29 @@ export default function RankingSection({ onSelect }: Props) {
     <section className="bg-surface-card-dark rounded-xl shadow-card overflow-hidden">
       {/* 헤더 */}
       <header className="px-6 pt-4 pb-0 border-b border-hairline-on-dark">
-        <h2 className="text-sm font-semibold text-on-dark mb-3">시장 현황</h2>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm font-semibold text-on-dark">시장 현황</h2>
+          <div className="flex items-center gap-2 text-xs">
+            {REALTIME_TABS.has(activeTab) && (
+              refreshing ? (
+                <span className="flex items-center gap-1 text-muted">
+                  <span className="w-3 h-3 border border-muted border-t-primary rounded-full animate-spin inline-block" />
+                  갱신 중
+                </span>
+              ) : (
+                <span className="flex items-center gap-1 text-muted-strong">
+                  <span className="w-1.5 h-1.5 rounded-full bg-trading-up animate-pulse inline-block" />
+                  15초 갱신
+                </span>
+              )
+            )}
+            {lastUpdated && (
+              <span className="text-muted font-mono">
+                {lastUpdated.toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+              </span>
+            )}
+          </div>
+        </div>
         {/* 탭 */}
         <div className="flex gap-0">
           {TABS.map((tab) => (
