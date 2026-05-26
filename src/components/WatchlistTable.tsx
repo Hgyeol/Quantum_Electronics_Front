@@ -34,11 +34,11 @@ function StockAvatar({ name, code }: { name: string | null; code: string }) {
 }
 
 function formatEok(volume: number, price: number): string {
-  const eok = (volume * price) / 1e8;
-  if (eok >= 1000) return `${(eok / 1000).toFixed(1)}조`;
-  if (eok >= 100) return `${Math.round(eok)}억`;
-  if (eok >= 1) return `${eok.toFixed(1)}억`;
-  const man = (volume * price) / 1e4;
+  const krw = volume * price;
+  const eok = krw / 1e8;
+  if (eok >= 10000) return `${(eok / 10000).toFixed(1)}조`; // 1조 = 10,000억
+  if (eok >= 1) return `${Math.round(eok)}억`;
+  const man = krw / 1e4;
   if (man >= 1) return `${Math.round(man)}만`;
   return "—";
 }
