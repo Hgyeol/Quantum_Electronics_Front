@@ -9,18 +9,7 @@ interface Props {
 function changeClass(change: number) {
   if (change > 0) return "text-trading-up";
   if (change < 0) return "text-trading-down";
-  return "text-muted-strong";
-}
-
-function Stat({ label, value, tone }: { label: string; value: string; tone?: string }) {
-  return (
-    <div className="flex flex-col gap-0.5">
-      <span className="text-[10px] uppercase tracking-wide text-muted">{label}</span>
-      <span className={`font-mono tabular text-sm font-semibold ${tone ?? "text-muted-strong"}`}>
-        {value}
-      </span>
-    </div>
-  );
+  return "text-muted";
 }
 
 export default function MarketQuoteCard({ quote }: Props) {
@@ -28,29 +17,34 @@ export default function MarketQuoteCard({ quote }: Props) {
   const sign = quote.change > 0 ? "+" : "";
 
   return (
-    <div className="rounded-xl bg-surface-card-dark px-6 py-5 flex flex-wrap items-center gap-x-8 gap-y-4">
+    <div>
       {/* 현재가 + 등락 */}
-      <div className="flex items-baseline gap-4">
-        <span className="font-mono tabular text-4xl font-bold text-on-dark tracking-tight">
+      <div className="flex flex-wrap items-end gap-3 mb-4">
+        <span className="font-mono tabular text-[36px] font-bold text-ink leading-none tracking-tight">
           {formatNumber(quote.price)}
-          <span className="text-lg text-muted font-normal ml-1">원</span>
+          <span className="text-base text-muted font-normal ml-1.5">원</span>
         </span>
-        <span className={`font-mono tabular text-xl font-semibold ${tone}`}>
-          {sign}{formatNumber(quote.change)}
-          <span className="text-base ml-2">({formatPct(quote.change_rate)})</span>
+        <span className={`font-mono tabular text-lg font-semibold ${tone} leading-none mb-0.5`}>
+          {sign}{formatNumber(quote.change)} ({formatPct(quote.change_rate)})
         </span>
       </div>
 
-      {/* 구분선 */}
-      <div className="hidden md:block w-px h-8 bg-hairline-on-dark" />
-
       {/* 세부 스탯 */}
-      <div className="flex gap-6 flex-wrap">
-        <Stat label="고가" value={formatNumber(quote.high ?? null)} tone="text-trading-up" />
-        <Stat label="저가" value={formatNumber(quote.low ?? null)} tone="text-trading-down" />
-        <Stat label="거래량" value={formatCompact(quote.volume ?? null)} />
-        <Stat label="52W 고" value={formatNumber(quote.w52_high ?? null)} />
-        <Stat label="52W 저" value={formatNumber(quote.w52_low ?? null)} />
+      <div className="flex gap-5 flex-wrap">
+        {[
+          { label: "고가", value: formatNumber(quote.high ?? null), tone: "text-trading-up" },
+          { label: "저가", value: formatNumber(quote.low ?? null), tone: "text-trading-down" },
+          { label: "거래량", value: formatCompact(quote.volume ?? null), tone: undefined },
+          { label: "52W 고", value: formatNumber(quote.w52_high ?? null), tone: undefined },
+          { label: "52W 저", value: formatNumber(quote.w52_low ?? null), tone: undefined },
+        ].map(({ label, value, tone: t }) => (
+          <div key={label} className="flex flex-col gap-0.5">
+            <span className="text-[11px] text-muted uppercase tracking-wide">{label}</span>
+            <span className={`font-mono tabular text-sm font-semibold ${t ?? "text-body"}`}>
+              {value}
+            </span>
+          </div>
+        ))}
       </div>
     </div>
   );

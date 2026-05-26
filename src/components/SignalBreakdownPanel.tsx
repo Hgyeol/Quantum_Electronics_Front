@@ -52,7 +52,7 @@ function quantInterpretation(label: string, value: number | null): string {
 
 export default function SignalBreakdownPanel({ quant, ai }: Props) {
   return (
-    <section className="rounded-xl bg-surface-card-dark border border-hairline-on-dark overflow-hidden">
+    <section className="rounded-xl bg-surface-card-dark border border-hairline-on-dark shadow-card overflow-hidden">
       <header className="px-6 py-4 border-b border-hairline-on-dark">
         <h2 className="text-sm uppercase tracking-widest text-muted">
           Signal Breakdown

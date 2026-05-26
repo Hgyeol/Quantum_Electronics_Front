@@ -31,7 +31,7 @@ export default function PositionContextCard({ ctx }: Props) {
         : "text-on-dark";
 
   return (
-    <section className="rounded-xl bg-surface-card-dark border border-hairline-on-dark p-6">
+    <section className="rounded-xl bg-surface-card-dark border border-hairline-on-dark shadow-card p-6">
       <header className="flex items-baseline justify-between mb-4">
         <h2 className="text-sm uppercase tracking-widest text-muted">Position Context</h2>
         <span className="text-xs text-muted-strong">

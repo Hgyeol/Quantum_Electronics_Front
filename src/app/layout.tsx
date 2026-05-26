@@ -29,7 +29,7 @@ export default function RootLayout({
       lang="ko"
       className={`${inter.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full bg-canvas-dark text-body">{children}</body>
+      <body className="min-h-full bg-canvas-dark text-body antialiased">{children}</body>
     </html>
   );
 }

@@ -140,7 +140,7 @@ export default function TechnicalIndicatorsPanel({ stockCode }: Props) {
   }
 
   return (
-    <section className="rounded-xl bg-surface-card-dark border border-hairline-on-dark overflow-hidden">
+    <section className="rounded-xl bg-surface-card-dark border border-hairline-on-dark shadow-card overflow-hidden">
       <header className="px-6 py-4 border-b border-hairline-on-dark">
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
           <div>

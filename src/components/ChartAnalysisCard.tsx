@@ -190,7 +190,7 @@ export default function ChartAnalysisCard({ stockCode, stockName }: Props) {
   }, [stockCode]);
 
   return (
-    <section className="rounded-xl bg-surface-card-dark border border-hairline-on-dark p-6 space-y-6">
+    <section className="rounded-xl bg-surface-card-dark border border-hairline-on-dark shadow-card p-6 space-y-6">
       <header className="flex items-baseline justify-between">
         <h2 className="text-sm uppercase tracking-widest text-muted">Chart Analysis</h2>
         <span className="text-xs text-muted-strong">저점 · 고점 · 진입·이탈 시점</span>

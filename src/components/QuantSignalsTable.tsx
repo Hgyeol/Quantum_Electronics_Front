@@ -265,7 +265,7 @@ export default function QuantSignalsTable({
   ];
 
   return (
-    <section className="rounded-xl bg-surface-card-dark border border-hairline-on-dark overflow-hidden">
+    <section className="rounded-xl bg-surface-card-dark border border-hairline-on-dark shadow-card overflow-hidden">
       <header className="px-6 py-4 border-b border-hairline-on-dark">
         <h2 className="text-sm uppercase tracking-widest text-muted">Signals</h2>
         <p className="text-xs text-muted-strong mt-1">
