@@ -227,6 +227,17 @@ export interface ChartAnalysis {
   disclaimer: string;
 }
 
+// ── Watchlist ────────────────────────────────────────────────────────────────
+
+export interface WatchlistItem {
+  stock_code: string;
+  stock_name: string | null;
+  price: number;
+  change: number;
+  change_rate: number;
+  volume: number;
+}
+
 // ── API Base ─────────────────────────────────────────────────────────────────
 
 const API_BASE =
@@ -278,6 +289,16 @@ export async function fetchChartAnalysis(code: string, days = 120): Promise<Char
     throw new Error(detail);
   }
   return (await response.json()) as ChartAnalysis;
+}
+
+export async function fetchWatchlist(codes: string[]): Promise<WatchlistItem[]> {
+  if (codes.length === 0) return [];
+  const url = `${API_BASE}/watchlist?codes=${codes.join(",")}`;
+  const response = await fetch(url, { cache: "no-store" });
+  if (!response.ok) {
+    throw new Error(`HTTP ${response.status}`);
+  }
+  return (await response.json()) as WatchlistItem[];
 }
 
 export async function fetchIndicatorCatalog(): Promise<IndicatorDefinition[]> {

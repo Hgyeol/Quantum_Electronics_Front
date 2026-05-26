@@ -6,132 +6,101 @@ interface Props {
   autoSummary?: string | null;
 }
 
-function directionStyle(direction: "positive" | "negative" | "neutral") {
-  if (direction === "positive")
-    return {
-      label: "POSITIVE",
-      caption: "다음 거래일 상승 우세",
-      text: "text-trading-up",
-      bg: "bg-trading-up",
-      glow: "shadow-[0_0_40px_rgba(14,203,129,0.15)]",
-    };
-  if (direction === "negative")
-    return {
-      label: "NEGATIVE",
-      caption: "다음 거래일 하락 우세",
-      text: "text-trading-down",
-      bg: "bg-trading-down",
-      glow: "shadow-[0_0_40px_rgba(246,70,93,0.15)]",
-    };
+type Direction = "positive" | "negative" | "neutral";
+
+function verdictMeta(direction: Direction) {
+  if (direction === "positive") return {
+    label: "POSITIVE",
+    sub: "상승 우세",
+    text: "text-trading-up",
+    glow: "shadow-[0_0_60px_-10px_rgba(14,203,129,0.35)]",
+    border: "border-trading-up/20",
+    bar: "bg-trading-up",
+  };
+  if (direction === "negative") return {
+    label: "NEGATIVE",
+    sub: "하락 우세",
+    text: "text-trading-down",
+    glow: "shadow-[0_0_60px_-10px_rgba(246,70,93,0.35)]",
+    border: "border-trading-down/20",
+    bar: "bg-trading-down",
+  };
   return {
     label: "NEUTRAL",
-    caption: "방향성 정렬 어려움",
+    sub: "방향성 불명확",
     text: "text-muted-strong",
-    bg: "bg-muted",
     glow: "",
+    border: "border-hairline-on-dark",
+    bar: "bg-muted",
   };
 }
 
-function ComponentCell({
-  label,
-  score,
-  caption,
-}: {
-  label: string;
-  score: number;
-  caption: string;
-}) {
-  const color =
-    score > 0
-      ? "text-trading-up"
-      : score < 0
-        ? "text-trading-down"
-        : "text-muted-strong";
+function ScoreBar({ label, score, max = 4 }: { label: string; score: number; max?: number }) {
+  const pct = Math.min(Math.abs(score) / max, 1) * 100;
+  const color = score > 0 ? "bg-trading-up" : score < 0 ? "bg-trading-down" : "bg-muted";
+  const textColor = score > 0 ? "text-trading-up" : score < 0 ? "text-trading-down" : "text-muted-strong";
   return (
-    <div className="flex flex-col gap-1">
-      <span className="text-xs uppercase tracking-wide text-muted">{label}</span>
-      <span className={`font-mono tabular text-2xl font-bold leading-none ${color}`}>
-        {score > 0 ? `+${score}` : score}
-      </span>
-      <span className="text-xs text-muted-strong">{caption}</span>
+    <div className="space-y-1.5">
+      <div className="flex justify-between items-baseline">
+        <span className="text-xs text-muted">{label}</span>
+        <span className={`font-mono tabular text-sm font-bold ${textColor}`}>
+          {score > 0 ? `+${score}` : score}
+        </span>
+      </div>
+      <div className="h-1 rounded-full bg-surface-elevated-dark overflow-hidden">
+        <div className={`h-full rounded-full ${color}`} style={{ width: `${pct}%` }} />
+      </div>
     </div>
   );
 }
 
 export default function FinalVerdictCard({ score, ai, autoSummary }: Props) {
-  const style = directionStyle(score.direction);
-  const quantPlusAI = score.quant_score + score.ai_score;
+  const meta = verdictMeta(score.direction);
 
   return (
-    <section
-      className={`rounded-xl bg-surface-card-dark border border-hairline-on-dark p-8 ${style.glow}`}
-    >
-      <header className="flex items-baseline justify-between mb-6">
-        <h2 className="text-sm uppercase tracking-widest text-muted">
-          Final Verdict
-        </h2>
-        <span className="text-xs text-muted-strong font-mono">
-          Quant + LLM + Financial 종합
-        </span>
-      </header>
-
-      <div className="flex flex-wrap items-end gap-6 mb-8">
-        <div className="flex flex-col gap-1">
-          <span className={`text-5xl font-bold tracking-tight ${style.text}`}>
-            {style.label}
-          </span>
-          <span className="text-xs text-muted">{style.caption}</span>
+    <section className={`rounded-xl bg-surface-card-dark border ${meta.border} p-6 ${meta.glow}`}>
+      <div className="flex flex-col md:flex-row md:items-center gap-6">
+        {/* 왼쪽: 버딕트 + 총점 */}
+        <div className="flex items-center gap-5 md:border-r md:border-hairline-on-dark md:pr-8">
+          <div className={`w-1.5 self-stretch rounded-full ${meta.bar}`} />
+          <div>
+            <div className={`text-4xl font-bold tracking-tight ${meta.text}`}>{meta.label}</div>
+            <div className="text-xs text-muted mt-1">{meta.sub}</div>
+          </div>
+          <div className="ml-4 text-right">
+            <div className="text-[10px] uppercase tracking-widest text-muted mb-1">합산</div>
+            <div className={`font-mono tabular text-5xl font-bold leading-none ${meta.text}`}>
+              {score.total_score > 0 ? `+${score.total_score}` : score.total_score}
+            </div>
+          </div>
         </div>
-        <div className="flex flex-col gap-1 ml-auto items-end">
-          <span className="text-xs uppercase tracking-wide text-muted">
-            합산 점수
-          </span>
-          <span
-            className={`font-mono tabular text-6xl font-bold leading-none ${style.text}`}
-          >
-            {score.total_score >= 0 ? `+${score.total_score}` : score.total_score}
-          </span>
+
+        {/* 오른쪽: 점수 바 */}
+        <div className="flex-1 grid grid-cols-1 gap-3 md:pl-2">
+          <ScoreBar label="Quant (가격·수급)" score={score.quant_score} max={4} />
+          <ScoreBar label="LLM (공시·뉴스 해석)" score={score.ai_score} max={4} />
+          <ScoreBar label="Financial (재무지표)" score={score.financial_score} max={4} />
         </div>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-6 pb-6 border-b border-hairline-on-dark">
-        <ComponentCell
-          label="Quant"
-          score={score.quant_score}
-          caption="가격·수급 5개"
-        />
-        <ComponentCell
-          label="LLM"
-          score={score.ai_score}
-          caption="공시·재무 해석"
-        />
-        <ComponentCell
-          label="Quant + LLM"
-          score={quantPlusAI}
-          caption="시장+해석 소계"
-        />
-        <ComponentCell
-          label="Financial"
-          score={score.financial_score}
-          caption="재무지표 점수"
-        />
-      </div>
-
-      <div className="mt-6 space-y-3">
-        {ai?.summary && (
-          <blockquote className="border-l-2 border-primary pl-4 py-1 text-on-dark text-base leading-relaxed">
-            {ai.summary}
-            <span className="block text-xs text-muted-strong mt-2 font-mono">
-              — gpt-5.2 · confidence {(ai.confidence * 100).toFixed(0)}%
-            </span>
-          </blockquote>
-        )}
-        {autoSummary && (
-          <p className="text-sm text-muted-strong leading-relaxed">
-            {autoSummary}
-          </p>
-        )}
-      </div>
+      {(ai?.summary || autoSummary) && (
+        <div className="mt-5 pt-5 border-t border-hairline-on-dark space-y-2">
+          {ai?.summary && (
+            <p className="text-[15px] text-on-dark leading-relaxed">
+              <span className={`font-semibold ${meta.text}`}>AI 해석 — </span>
+              {ai.summary}
+            </p>
+          )}
+          {autoSummary && (
+            <p className="text-sm text-muted-strong leading-relaxed">{autoSummary}</p>
+          )}
+          {ai && (
+            <div className="text-[11px] text-muted font-mono mt-1">
+              gpt-5.2 · confidence {(ai.confidence * 100).toFixed(0)}%
+            </div>
+          )}
+        </div>
+      )}
     </section>
   );
 }
