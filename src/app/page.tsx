@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
-import { fetchOutlook, searchStocks, type OutlookQueryInput, type OutlookReport } from "@/lib/api";
+import { useState, useEffect, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
+import { fetchOutlook, searchStocks, checkAuth, logout, type OutlookQueryInput, type OutlookReport } from "@/lib/api";
 import { useWatchlist } from "@/lib/watchlist";
 import WatchlistTable from "@/components/WatchlistTable";
 import FinalVerdictCard from "@/components/FinalVerdictCard";
@@ -24,6 +25,7 @@ const QUICK_PICKS = [
 ];
 
 export default function Home() {
+  const router = useRouter();
   const [selectedCode, setSelectedCode] = useState<string | null>(null);
   const [selectedName, setSelectedName] = useState<string | null>(null);
   const [report, setReport] = useState<OutlookReport | null>(null);
@@ -32,6 +34,18 @@ export default function Home() {
   const [searchError, setSearchError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const watchlist = useWatchlist();
+
+  // 세션 확인: 미인증이면 /login으로 리다이렉트
+  useEffect(() => {
+    checkAuth().then((ok) => {
+      if (!ok) router.replace("/login");
+    });
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function handleLogout() {
+    await logout();
+    router.replace("/login");
+  }
 
   function handleSelectStock(code: string, name?: string | null) {
     setSelectedCode(code);
@@ -133,6 +147,14 @@ export default function Home() {
               조회
             </button>
           </form>
+
+          <button
+            type="button"
+            onClick={handleLogout}
+            className="h-9 px-3 rounded-lg border border-hairline-on-dark text-xs text-muted hover:text-on-dark transition-colors cursor-pointer shrink-0"
+          >
+            로그아웃
+          </button>
         </div>
       </header>
 

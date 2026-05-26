@@ -244,6 +244,59 @@ export interface WatchlistItem {
 const API_BASE =
   process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8000";
 
+const FETCH_OPTS: RequestInit = { cache: "no-store", credentials: "include" };
+
+// ── Auth ─────────────────────────────────────────────────────────────────────
+
+export async function login(username: string, password: string): Promise<void> {
+  const response = await fetch(`${API_BASE}/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, password }),
+    credentials: "include",
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    let detail = `HTTP ${response.status}`;
+    try {
+      const payload = await response.json();
+      if (payload?.detail) detail = String(payload.detail);
+    } catch { /* ignore */ }
+    throw new Error(detail);
+  }
+}
+
+export async function logout(): Promise<void> {
+  await fetch(`${API_BASE}/auth/logout`, { method: "POST", credentials: "include", cache: "no-store" });
+}
+
+export async function checkAuth(): Promise<boolean> {
+  try {
+    const response = await fetch(`${API_BASE}/auth/me`, { credentials: "include", cache: "no-store" });
+    return response.ok;
+  } catch {
+    return false;
+  }
+}
+
+// ── Watchlist (server-side) ───────────────────────────────────────────────────
+
+export async function fetchMyWatchlist(): Promise<string[]> {
+  const response = await fetch(`${API_BASE}/me/watchlist`, FETCH_OPTS);
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  return (await response.json()) as string[];
+}
+
+export async function saveMyWatchlist(codes: string[]): Promise<void> {
+  await fetch(`${API_BASE}/me/watchlist`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ codes }),
+    credentials: "include",
+    cache: "no-store",
+  });
+}
+
 export async function fetchOutlook({
   code,
   avg_price,
@@ -264,7 +317,7 @@ export async function fetchOutlook({
   const qs = params.toString();
   const url = `${API_BASE}/outlook/stock/${encodeURIComponent(code)}${qs ? `?${qs}` : ""}`;
 
-  const response = await fetch(url, { cache: "no-store" });
+  const response = await fetch(url, FETCH_OPTS);
   if (!response.ok) {
     let detail = `HTTP ${response.status}`;
     try {
@@ -280,7 +333,7 @@ export async function fetchOutlook({
 
 export async function fetchChartAnalysis(code: string, days = 120): Promise<ChartAnalysis> {
   const url = `${API_BASE}/chart/${encodeURIComponent(code)}?days=${days}`;
-  const response = await fetch(url, { cache: "no-store" });
+  const response = await fetch(url, FETCH_OPTS);
   if (!response.ok) {
     let detail = `HTTP ${response.status}`;
     try {
@@ -310,13 +363,13 @@ export type RankSort = "volume" | "amount";
 export type RankInvestor = "foreign" | "institution";
 
 export async function fetchVolumeRanking(sort: RankSort, limit = 20): Promise<RankItem[]> {
-  const response = await fetch(`${API_BASE}/ranking/volume?sort=${sort}&limit=${limit}`, { cache: "no-store" });
+  const response = await fetch(`${API_BASE}/ranking/volume?sort=${sort}&limit=${limit}`, FETCH_OPTS);
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
   return (await response.json()) as RankItem[];
 }
 
 export async function fetchForeignRanking(investor: RankInvestor, limit = 20): Promise<RankItem[]> {
-  const response = await fetch(`${API_BASE}/ranking/foreign?investor=${investor}&limit=${limit}`, { cache: "no-store" });
+  const response = await fetch(`${API_BASE}/ranking/foreign?investor=${investor}&limit=${limit}`, FETCH_OPTS);
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
   return (await response.json()) as RankItem[];
 }
@@ -328,7 +381,7 @@ export interface StockSearchResult {
 
 export async function searchStocks(q: string): Promise<StockSearchResult[]> {
   const url = `${API_BASE}/search?q=${encodeURIComponent(q)}`;
-  const response = await fetch(url, { cache: "no-store" });
+  const response = await fetch(url, FETCH_OPTS);
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
   return (await response.json()) as StockSearchResult[];
 }
@@ -336,7 +389,7 @@ export async function searchStocks(q: string): Promise<StockSearchResult[]> {
 export async function fetchWatchlist(codes: string[]): Promise<WatchlistItem[]> {
   if (codes.length === 0) return [];
   const url = `${API_BASE}/watchlist?codes=${codes.join(",")}`;
-  const response = await fetch(url, { cache: "no-store" });
+  const response = await fetch(url, FETCH_OPTS);
   if (!response.ok) {
     throw new Error(`HTTP ${response.status}`);
   }
@@ -344,9 +397,7 @@ export async function fetchWatchlist(codes: string[]): Promise<WatchlistItem[]> 
 }
 
 export async function fetchIndicatorCatalog(): Promise<IndicatorDefinition[]> {
-  const response = await fetch(`${API_BASE}/technical/indicators`, {
-    cache: "no-store",
-  });
+  const response = await fetch(`${API_BASE}/technical/indicators`, FETCH_OPTS);
   if (!response.ok) {
     throw new Error(`HTTP ${response.status}`);
   }
@@ -371,7 +422,7 @@ export async function fetchTechnicalIndicators({
 
   const response = await fetch(
     `${API_BASE}/technical/indicators/${encodeURIComponent(code)}?${params.toString()}`,
-    { cache: "no-store" },
+    FETCH_OPTS,
   );
   if (!response.ok) {
     throw new Error(`HTTP ${response.status}`);

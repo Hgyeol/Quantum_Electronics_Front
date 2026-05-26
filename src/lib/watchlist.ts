@@ -1,63 +1,54 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-
-const STORAGE_KEY = "qe_watchlist_codes";
-
-function readCodes(): string[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-}
-
-function writeCodes(codes: string[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(codes));
-}
+import { fetchMyWatchlist, saveMyWatchlist } from "@/lib/api";
 
 export function useWatchlist() {
   const [codes, setCodes] = useState<string[]>([]);
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    setCodes(readCodes());
+    fetchMyWatchlist()
+      .then(setCodes)
+      .catch(() => {})
+      .finally(() => setLoaded(true));
+  }, []);
+
+  const save = useCallback((next: string[]) => {
+    saveMyWatchlist(next).catch(() => {});
   }, []);
 
   const add = useCallback((code: string) => {
     setCodes((prev) => {
       if (prev.includes(code)) return prev;
       const next = [...prev, code];
-      writeCodes(next);
+      save(next);
       return next;
     });
-  }, []);
+  }, [save]);
 
   const remove = useCallback((code: string) => {
     setCodes((prev) => {
       const next = prev.filter((c) => c !== code);
-      writeCodes(next);
+      save(next);
       return next;
     });
-  }, []);
+  }, [save]);
 
   const toggle = useCallback((code: string) => {
     setCodes((prev) => {
       const next = prev.includes(code)
         ? prev.filter((c) => c !== code)
         : [...prev, code];
-      writeCodes(next);
+      save(next);
       return next;
     });
-  }, []);
+  }, [save]);
 
   const has = useCallback(
     (code: string) => codes.includes(code),
     [codes]
   );
 
-  return { codes, add, remove, toggle, has };
+  return { codes, add, remove, toggle, has, loaded };
 }
