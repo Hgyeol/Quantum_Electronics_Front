@@ -163,7 +163,10 @@ export default function StockPriceChart({ ohlcv, supports, resistances, currentP
       });
     });
 
-    chart.timeScale().fitContent();
+    // 기본 뷰: 최근 3개월(약 65거래일)
+    const defaultBars = 65;
+    const from = Math.max(0, barCount - defaultBars);
+    chart.timeScale().setVisibleLogicalRange({ from: from as Logical, to: (barCount - 1) as Logical });
 
     // 데이터 범위 밖으로 스크롤 방지
     const barCount = ohlcv.length;
