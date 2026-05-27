@@ -16,6 +16,14 @@ const CONDITIONS: { id: ScreenerCondition; label: string; desc: string }[] = [
   { id: "orgn_buy",      label: "기관 연속 순매수",      desc: "최근 N일 연속 기관 순매수" },
 ];
 
+type SortType = "default" | "volume" | "amount";
+
+const SORT_TABS: { id: SortType; label: string }[] = [
+  { id: "default", label: "기본" },
+  { id: "volume",  label: "거래량" },
+  { id: "amount",  label: "거래대금" },
+];
+
 function formatVolume(n: number): string {
   if (n >= 1e8) return `${(n / 1e8).toFixed(1)}억주`;
   if (n >= 1e4) return `${Math.floor(n / 1e4)}만주`;
@@ -31,6 +39,7 @@ export default function ScreenerSection({ onSelect }: Props) {
   const [volumeThreshold, setVolumeThreshold] = useState(2.0);
   const [consecutiveDays, setConsecutiveDays] = useState(3);
   const [results, setResults] = useState<ScreenerResultItem[] | null>(null);
+  const [sortBy, setSortBy] = useState<SortType>("default");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastCollected, setLastCollected] = useState<string | null>(null);
@@ -55,6 +64,7 @@ export default function ScreenerSection({ onSelect }: Props) {
     setLoading(true);
     setError(null);
     setResults(null);
+    setSortBy("default");
     try {
       const data = await fetchScreener(Array.from(selected) as ScreenerCondition[], volumeThreshold, consecutiveDays);
       setResults(data);
@@ -163,8 +173,31 @@ export default function ScreenerSection({ onSelect }: Props) {
       </header>
 
       {/* 결과 */}
-      {results !== null && results.length > 0 && (
+      {results !== null && results.length > 0 && (() => {
+        const sorted = [...results].sort((a, b) => {
+          if (sortBy === "volume") return b.volume - a.volume;
+          if (sortBy === "amount") return b.close * b.volume - a.close * a.volume;
+          return 0;
+        });
+        return (
         <>
+          {/* 정렬 탭 */}
+          <div className="flex gap-0 px-6 border-b border-hairline-on-dark bg-surface-elevated-dark/40">
+            {SORT_TABS.map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setSortBy(tab.id)}
+                className={`px-3 py-2 text-xs font-semibold border-b-2 transition-colors cursor-pointer ${
+                  sortBy === tab.id
+                    ? "border-primary text-primary"
+                    : "border-transparent text-muted hover:text-muted-strong"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
           {/* 컬럼 레이블 */}
           <div className="grid grid-cols-[1fr_6rem_5rem_6rem] gap-3 px-6 py-2.5 bg-surface-elevated-dark/60 border-b border-hairline-on-dark">
             <span className="text-[10px] uppercase tracking-widest text-muted">종목명</span>
@@ -173,7 +206,7 @@ export default function ScreenerSection({ onSelect }: Props) {
             <span className="text-[10px] uppercase tracking-widest text-muted text-right">매칭 조건</span>
           </div>
           <ul>
-            {results.map((item) => (
+            {sorted.map((item) => (
               <li
                 key={item.stock_code}
                 onClick={() => onSelect(item.stock_code, item.stock_name)}
@@ -209,7 +242,8 @@ export default function ScreenerSection({ onSelect }: Props) {
             ))}
           </ul>
         </>
-      )}
+        );
+      })()}
 
       {results !== null && results.length === 0 && !loading && (
         <div className="px-6 py-10 text-center text-sm text-muted">
