@@ -47,11 +47,9 @@ function StockAvatar({ name, code }: { name: string | null; code: string }) {
 }
 
 function formatTradeValue(tradeValue: number): string {
-  const eok = tradeValue / 1e8;
-  if (eok >= 10000) return `${(eok / 10000).toFixed(1)}조`; // 1조 = 10,000억
-  if (eok >= 1) return `${Math.round(eok)}억`;
-  const man = tradeValue / 1e4;
-  if (man >= 1) return `${Math.round(man)}만`;
+  if (tradeValue >= 1e12) return `${Math.floor(tradeValue / 1e11) / 10}조`;
+  if (tradeValue >= 1e8) return `${Math.floor(tradeValue / 1e8)}억`;
+  if (tradeValue >= 1e4) return `${Math.floor(tradeValue / 1e4)}만`;
   return "—";
 }
 
