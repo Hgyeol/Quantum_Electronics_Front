@@ -79,6 +79,8 @@ export default function StockPriceChart({ ohlcv, supports, resistances, currentP
     support: true, resistance: true,
   });
 
+  const [hoveredBar, setHoveredBar] = useState<OHLCVBar | null>(null);
+
   // 차트 생성
   useEffect(() => {
     if (!containerRef.current || ohlcv.length === 0) return;
@@ -166,6 +168,14 @@ export default function StockPriceChart({ ohlcv, supports, resistances, currentP
         color: b.close >= b.open ? `${COLORS.up}66` : `${COLORS.down}66`,
       }))
     );
+
+    // 캔들 hover 시 OHLCV 표시
+    const ohlcvMap = new Map(ohlcv.map((b) => [b.date, b]));
+    chart.subscribeCrosshairMove((param) => {
+      if (!param.time) { setHoveredBar(null); return; }
+      const date = param.time as string;
+      setHoveredBar(ohlcvMap.get(date) ?? null);
+    });
 
     const supportLines: IPriceLine[] = supports.map((s) =>
       candleSeries.createPriceLine({
@@ -268,7 +278,26 @@ export default function StockPriceChart({ ohlcv, supports, resistances, currentP
           </button>
         ))}
       </div>
-      <div ref={containerRef} className="w-full rounded-xl overflow-hidden border border-hairline-on-dark" />
+      <div className="relative">
+        <div ref={containerRef} className="w-full rounded-xl overflow-hidden border border-hairline-on-dark" />
+        {hoveredBar && (
+          <div className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm border border-hairline-on-dark rounded-lg px-3 py-2 text-xs font-mono shadow-sm pointer-events-none">
+            <div className="text-muted mb-1">{hoveredBar.date}</div>
+            <div className="grid grid-cols-2 gap-x-3 gap-y-0.5">
+              <span className="text-muted">시가</span>
+              <span className="text-right text-on-dark">{hoveredBar.open.toLocaleString()}</span>
+              <span className="text-muted">고가</span>
+              <span className="text-right" style={{ color: COLORS.up }}>{hoveredBar.high.toLocaleString()}</span>
+              <span className="text-muted">저가</span>
+              <span className="text-right" style={{ color: COLORS.down }}>{hoveredBar.low.toLocaleString()}</span>
+              <span className="text-muted">종가</span>
+              <span className="text-right text-on-dark">{hoveredBar.close.toLocaleString()}</span>
+              <span className="text-muted">거래량</span>
+              <span className="text-right text-on-dark">{(hoveredBar.volume / 1000).toFixed(0)}K</span>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
