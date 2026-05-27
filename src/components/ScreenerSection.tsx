@@ -16,13 +16,19 @@ const CONDITIONS: { id: ScreenerCondition; label: string; desc: string }[] = [
   { id: "orgn_buy",      label: "기관 연속 순매수",      desc: "최근 N일 연속 기관 순매수" },
 ];
 
-type SortType = "default" | "volume" | "amount";
+type SortType = "volume" | "amount";
 
 const SORT_TABS: { id: SortType; label: string }[] = [
-  { id: "default", label: "기본" },
   { id: "volume",  label: "거래량" },
   { id: "amount",  label: "거래대금" },
 ];
+
+function formatTradeValue(n: number): string {
+  if (n >= 1e12) return `${Math.floor(n / 1e11) / 10}조`;
+  if (n >= 1e8)  return `${Math.floor(n / 1e8)}억`;
+  if (n >= 1e4)  return `${Math.floor(n / 1e4)}만`;
+  return "—";
+}
 
 function formatVolume(n: number): string {
   if (n >= 1e8) return `${(n / 1e8).toFixed(1)}억주`;
@@ -39,7 +45,7 @@ export default function ScreenerSection({ onSelect }: Props) {
   const [volumeThreshold, setVolumeThreshold] = useState(2.0);
   const [consecutiveDays, setConsecutiveDays] = useState(3);
   const [results, setResults] = useState<ScreenerResultItem[] | null>(null);
-  const [sortBy, setSortBy] = useState<SortType>("default");
+  const [sortBy, setSortBy] = useState<SortType>("volume");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastCollected, setLastCollected] = useState<string | null>(null);
@@ -64,7 +70,7 @@ export default function ScreenerSection({ onSelect }: Props) {
     setLoading(true);
     setError(null);
     setResults(null);
-    setSortBy("default");
+    setSortBy("volume");
     try {
       const data = await fetchScreener(Array.from(selected) as ScreenerCondition[], volumeThreshold, consecutiveDays);
       setResults(data);
@@ -199,10 +205,11 @@ export default function ScreenerSection({ onSelect }: Props) {
             ))}
           </div>
           {/* 컬럼 레이블 */}
-          <div className="grid grid-cols-[1fr_6rem_5rem_6rem] gap-3 px-6 py-2.5 bg-surface-elevated-dark/60 border-b border-hairline-on-dark">
+          <div className="grid grid-cols-[1fr_6rem_5rem_5rem_6rem] gap-3 px-6 py-2.5 bg-surface-elevated-dark/60 border-b border-hairline-on-dark">
             <span className="text-[10px] uppercase tracking-widest text-muted">종목명</span>
             <span className="text-[10px] uppercase tracking-widest text-muted text-right">현재가</span>
             <span className="text-[10px] uppercase tracking-widest text-muted text-right">거래량</span>
+            <span className="text-[10px] uppercase tracking-widest text-muted text-right">거래대금</span>
             <span className="text-[10px] uppercase tracking-widest text-muted text-right">매칭 조건</span>
           </div>
           <ul>
@@ -210,7 +217,7 @@ export default function ScreenerSection({ onSelect }: Props) {
               <li
                 key={item.stock_code}
                 onClick={() => onSelect(item.stock_code, item.stock_name)}
-                className="grid grid-cols-[1fr_6rem_5rem_6rem] gap-3 items-center px-6 py-3 border-t border-hairline-on-dark first:border-t-0 hover:bg-canvas-dark cursor-pointer transition-colors"
+                className="grid grid-cols-[1fr_6rem_5rem_5rem_6rem] gap-3 items-center px-6 py-3 border-t border-hairline-on-dark first:border-t-0 hover:bg-canvas-dark cursor-pointer transition-colors"
               >
                 <span className="flex items-center gap-2.5 min-w-0">
                   <StockLogo code={item.stock_code} name={item.stock_name} size={32} />
@@ -227,6 +234,9 @@ export default function ScreenerSection({ onSelect }: Props) {
                 </span>
                 <span className="text-right font-mono text-xs text-muted-strong tabular">
                   {formatVolume(item.volume)}
+                </span>
+                <span className="text-right font-mono text-xs text-muted-strong tabular">
+                  {formatTradeValue(item.close * item.volume)}
                 </span>
                 <span className="flex flex-wrap justify-end gap-1">
                   {item.matched_conditions.map((label) => (
