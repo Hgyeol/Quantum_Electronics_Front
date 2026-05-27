@@ -170,17 +170,11 @@ export default function StockPriceChart({ ohlcv, supports, resistances, currentP
     );
 
     // 캔들 클릭 시 OHLCV 표시
+    const ohlcvByDate = new Map(ohlcv.map((b) => [b.date, b]));
     chart.subscribeClick((param) => {
-      if (!param.time || param.logical === null || param.logical === undefined) {
-        setHoveredBar(null);
-        return;
-      }
-      const idx = Math.round(param.logical as number);
-      if (idx >= 0 && idx < ohlcv.length) {
-        setHoveredBar(ohlcv[idx]);
-      } else {
-        setHoveredBar(null);
-      }
+      console.log("click param.time:", param.time, "type:", typeof param.time);
+      if (!param.time) { setHoveredBar(null); return; }
+      setHoveredBar(ohlcvByDate.get(String(param.time)) ?? null);
     });
 
     const supportLines: IPriceLine[] = supports.map((s) =>
