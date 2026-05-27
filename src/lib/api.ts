@@ -337,7 +337,7 @@ export async function fetchMarketQuote(code: string): Promise<MarketQuote> {
   return (await response.json()) as MarketQuote;
 }
 
-export async function fetchChartAnalysis(code: string, days = 120): Promise<ChartAnalysis> {
+export async function fetchChartAnalysis(code: string, days = 365): Promise<ChartAnalysis> {
   const url = `${API_BASE}/chart/${encodeURIComponent(code)}?days=${days}`;
   const response = await fetch(url, FETCH_OPTS);
   if (!response.ok) {
