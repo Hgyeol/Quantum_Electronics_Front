@@ -23,6 +23,7 @@ const POLL_INTERVAL_MS = 15_000;
 const REALTIME_TABS = new Set<TabId>(["volume", "amount"]);
 
 function formatNumber(n: number): string {
+  if (n >= 1e12) return `${(n / 1e12).toFixed(1)}조`;
   if (n >= 1e8) return `${(n / 1e8).toFixed(0)}억`;
   if (n >= 1e4) return `${(n / 1e4).toFixed(0)}만`;
   return n.toLocaleString("ko-KR");
