@@ -26,6 +26,7 @@ const COLORS = {
   ma5:  "#26C6DA",            // 이동평균 5
   ma20: "#F5A623",            // 이동평균 20
   ma60: "#9B59B6",            // 이동평균 60
+  ma120: "#2ECC71",           // 이동평균 120
   support: "#1B64DA",         // 지지선 = 파랑
   resistance: "#F04452",      // 저항선 = 빨강
 } as const;
@@ -120,6 +121,14 @@ export default function StockPriceChart({ ohlcv, supports, resistances, currentP
       ma60.setData(calcMA(ohlcv, 60));
     }
 
+    if (ohlcv.length >= 120) {
+      const ma120 = chart.addSeries(LineSeries, {
+        color: COLORS.ma120, lineWidth: 1, title: "MA120",
+        priceLineVisible: false, lastValueVisible: false,
+      });
+      ma120.setData(calcMA(ohlcv, 120));
+    }
+
     supports.forEach((s) => {
       candleSeries.createPriceLine({
         price: s.price, color: COLORS.support,
@@ -182,6 +191,9 @@ export default function StockPriceChart({ ohlcv, supports, resistances, currentP
         </span>
         <span className="flex items-center gap-1.5">
           <span className="w-3 h-0.5 inline-block rounded" style={{ background: COLORS.ma60 }} /> MA60
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="w-3 h-0.5 inline-block rounded" style={{ background: COLORS.ma120 }} /> MA120
         </span>
         <span className="flex items-center gap-1.5">
           <span className="w-3 h-0.5 inline-block border-t border-dashed" style={{ borderColor: COLORS.support }} /> 지지선
