@@ -60,9 +60,9 @@ export default function RankingSection({ onSelect }: Props) {
     try {
       let data: RankItem[];
       if (tab === "volume" || tab === "amount") {
-        data = await fetchVolumeRanking(tab as RankSort);
+        data = await fetchVolumeRanking(tab as RankSort, 100);
       } else {
-        data = await fetchForeignRanking(tab as RankInvestor);
+        data = await fetchForeignRanking(tab as RankInvestor, 100);
       }
       cacheRef.current[tab] = data;
       setItems(data);
