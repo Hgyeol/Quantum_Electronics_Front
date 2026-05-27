@@ -20,7 +20,7 @@ const COLORS = {
   text: "#8B95A1",
   grid: "#F0F2F5",
   border: "#E5E8EB",
-  crosshair: "#3182F6",       // Toss 블루
+  crosshair: "#C2C8D0",
   up: "#F04452",              // 상승 = 빨강
   down: "#1B64DA",            // 하락 = 파랑
   ma20: "#F5A623",            // 이동평균 20
