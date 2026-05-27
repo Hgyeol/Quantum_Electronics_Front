@@ -23,6 +23,7 @@ const COLORS = {
   crosshair: "#88929f",
   up: "#F04452",              // 상승 = 빨강
   down: "#1B64DA",            // 하락 = 파랑
+  ma5:  "#26C6DA",            // 이동평균 5
   ma20: "#F5A623",            // 이동평균 20
   ma60: "#9B59B6",            // 이동평균 60
   support: "#1B64DA",         // 지지선 = 파랑
@@ -99,6 +100,12 @@ export default function StockPriceChart({ ohlcv, supports, resistances, currentP
       }))
     );
 
+    const ma5 = chart.addSeries(LineSeries, {
+      color: COLORS.ma5, lineWidth: 1, title: "MA5",
+      priceLineVisible: false, lastValueVisible: false,
+    });
+    ma5.setData(calcMA(ohlcv, 5));
+
     const ma20 = chart.addSeries(LineSeries, {
       color: COLORS.ma20, lineWidth: 1, title: "MA20",
       priceLineVisible: false, lastValueVisible: false,
@@ -167,6 +174,9 @@ export default function StockPriceChart({ ohlcv, supports, resistances, currentP
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-4 text-xs text-muted">
+        <span className="flex items-center gap-1.5">
+          <span className="w-3 h-0.5 inline-block rounded" style={{ background: COLORS.ma5 }} /> MA5
+        </span>
         <span className="flex items-center gap-1.5">
           <span className="w-3 h-0.5 inline-block rounded" style={{ background: COLORS.ma20 }} /> MA20
         </span>
