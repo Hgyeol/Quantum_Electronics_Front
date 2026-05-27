@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { fetchOutlook, fetchMarketQuote, checkAuth, logout, type OutlookQueryInput, type OutlookReport, type MarketQuote } from "@/lib/api";
+import { fetchOutlook, fetchMarketQuote, checkAuth, logout, type OutlookQueryInput, type OutlookReport, type MarketQuote, type OHLCVBar } from "@/lib/api";
 import { useWatchlist } from "@/lib/watchlist";
 import WatchlistTable from "@/components/WatchlistTable";
 import FinalVerdictCard from "@/components/FinalVerdictCard";
@@ -27,6 +27,41 @@ interface LiveTick {
   change_rate: number;
 }
 
+function CandleInfoPanel({ bar, pinned, onClose }: { bar: OHLCVBar; pinned: boolean; onClose: () => void }) {
+  return (
+    <div className="absolute top-0 left-full ml-3 w-40 rounded-xl border border-hairline-on-dark bg-surface-card-dark shadow-card px-4 py-3 text-xs font-mono space-y-2">
+      <div className="flex items-center justify-between pb-1 border-b border-hairline-on-dark">
+        <span className="text-muted text-[10px]">{bar.date}</span>
+        {pinned && (
+          <button type="button" onClick={onClose} className="text-muted hover:text-on-dark transition-colors leading-none">✕</button>
+        )}
+      </div>
+      <div className="space-y-1.5">
+        <div className="flex justify-between gap-2">
+          <span className="text-muted">시가</span>
+          <span className="text-on-dark">{bar.open.toLocaleString()}</span>
+        </div>
+        <div className="flex justify-between gap-2">
+          <span className="text-muted">고가</span>
+          <span style={{ color: "#F04452" }}>{bar.high.toLocaleString()}</span>
+        </div>
+        <div className="flex justify-between gap-2">
+          <span className="text-muted">저가</span>
+          <span style={{ color: "#1B64DA" }}>{bar.low.toLocaleString()}</span>
+        </div>
+        <div className="flex justify-between gap-2">
+          <span className="text-muted">종가</span>
+          <span className="text-on-dark">{bar.close.toLocaleString()}</span>
+        </div>
+        <div className="flex justify-between gap-2 pt-1.5 border-t border-hairline-on-dark">
+          <span className="text-muted">거래량</span>
+          <span className="text-on-dark">{(bar.volume / 1000).toFixed(0)}K</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 const QUICK_PICKS = [
   { code: "005930", name: "삼성전자" },
   { code: "000660", name: "SK하이닉스" },
@@ -44,6 +79,8 @@ export default function Home() {
   const [outlookError, setOutlookError] = useState<string | null>(null);
   const [liveTick, setLiveTick] = useState<LiveTick | null>(null);
   const [marketQuote, setMarketQuote] = useState<MarketQuote | null>(null);
+  const [hoveredBar, setHoveredBar] = useState<OHLCVBar | null>(null);
+  const [pinnedBar, setPinnedBar] = useState<OHLCVBar | null>(null);
   const liveWsRef = useRef<WebSocket | null>(null);
   const watchlist = useWatchlist();
 
@@ -100,6 +137,8 @@ export default function Home() {
     setReport(null);
     setMarketQuote(null);
     setOutlookError(null);
+    setHoveredBar(null);
+    setPinnedBar(null);
   }
 
   async function handleLoadOutlook(input?: OutlookQueryInput) {
@@ -284,11 +323,22 @@ export default function Home() {
           </div>
 
           {/* 차트 분석 */}
-          <ChartAnalysisCard
-            stockCode={selectedCode}
-            stockName={report?.stock_name ?? selectedName ?? null}
-            onNameResolved={(name) => setSelectedName((prev) => prev ?? name)}
-          />
+          <div className="relative">
+            <ChartAnalysisCard
+              stockCode={selectedCode}
+              stockName={report?.stock_name ?? selectedName ?? null}
+              onNameResolved={(name) => setSelectedName((prev) => prev ?? name)}
+              onBarHover={setHoveredBar}
+              onBarClick={(bar) => { if (bar) setPinnedBar(bar); }}
+            />
+            {(pinnedBar ?? hoveredBar) && (
+              <CandleInfoPanel
+                bar={(pinnedBar ?? hoveredBar)!}
+                pinned={!!pinnedBar}
+                onClose={() => setPinnedBar(null)}
+              />
+            )}
+          </div>
 
           {/* 전망 로드 에러 */}
           {outlookError && (

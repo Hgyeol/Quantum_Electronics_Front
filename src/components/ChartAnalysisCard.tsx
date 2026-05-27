@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { fetchChartAnalysis } from "@/lib/api";
-import type { ChartAnalysis } from "@/lib/api";
+import type { ChartAnalysis, OHLCVBar } from "@/lib/api";
 import { formatKRW } from "@/lib/format";
 
 // lightweight-charts uses window — load client-side only
@@ -173,9 +173,11 @@ interface Props {
   stockCode: string;
   stockName?: string | null;
   onNameResolved?: (name: string) => void;
+  onBarHover?: (bar: OHLCVBar | null) => void;
+  onBarClick?: (bar: OHLCVBar | null) => void;
 }
 
-export default function ChartAnalysisCard({ stockCode, stockName, onNameResolved }: Props) {
+export default function ChartAnalysisCard({ stockCode, stockName, onNameResolved, onBarHover, onBarClick }: Props) {
   const [data, setData] = useState<ChartAnalysis | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -184,6 +186,7 @@ export default function ChartAnalysisCard({ stockCode, stockName, onNameResolved
     setLoading(true);
     setError(null);
     setData(null);
+    onBarClick?.(null);
     fetchChartAnalysis(stockCode)
       .then((d) => {
         setData(d);
@@ -219,6 +222,8 @@ export default function ChartAnalysisCard({ stockCode, stockName, onNameResolved
             supports={data.support_levels}
             resistances={data.resistance_levels}
             currentPrice={data.current_price}
+            onBarHover={onBarHover}
+            onBarClick={onBarClick}
           />
 
           {/* 2. 매수/매도 신호 요약 */}

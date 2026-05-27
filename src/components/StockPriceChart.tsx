@@ -38,6 +38,8 @@ interface Props {
   supports: SupportResistanceLevel[];
   resistances: SupportResistanceLevel[];
   currentPrice: number;
+  onBarHover?: (bar: OHLCVBar | null) => void;
+  onBarClick?: (bar: OHLCVBar | null) => void;
 }
 
 function calcMA(ohlcv: OHLCVBar[], period: number) {
@@ -62,7 +64,7 @@ const LEGEND: { key: VisibilityKey; label: string; color: string }[] = [
   { key: "resistance",  label: "저항선", color: COLORS.resistance },
 ];
 
-export default function StockPriceChart({ ohlcv, supports, resistances, currentPrice }: Props) {
+export default function StockPriceChart({ ohlcv, supports, resistances, currentPrice, onBarHover, onBarClick }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const seriesRefs = useRef<{
@@ -78,8 +80,6 @@ export default function StockPriceChart({ ohlcv, supports, resistances, currentP
     ma5: true, ma20: true, ma60: true, ma120: true,
     support: true, resistance: true,
   });
-
-  const [hoveredBar, setHoveredBar] = useState<OHLCVBar | null>(null);
 
   // 차트 생성
   useEffect(() => {
@@ -169,12 +169,16 @@ export default function StockPriceChart({ ohlcv, supports, resistances, currentP
       }))
     );
 
-    // 캔들 클릭 시 OHLCV 표시
     const ohlcvByDate = new Map(ohlcv.map((b) => [b.date, b]));
+
+    chart.subscribeCrosshairMove((param) => {
+      if (!param.time) { onBarHover?.(null); return; }
+      onBarHover?.(ohlcvByDate.get(String(param.time)) ?? null);
+    });
+
     chart.subscribeClick((param) => {
-      console.log("click param.time:", param.time, "type:", typeof param.time);
-      if (!param.time) { setHoveredBar(null); return; }
-      setHoveredBar(ohlcvByDate.get(String(param.time)) ?? null);
+      if (!param.time) { onBarClick?.(null); return; }
+      onBarClick?.(ohlcvByDate.get(String(param.time)) ?? null);
     });
 
     const supportLines: IPriceLine[] = supports.map((s) =>
@@ -278,26 +282,7 @@ export default function StockPriceChart({ ohlcv, supports, resistances, currentP
           </button>
         ))}
       </div>
-      <div className="relative">
-        <div ref={containerRef} className="w-full rounded-xl overflow-hidden border border-hairline-on-dark" />
-        {hoveredBar && (
-          <div className="absolute top-2 right-2 rounded-lg px-3 py-2 text-xs font-mono pointer-events-none" style={{ background: "rgba(30,32,38,0.92)", border: "1px solid rgba(255,255,255,0.08)" }}>
-            <div className="mb-1" style={{ color: "#8B95A1" }}>{hoveredBar.date}</div>
-            <div className="grid grid-cols-2 gap-x-4 gap-y-0.5">
-              <span style={{ color: "#8B95A1" }}>시가</span>
-              <span className="text-right" style={{ color: "#E2E8F0" }}>{hoveredBar.open.toLocaleString()}</span>
-              <span style={{ color: "#8B95A1" }}>고가</span>
-              <span className="text-right" style={{ color: COLORS.up }}>{hoveredBar.high.toLocaleString()}</span>
-              <span style={{ color: "#8B95A1" }}>저가</span>
-              <span className="text-right" style={{ color: COLORS.down }}>{hoveredBar.low.toLocaleString()}</span>
-              <span style={{ color: "#8B95A1" }}>종가</span>
-              <span className="text-right" style={{ color: "#E2E8F0" }}>{hoveredBar.close.toLocaleString()}</span>
-              <span style={{ color: "#8B95A1" }}>거래량</span>
-              <span className="text-right" style={{ color: "#E2E8F0" }}>{(hoveredBar.volume / 1000).toFixed(0)}K</span>
-            </div>
-          </div>
-        )}
-      </div>
+      <div ref={containerRef} className="w-full rounded-xl overflow-hidden border border-hairline-on-dark" />
     </div>
   );
 }
