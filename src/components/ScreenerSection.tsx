@@ -205,7 +205,7 @@ export default function ScreenerSection({ onSelect }: Props) {
             ))}
           </div>
           {/* 컬럼 레이블 */}
-          <div className="grid grid-cols-[1fr_6rem_5rem_5rem_6rem] gap-3 px-6 py-2.5 bg-surface-elevated-dark/60 border-b border-hairline-on-dark">
+          <div className="grid grid-cols-[1fr_6rem_5rem_5rem_minmax(8rem,auto)] gap-3 px-6 py-2.5 bg-surface-elevated-dark/60 border-b border-hairline-on-dark">
             <span className="text-[10px] uppercase tracking-widest text-muted">종목명</span>
             <span className="text-[10px] uppercase tracking-widest text-muted text-right">현재가</span>
             <span className="text-[10px] uppercase tracking-widest text-muted text-right">거래량</span>
@@ -217,7 +217,7 @@ export default function ScreenerSection({ onSelect }: Props) {
               <li
                 key={item.stock_code}
                 onClick={() => onSelect(item.stock_code, item.stock_name)}
-                className="grid grid-cols-[1fr_6rem_5rem_5rem_6rem] gap-3 items-center px-6 py-3 border-t border-hairline-on-dark first:border-t-0 hover:bg-canvas-dark cursor-pointer transition-colors"
+                className="grid grid-cols-[1fr_6rem_5rem_5rem_minmax(8rem,auto)] gap-3 items-center px-6 py-3 border-t border-hairline-on-dark first:border-t-0 hover:bg-canvas-dark cursor-pointer transition-colors"
               >
                 <span className="flex items-center gap-2.5 min-w-0">
                   <StockLogo code={item.stock_code} name={item.stock_name} size={32} />
