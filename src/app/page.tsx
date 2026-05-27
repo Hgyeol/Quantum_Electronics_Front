@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { fetchOutlook, searchStocks, checkAuth, logout, type OutlookQueryInput, type OutlookReport } from "@/lib/api";
+import { fetchOutlook, fetchMarketQuote, searchStocks, checkAuth, logout, type OutlookQueryInput, type OutlookReport, type MarketQuote } from "@/lib/api";
 import { useWatchlist } from "@/lib/watchlist";
 import WatchlistTable from "@/components/WatchlistTable";
 import FinalVerdictCard from "@/components/FinalVerdictCard";
@@ -43,6 +43,7 @@ export default function Home() {
   const [searchError, setSearchError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [liveTick, setLiveTick] = useState<LiveTick | null>(null);
+  const [marketQuote, setMarketQuote] = useState<MarketQuote | null>(null);
   const liveWsRef = useRef<WebSocket | null>(null);
   const watchlist = useWatchlist();
 
@@ -80,6 +81,14 @@ export default function Home() {
     };
   }, [selectedCode]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // 상세 진입 시 즉시 시세 조회 (고가·저가·52W 등)
+  useEffect(() => {
+    if (!selectedCode) { setMarketQuote(null); return; }
+    fetchMarketQuote(selectedCode)
+      .then(setMarketQuote)
+      .catch(() => {});
+  }, [selectedCode]); // eslint-disable-line react-hooks/exhaustive-deps
+
   async function handleLogout() {
     await logout();
     router.replace("/login");
@@ -89,6 +98,7 @@ export default function Home() {
     setSelectedCode(code);
     setSelectedName(name ?? null);
     setReport(null);
+    setMarketQuote(null);
     setOutlookError(null);
     setSearchError(null);
   }
@@ -133,6 +143,7 @@ export default function Home() {
     setSelectedCode(null);
     setSelectedName(null);
     setReport(null);
+    setMarketQuote(null);
     setOutlookError(null);
     setSearchError(null);
   }
@@ -255,7 +266,7 @@ export default function Home() {
                   <span className="text-sm text-muted font-mono">{selectedCode}</span>
                 )}
                 {/* 실시간 가격 (report 없을 때도 바로 표시) */}
-                {liveTick && !report?.market_quote && (
+                {liveTick && (
                   <div className="flex items-baseline gap-2 mt-1.5">
                     <span className="font-mono text-2xl font-bold text-ink tabular">
                       {liveTick.price.toLocaleString("ko-KR")}
@@ -301,13 +312,13 @@ export default function Home() {
                 )}
               </div>
             </div>
-            {report?.market_quote && (
+            {(marketQuote ?? report?.market_quote) && (
               <MarketQuoteCard
                 quote={liveTick
-                  ? { ...report.market_quote, price: liveTick.price, change: liveTick.change, change_rate: liveTick.change_rate }
-                  : report.market_quote
+                  ? { ...(marketQuote ?? report!.market_quote!), price: liveTick.price, change: liveTick.change, change_rate: liveTick.change_rate }
+                  : (marketQuote ?? report!.market_quote!)
                 }
-                stockName={report.stock_name}
+                stockName={report?.stock_name ?? selectedName}
               />
             )}
           </div>
