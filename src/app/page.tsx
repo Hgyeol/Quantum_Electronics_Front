@@ -241,9 +241,9 @@ export default function Home() {
             activeCode={null}
           />
 
-          <RankingSection onSelect={handleSelectStock} />
-
           <ScreenerSection onSelect={handleSelectStock} />
+
+          <RankingSection onSelect={handleSelectStock} />
 
           {watchlist.codes.length === 0 && (
             <div className="bg-surface-card-dark rounded-xl shadow-card px-6 py-12 text-center">

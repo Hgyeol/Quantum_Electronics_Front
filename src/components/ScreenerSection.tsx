@@ -51,19 +51,12 @@ export default function ScreenerSection({ onSelect }: Props) {
   }
 
   async function handleSearch() {
-    if (selected.size === 0) {
-      setError("조건을 하나 이상 선택하세요.");
-      return;
-    }
+    if (selected.size === 0) { setError("조건을 하나 이상 선택하세요."); return; }
     setLoading(true);
     setError(null);
     setResults(null);
     try {
-      const data = await fetchScreener(
-        Array.from(selected) as ScreenerCondition[],
-        volumeThreshold,
-        consecutiveDays,
-      );
+      const data = await fetchScreener(Array.from(selected) as ScreenerCondition[], volumeThreshold, consecutiveDays);
       setResults(data);
     } catch (e) {
       setError(e instanceof Error ? e.message : "오류가 발생했습니다.");
@@ -86,10 +79,8 @@ export default function ScreenerSection({ onSelect }: Props) {
               DB 업데이트:{" "}
               <span className="font-mono">
                 {new Date(lastCollected).toLocaleString("ko-KR", {
-                  month: "2-digit",
-                  day: "2-digit",
-                  hour: "2-digit",
-                  minute: "2-digit",
+                  month: "2-digit", day: "2-digit",
+                  hour: "2-digit", minute: "2-digit",
                 })}
               </span>
             </span>
@@ -132,10 +123,7 @@ export default function ScreenerSection({ onSelect }: Props) {
             <label className="flex flex-col gap-1">
               <span className="text-[10px] uppercase tracking-widest text-muted">급등 배수</span>
               <input
-                type="number"
-                min={1}
-                max={20}
-                step={0.5}
+                type="number" min={1} max={20} step={0.5}
                 value={volumeThreshold}
                 onChange={(e) => setVolumeThreshold(parseFloat(e.target.value))}
                 className="w-24 h-8 px-2.5 rounded-lg border border-hairline-on-dark bg-surface-elevated-dark text-sm text-on-dark font-mono focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/50"
@@ -146,10 +134,7 @@ export default function ScreenerSection({ onSelect }: Props) {
             <label className="flex flex-col gap-1">
               <span className="text-[10px] uppercase tracking-widest text-muted">연속 순매수 일수</span>
               <input
-                type="number"
-                min={1}
-                max={10}
-                step={1}
+                type="number" min={1} max={10} step={1}
                 value={consecutiveDays}
                 onChange={(e) => setConsecutiveDays(parseInt(e.target.value, 10))}
                 className="w-24 h-8 px-2.5 rounded-lg border border-hairline-on-dark bg-surface-elevated-dark text-sm text-on-dark font-mono focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/50"
@@ -174,27 +159,25 @@ export default function ScreenerSection({ onSelect }: Props) {
           )}
         </div>
 
-        {error && (
-          <p className="mt-3 text-xs text-trading-down">{error}</p>
-        )}
+        {error && <p className="mt-3 text-xs text-trading-down">{error}</p>}
       </header>
 
       {/* 결과 */}
       {results !== null && results.length > 0 && (
         <>
           {/* 컬럼 레이블 */}
-          <div className="grid grid-cols-[1fr_6rem_5rem_1fr] gap-3 px-6 py-2.5 bg-surface-elevated-dark/60 border-b border-hairline-on-dark">
+          <div className="grid grid-cols-[1fr_6rem_5rem_6rem] gap-3 px-6 py-2.5 bg-surface-elevated-dark/60 border-b border-hairline-on-dark">
             <span className="text-[10px] uppercase tracking-widest text-muted">종목명</span>
             <span className="text-[10px] uppercase tracking-widest text-muted text-right">현재가</span>
             <span className="text-[10px] uppercase tracking-widest text-muted text-right">거래량</span>
-            <span className="text-[10px] uppercase tracking-widest text-muted">매칭 조건</span>
+            <span className="text-[10px] uppercase tracking-widest text-muted text-right">매칭 조건</span>
           </div>
           <ul>
             {results.map((item) => (
               <li
                 key={item.stock_code}
                 onClick={() => onSelect(item.stock_code, item.stock_name)}
-                className="grid grid-cols-[1fr_6rem_5rem_1fr] gap-3 items-center px-6 py-3 border-t border-hairline-on-dark first:border-t-0 hover:bg-canvas-dark cursor-pointer transition-colors"
+                className="grid grid-cols-[1fr_6rem_5rem_6rem] gap-3 items-center px-6 py-3 border-t border-hairline-on-dark first:border-t-0 hover:bg-canvas-dark cursor-pointer transition-colors"
               >
                 <span className="flex items-center gap-2.5 min-w-0">
                   <StockLogo code={item.stock_code} name={item.stock_name} size={32} />
@@ -212,7 +195,7 @@ export default function ScreenerSection({ onSelect }: Props) {
                 <span className="text-right font-mono text-xs text-muted-strong tabular">
                   {formatVolume(item.volume)}
                 </span>
-                <span className="flex flex-wrap gap-1">
+                <span className="flex flex-wrap justify-end gap-1">
                   {item.matched_conditions.map((label) => (
                     <span
                       key={label}
