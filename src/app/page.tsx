@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect, useRef, type FormEvent } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { fetchOutlook, fetchMarketQuote, searchStocks, checkAuth, logout, type OutlookQueryInput, type OutlookReport, type MarketQuote } from "@/lib/api";
+import { fetchOutlook, fetchMarketQuote, checkAuth, logout, type OutlookQueryInput, type OutlookReport, type MarketQuote } from "@/lib/api";
 import { useWatchlist } from "@/lib/watchlist";
 import WatchlistTable from "@/components/WatchlistTable";
 import FinalVerdictCard from "@/components/FinalVerdictCard";
@@ -17,6 +17,7 @@ import ChartAnalysisCard from "@/components/ChartAnalysisCard";
 import RankingSection from "@/components/RankingSection";
 import ScreenerSection from "@/components/ScreenerSection";
 import StockLogo from "@/components/StockLogo";
+import StockSearchBox from "@/components/StockSearchBox";
 
 const WS_BASE = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000").replace(/^http/, "ws");
 
@@ -41,8 +42,6 @@ export default function Home() {
   const [report, setReport] = useState<OutlookReport | null>(null);
   const [outlookLoading, setOutlookLoading] = useState(false);
   const [outlookError, setOutlookError] = useState<string | null>(null);
-  const [searchError, setSearchError] = useState<string | null>(null);
-  const [query, setQuery] = useState("");
   const [liveTick, setLiveTick] = useState<LiveTick | null>(null);
   const [marketQuote, setMarketQuote] = useState<MarketQuote | null>(null);
   const liveWsRef = useRef<WebSocket | null>(null);
@@ -101,29 +100,6 @@ export default function Home() {
     setReport(null);
     setMarketQuote(null);
     setOutlookError(null);
-    setSearchError(null);
-  }
-
-  async function handleSearch(e: FormEvent) {
-    e.preventDefault();
-    const trimmed = query.trim();
-    if (!trimmed) return;
-    // 6자리 숫자면 종목코드로 바로 사용 (이름은 차트 로드 후 채워짐)
-    if (/^\d{6}$/.test(trimmed)) {
-      handleSelectStock(trimmed);
-      return;
-    }
-    // 종목명이면 서버에서 코드 조회
-    try {
-      const results = await searchStocks(trimmed);
-      if (results.length === 0) {
-        setSearchError(`"${trimmed}" 종목을 찾을 수 없습니다.`);
-        return;
-      }
-      handleSelectStock(results[0].stock_code, results[0].corp_name);
-    } catch {
-      setSearchError("종목 검색 중 오류가 발생했습니다.");
-    }
   }
 
   async function handleLoadOutlook(input?: OutlookQueryInput) {
@@ -146,7 +122,6 @@ export default function Home() {
     setReport(null);
     setMarketQuote(null);
     setOutlookError(null);
-    setSearchError(null);
   }
 
   const isDetail = selectedCode !== null;
@@ -182,21 +157,7 @@ export default function Home() {
 
           <span className="flex-1" />
 
-          <form onSubmit={handleSearch} className="flex items-center gap-2 shrink-0">
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="종목코드 · 종목명"
-              className="w-48 h-9 px-3 rounded-lg border border-hairline-on-dark bg-surface-elevated-dark text-sm text-on-dark placeholder:text-muted font-mono focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/50 transition-colors"
-            />
-            <button
-              type="submit"
-              className="h-9 px-4 rounded-lg bg-primary hover:bg-primary-active text-on-primary text-sm font-semibold transition-colors cursor-pointer"
-            >
-              조회
-            </button>
-          </form>
+          <StockSearchBox onSelect={handleSelectStock} />
 
           <button
             type="button"
@@ -211,12 +172,6 @@ export default function Home() {
       {/* ── 홈 뷰 ───────────────────────────────────────── */}
       {!isDetail && (
         <main className="flex-1 max-w-5xl w-full mx-auto px-5 py-7 space-y-4">
-          {searchError && (
-            <div className="bg-surface-card-dark rounded-xl shadow-card px-5 py-4 text-sm text-trading-down border-l-4 border-trading-down">
-              {searchError}
-            </div>
-          )}
-
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-[10px] uppercase tracking-widest text-muted shrink-0">빠른 조회</span>
             <div className="w-px h-3 bg-hairline-on-dark shrink-0" />
