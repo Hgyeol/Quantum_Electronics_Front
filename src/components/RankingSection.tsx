@@ -8,6 +8,7 @@ import {
   type RankSort,
   type RankInvestor,
 } from "@/lib/api";
+import StockLogo from "@/components/StockLogo";
 
 type TabId = "volume" | "amount" | "foreign" | "institution";
 
@@ -203,11 +204,14 @@ export default function RankingSection({ onSelect }: Props) {
               </span>
 
               {/* 종목명 */}
-              <span className="min-w-0">
-                <span className="block text-sm font-semibold text-on-dark truncate leading-tight">
-                  {item.stock_name || item.stock_code}
+              <span className="flex items-center gap-2.5 min-w-0">
+                <StockLogo code={item.stock_code} name={item.stock_name} size={32} />
+                <span className="min-w-0">
+                  <span className="block text-sm font-semibold text-on-dark truncate leading-tight">
+                    {item.stock_name || item.stock_code}
+                  </span>
+                  <span className="block text-[11px] text-muted font-mono">{item.stock_code}</span>
                 </span>
-                <span className="block text-[11px] text-muted font-mono">{item.stock_code}</span>
               </span>
 
               {/* 현재가 */}

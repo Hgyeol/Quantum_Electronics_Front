@@ -16,6 +16,7 @@ import ErrorsBanner from "@/components/ErrorsBanner";
 import ChartAnalysisCard from "@/components/ChartAnalysisCard";
 import RankingSection from "@/components/RankingSection";
 import ScreenerSection from "@/components/ScreenerSection";
+import StockLogo from "@/components/StockLogo";
 
 const WS_BASE = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000").replace(/^http/, "ws");
 
@@ -224,10 +225,11 @@ export default function Home() {
                 key={p.code}
                 type="button"
                 onClick={() => handleSelectStock(p.code, p.name)}
-                className="text-[13px] text-muted-strong hover:text-on-dark transition-colors cursor-pointer"
+                className="flex items-center gap-1.5 text-[13px] text-muted-strong hover:text-on-dark transition-colors cursor-pointer"
               >
+                <StockLogo code={p.code} name={p.name} size={18} rounded="lg" />
                 {p.name}
-                <span className="font-mono text-[11px] text-muted ml-1">{p.code}</span>
+                <span className="font-mono text-[11px] text-muted">{p.code}</span>
               </button>
             ))}
           </div>
@@ -260,7 +262,9 @@ export default function Home() {
           {/* 종목 헤더 */}
           <div className="bg-surface-card-dark rounded-xl shadow-card p-5">
             <div className="flex items-start justify-between mb-3">
-              <div>
+              <div className="flex items-start gap-3">
+                <StockLogo code={selectedCode} name={displayName} size={48} rounded="xl" className="mt-0.5" />
+                <div>
                 <h1 className="text-xl font-bold text-ink">{displayName}</h1>
                 {selectedName && selectedName !== selectedCode && (
                   <span className="text-sm text-muted font-mono">{selectedCode}</span>
@@ -281,6 +285,7 @@ export default function Home() {
                     </span>
                   </div>
                 )}
+                </div>
               </div>
               <div className="flex items-center gap-2">
                 <button

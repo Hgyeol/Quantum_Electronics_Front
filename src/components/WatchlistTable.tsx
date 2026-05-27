@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { fetchWatchlist, fetchVolumeRanking, fetchForeignRanking, type WatchlistItem } from "@/lib/api";
+import StockLogo from "@/components/StockLogo";
 
 type SortType = "default" | "volume" | "amount" | "foreign" | "institution";
 
@@ -23,29 +24,6 @@ interface Props {
   activeCode?: string | null;
 }
 
-const AVATAR_PALETTE = [
-  "#3182F6", "#F04452", "#1B64DA", "#F5A623", "#9B59B6",
-  "#0DB3A8", "#FF6B35", "#27AE60", "#C0392B", "#8E44AD",
-];
-
-function avatarColor(code: string) {
-  let h = 0;
-  for (const c of code) h = (h * 31 + c.charCodeAt(0)) & 0xffff;
-  return AVATAR_PALETTE[h % AVATAR_PALETTE.length];
-}
-
-function StockAvatar({ name, code }: { name: string | null; code: string }) {
-  const bg = avatarColor(code);
-  return (
-    <span
-      className="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0 select-none"
-      style={{ backgroundColor: bg }}
-    >
-      {(name ?? code).charAt(0)}
-    </span>
-  );
-}
-
 function formatTradeValue(tradeValue: number): string {
   if (tradeValue >= 1e12) return `${Math.floor(tradeValue / 1e11) / 10}조`;
   if (tradeValue >= 1e8) return `${Math.floor(tradeValue / 1e8)}억`;
@@ -57,7 +35,7 @@ function SkeletonRow() {
   return (
     <li className="flex items-center gap-4 px-6 py-4 border-t border-hairline-on-dark first:border-t-0 animate-pulse">
       <span className="w-5 h-3 rounded bg-surface-elevated-dark" />
-      <span className="w-10 h-10 rounded-full bg-surface-elevated-dark shrink-0" />
+      <span className="w-10 h-10 rounded-xl bg-surface-elevated-dark shrink-0" />
       <span className="flex-1 space-y-1.5">
         <span className="block w-24 h-3.5 rounded bg-surface-elevated-dark" />
         <span className="block w-14 h-2.5 rounded bg-surface-elevated-dark" />
@@ -278,7 +256,7 @@ export default function WatchlistTable({
 
                     {/* 아바타 + 종목명 */}
                     <span className="flex items-center gap-3 min-w-0">
-                      <StockAvatar name={item?.stock_name ?? null} code={code} />
+                      <StockLogo code={code} name={item?.stock_name ?? null} size={40} />
                       <span className="min-w-0">
                         <span
                           className={`block text-[15px] font-semibold truncate leading-tight ${

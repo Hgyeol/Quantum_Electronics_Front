@@ -7,6 +7,7 @@ import {
   type ScreenerCondition,
   type ScreenerResultItem,
 } from "@/lib/api";
+import StockLogo from "@/components/StockLogo";
 
 const CONDITIONS: { id: ScreenerCondition; label: string; desc: string }[] = [
   { id: "volume_surge",  label: "거래량 급등",          desc: "오늘 거래량 > N배 × 20일 평균" },
@@ -195,11 +196,14 @@ export default function ScreenerSection({ onSelect }: Props) {
                 onClick={() => onSelect(item.stock_code, item.stock_name)}
                 className="grid grid-cols-[1fr_6rem_5rem_1fr] gap-3 items-center px-6 py-3 border-t border-hairline-on-dark first:border-t-0 hover:bg-canvas-dark cursor-pointer transition-colors"
               >
-                <span className="min-w-0">
-                  <span className="block text-sm font-semibold text-on-dark truncate leading-tight">
-                    {item.stock_name || item.stock_code}
+                <span className="flex items-center gap-2.5 min-w-0">
+                  <StockLogo code={item.stock_code} name={item.stock_name} size={32} />
+                  <span className="min-w-0">
+                    <span className="block text-sm font-semibold text-on-dark truncate leading-tight">
+                      {item.stock_name || item.stock_code}
+                    </span>
+                    <span className="block text-[11px] text-muted font-mono">{item.stock_code}</span>
                   </span>
-                  <span className="block text-[11px] text-muted font-mono">{item.stock_code}</span>
                 </span>
                 <span className="text-right font-mono text-sm font-semibold text-on-dark tabular">
                   {item.close.toLocaleString("ko-KR")}
