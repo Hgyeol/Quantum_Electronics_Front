@@ -169,15 +169,15 @@ export default function StockPriceChart({ ohlcv, supports, resistances, currentP
       }))
     );
 
-    // 캔들 hover 시 OHLCV 표시
-    chart.subscribeCrosshairMove((param) => {
+    // 캔들 클릭 시 OHLCV 표시
+    chart.subscribeClick((param) => {
       if (!param.time || param.logical === null || param.logical === undefined) {
         setHoveredBar(null);
         return;
       }
-      const idx = param.logical as number;
+      const idx = Math.round(param.logical as number);
       if (idx >= 0 && idx < ohlcv.length) {
-        setHoveredBar(ohlcv[Math.round(idx)]);
+        setHoveredBar(ohlcv[idx]);
       } else {
         setHoveredBar(null);
       }
