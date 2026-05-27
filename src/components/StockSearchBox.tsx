@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, type FormEvent } from "react";
-import { searchStocks, type StockSearchResult } from "@/lib/api";
+import { searchStocks, fetchVolumeRanking, type StockSearchResult } from "@/lib/api";
 import StockLogo from "@/components/StockLogo";
 
 interface Props {
@@ -11,10 +11,20 @@ interface Props {
 export default function StockSearchBox({ onSelect }: Props) {
   const [query, setQuery] = useState("");
   const [suggestions, setSuggestions] = useState<StockSearchResult[]>([]);
+  const [popular, setPopular] = useState<StockSearchResult[]>([]);
   const [open, setOpen] = useState(false);
   const [activeIdx, setActiveIdx] = useState(-1);
   const containerRef = useRef<HTMLDivElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // 인기 종목 미리 로드 (거래량 상위 8개)
+  useEffect(() => {
+    fetchVolumeRanking("volume", 8)
+      .then((items) =>
+        setPopular(items.map((r) => ({ stock_code: r.stock_code, corp_name: r.stock_name })))
+      )
+      .catch(() => {});
+  }, []);
 
   // 입력 변경 시 디바운스 후 검색
   useEffect(() => {
@@ -95,7 +105,7 @@ export default function StockSearchBox({ onSelect }: Props) {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={handleKeyDown}
-          onFocus={() => { if (suggestions.length > 0) setOpen(true); }}
+          onFocus={() => { setOpen(true); }}
           placeholder="종목코드 · 종목명"
           autoComplete="off"
           className="w-48 h-9 px-3 rounded-lg border border-hairline-on-dark bg-surface-elevated-dark text-sm text-on-dark placeholder:text-muted font-mono focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/50 transition-colors"
@@ -109,30 +119,40 @@ export default function StockSearchBox({ onSelect }: Props) {
       </form>
 
       {/* 드롭다운 */}
-      {open && suggestions.length > 0 && (
-        <ul className="absolute right-0 top-full mt-1.5 w-64 bg-surface-card-dark border border-hairline-on-dark rounded-xl shadow-card overflow-hidden z-50">
-          {suggestions.map((s, idx) => (
-            <li key={s.stock_code}>
-              <button
-                type="button"
-                onMouseDown={(e) => { e.preventDefault(); pick(s); }}
-                onMouseEnter={() => setActiveIdx(idx)}
-                className={`w-full flex items-center gap-2.5 px-4 py-2.5 text-left transition-colors ${
-                  activeIdx === idx ? "bg-primary/10" : "hover:bg-surface-elevated-dark"
-                }`}
-              >
-                <StockLogo code={s.stock_code} name={s.corp_name} size={28} />
-                <span className="min-w-0">
-                  <span className="block text-sm font-semibold text-on-dark truncate leading-tight">
-                    {s.corp_name}
+      {open && (() => {
+        const isEmpty = query.trim() === "";
+        const list = isEmpty ? popular : suggestions;
+        if (list.length === 0) return null;
+        return (
+          <ul className="absolute right-0 top-full mt-1.5 w-64 bg-surface-card-dark border border-hairline-on-dark rounded-xl shadow-card overflow-hidden z-50">
+            {isEmpty && (
+              <li className="px-4 pt-3 pb-1">
+                <span className="text-[10px] uppercase tracking-widest text-muted">인기 종목</span>
+              </li>
+            )}
+            {list.map((s, idx) => (
+              <li key={s.stock_code}>
+                <button
+                  type="button"
+                  onMouseDown={(e) => { e.preventDefault(); pick(s); }}
+                  onMouseEnter={() => setActiveIdx(idx)}
+                  className={`w-full flex items-center gap-2.5 px-4 py-2.5 text-left transition-colors ${
+                    activeIdx === idx ? "bg-primary/10" : "hover:bg-surface-elevated-dark"
+                  }`}
+                >
+                  <StockLogo code={s.stock_code} name={s.corp_name} size={28} />
+                  <span className="min-w-0">
+                    <span className="block text-sm font-semibold text-on-dark truncate leading-tight">
+                      {s.corp_name}
+                    </span>
+                    <span className="block text-[11px] text-muted font-mono">{s.stock_code}</span>
                   </span>
-                  <span className="block text-[11px] text-muted font-mono">{s.stock_code}</span>
-                </span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
+                </button>
+              </li>
+            ))}
+          </ul>
+        );
+      })()}
     </div>
   );
 }
