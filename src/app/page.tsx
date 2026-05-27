@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, type FormEvent } from "react";
+import { useState, useEffect, useRef, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { fetchOutlook, searchStocks, checkAuth, logout, type OutlookQueryInput, type OutlookReport } from "@/lib/api";
 import { useWatchlist } from "@/lib/watchlist";
@@ -16,6 +16,14 @@ import ErrorsBanner from "@/components/ErrorsBanner";
 import ChartAnalysisCard from "@/components/ChartAnalysisCard";
 import RankingSection from "@/components/RankingSection";
 import ScreenerSection from "@/components/ScreenerSection";
+
+const WS_BASE = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000").replace(/^http/, "ws");
+
+interface LiveTick {
+  price: number;
+  change: number;
+  change_rate: number;
+}
 
 const QUICK_PICKS = [
   { code: "005930", name: "삼성전자" },
@@ -34,6 +42,8 @@ export default function Home() {
   const [outlookError, setOutlookError] = useState<string | null>(null);
   const [searchError, setSearchError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
+  const [liveTick, setLiveTick] = useState<LiveTick | null>(null);
+  const liveWsRef = useRef<WebSocket | null>(null);
   const watchlist = useWatchlist();
 
   // 세션 확인: 미인증이면 /login으로 리다이렉트
@@ -42,6 +52,33 @@ export default function Home() {
       if (!ok) router.replace("/login");
     });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // 상세 뷰 진입 시 해당 종목 실시간 체결가 구독
+  useEffect(() => {
+    liveWsRef.current?.close();
+    liveWsRef.current = null;
+    setLiveTick(null);
+    if (!selectedCode) return;
+
+    let ws: WebSocket;
+    try {
+      ws = new WebSocket(`${WS_BASE}/ws/watchlist?codes=${selectedCode}`);
+      liveWsRef.current = ws;
+      ws.onmessage = (e) => {
+        try {
+          const tick = JSON.parse(e.data) as LiveTick & { stock_code: string };
+          if (tick.stock_code === selectedCode) {
+            setLiveTick({ price: tick.price, change: tick.change, change_rate: tick.change_rate });
+          }
+        } catch { /* ignore */ }
+      };
+    } catch { /* ignore */ }
+
+    return () => {
+      ws?.close();
+      liveWsRef.current = null;
+    };
+  }, [selectedCode]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleLogout() {
     await logout();
@@ -217,6 +254,22 @@ export default function Home() {
                 {selectedName && selectedName !== selectedCode && (
                   <span className="text-sm text-muted font-mono">{selectedCode}</span>
                 )}
+                {/* 실시간 가격 (report 없을 때도 바로 표시) */}
+                {liveTick && !report?.market_quote && (
+                  <div className="flex items-baseline gap-2 mt-1.5">
+                    <span className="font-mono text-2xl font-bold text-ink tabular">
+                      {liveTick.price.toLocaleString("ko-KR")}
+                      <span className="text-sm font-normal text-muted ml-1">원</span>
+                    </span>
+                    <span className={`font-mono text-sm font-semibold tabular ${liveTick.change > 0 ? "text-trading-up" : liveTick.change < 0 ? "text-trading-down" : "text-muted"}`}>
+                      {liveTick.change > 0 ? "+" : ""}{liveTick.change.toLocaleString("ko-KR")} ({liveTick.change_rate > 0 ? "+" : ""}{liveTick.change_rate.toFixed(2)}%)
+                    </span>
+                    <span className="flex items-center gap-1 text-[10px] text-trading-up font-semibold">
+                      <span className="w-1.5 h-1.5 rounded-full bg-trading-up animate-pulse inline-block" />
+                      LIVE
+                    </span>
+                  </div>
+                )}
               </div>
               <div className="flex items-center gap-2">
                 <button
@@ -249,7 +302,13 @@ export default function Home() {
               </div>
             </div>
             {report?.market_quote && (
-              <MarketQuoteCard quote={report.market_quote} stockName={report.stock_name} />
+              <MarketQuoteCard
+                quote={liveTick
+                  ? { ...report.market_quote, price: liveTick.price, change: liveTick.change, change_rate: liveTick.change_rate }
+                  : report.market_quote
+                }
+                stockName={report.stock_name}
+              />
             )}
           </div>
 
