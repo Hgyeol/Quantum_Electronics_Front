@@ -128,34 +128,24 @@ export default function StockPriceChart({ ohlcv, supports, resistances, currentP
       }))
     );
 
-    const ma5Series = chart.addSeries(LineSeries, {
-      color: COLORS.ma5, lineWidth: 1, title: "MA5",
-      priceLineVisible: false, lastValueVisible: false,
-    });
+    const maOptions = { priceLineVisible: false, lastValueVisible: false, autoscaleInfoProvider: () => null };
+
+    const ma5Series = chart.addSeries(LineSeries, { color: COLORS.ma5, lineWidth: 1, title: "MA5", ...maOptions });
     ma5Series.setData(calcMA(ohlcv, 5));
     seriesRefs.current.ma5 = ma5Series;
 
-    const ma20Series = chart.addSeries(LineSeries, {
-      color: COLORS.ma20, lineWidth: 1, title: "MA20",
-      priceLineVisible: false, lastValueVisible: false,
-    });
+    const ma20Series = chart.addSeries(LineSeries, { color: COLORS.ma20, lineWidth: 1, title: "MA20", ...maOptions });
     ma20Series.setData(calcMA(ohlcv, 20));
     seriesRefs.current.ma20 = ma20Series;
 
     if (ohlcv.length >= 60) {
-      const ma60Series = chart.addSeries(LineSeries, {
-        color: COLORS.ma60, lineWidth: 1, title: "MA60",
-        priceLineVisible: false, lastValueVisible: false,
-      });
+      const ma60Series = chart.addSeries(LineSeries, { color: COLORS.ma60, lineWidth: 1, title: "MA60", ...maOptions });
       ma60Series.setData(calcMA(ohlcv, 60));
       seriesRefs.current.ma60 = ma60Series;
     }
 
     if (ohlcv.length >= 120) {
-      const ma120Series = chart.addSeries(LineSeries, {
-        color: COLORS.ma120, lineWidth: 1, title: "MA120",
-        priceLineVisible: false, lastValueVisible: false,
-      });
+      const ma120Series = chart.addSeries(LineSeries, { color: COLORS.ma120, lineWidth: 1, title: "MA120", ...maOptions });
       ma120Series.setData(calcMA(ohlcv, 120));
       seriesRefs.current.ma120 = ma120Series;
     }
