@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import {
   createChart,
   CandlestickSeries,
+  HistogramSeries,
   LineSeries,
   IChartApi,
   ColorType,
@@ -128,6 +129,23 @@ export default function StockPriceChart({ ohlcv, supports, resistances, currentP
       });
       ma120.setData(calcMA(ohlcv, 120));
     }
+
+    const volumeSeries = chart.addSeries(HistogramSeries, {
+      priceFormat: { type: "volume" },
+      priceScaleId: "volume",
+      lastValueVisible: false,
+      priceLineVisible: false,
+    });
+    chart.priceScale("volume").applyOptions({
+      scaleMargins: { top: 0.8, bottom: 0 },
+    });
+    volumeSeries.setData(
+      ohlcv.map((b) => ({
+        time: b.date as `${number}-${number}-${number}`,
+        value: b.volume,
+        color: b.close >= b.open ? `${COLORS.up}66` : `${COLORS.down}66`,
+      }))
+    );
 
     supports.forEach((s) => {
       candleSeries.createPriceLine({
