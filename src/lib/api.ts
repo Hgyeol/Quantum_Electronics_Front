@@ -429,3 +429,47 @@ export async function fetchTechnicalIndicators({
   }
   return (await response.json()) as IndicatorCalculationResponse;
 }
+
+// ── Screener ─────────────────────────────────────────────────────────────────
+
+export type ScreenerCondition = "volume_surge" | "golden_cross" | "frgn_buy" | "orgn_buy";
+
+export interface ScreenerResultItem {
+  stock_code: string;
+  stock_name: string;
+  close: number;
+  volume: number;
+  matched_conditions: string[];
+}
+
+export interface ScreenerStatus {
+  last_collected: string | null;
+}
+
+export async function fetchScreener(
+  conditions: ScreenerCondition[],
+  volumeThreshold = 2.0,
+  consecutiveDays = 3,
+): Promise<ScreenerResultItem[]> {
+  const params = new URLSearchParams({
+    conditions: conditions.join(","),
+    volume_threshold: String(volumeThreshold),
+    consecutive_days: String(consecutiveDays),
+  });
+  const response = await fetch(`${API_BASE}/screener?${params.toString()}`, FETCH_OPTS);
+  if (!response.ok) {
+    let detail = `HTTP ${response.status}`;
+    try {
+      const payload = await response.json();
+      if (payload?.detail) detail = String(payload.detail);
+    } catch { /* ignore */ }
+    throw new Error(detail);
+  }
+  return (await response.json()) as ScreenerResultItem[];
+}
+
+export async function fetchScreenerStatus(): Promise<ScreenerStatus> {
+  const response = await fetch(`${API_BASE}/screener/status`, FETCH_OPTS);
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  return (await response.json()) as ScreenerStatus;
+}
