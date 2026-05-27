@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   createChart,
   CandlestickSeries,
@@ -10,26 +10,27 @@ import {
   ColorType,
   CrosshairMode,
   PriceScaleMode,
+  type ISeriesApi,
+  type IPriceLine,
   type Logical,
   type LogicalRangeChangeEventHandler,
 } from "lightweight-charts";
 import type { OHLCVBar, SupportResistanceLevel } from "@/lib/api";
 
-// Toss 라이트 테마 + 한국 관행 (상승=빨강, 하락=파랑)
 const COLORS = {
   bg: "#FFFFFF",
   text: "#8B95A1",
   grid: "#F0F2F5",
   border: "#E5E8EB",
   crosshair: "#88929f",
-  up: "#F04452",              // 상승 = 빨강
-  down: "#1B64DA",            // 하락 = 파랑
-  ma5:  "#26C6DA",            // 이동평균 5
-  ma20: "#F5A623",            // 이동평균 20
-  ma60: "#9B59B6",            // 이동평균 60
-  ma120: "#2ECC71",           // 이동평균 120
-  support: "#1B64DA",         // 지지선 = 파랑
-  resistance: "#F04452",      // 저항선 = 빨강
+  up: "#F04452",
+  down: "#1B64DA",
+  ma5:  "#26C6DA",
+  ma20: "#F5A623",
+  ma60: "#9B59B6",
+  ma120: "#2ECC71",
+  support: "#1B64DA",
+  resistance: "#F04452",
 } as const;
 
 interface Props {
@@ -50,10 +51,35 @@ function calcMA(ohlcv: OHLCVBar[], period: number) {
     .filter(Boolean) as { time: `${number}-${number}-${number}`; value: number }[];
 }
 
+type VisibilityKey = "ma5" | "ma20" | "ma60" | "ma120" | "support" | "resistance";
+
+const LEGEND: { key: VisibilityKey; label: string; color: string }[] = [
+  { key: "ma5",         label: "MA5",   color: COLORS.ma5 },
+  { key: "ma20",        label: "MA20",  color: COLORS.ma20 },
+  { key: "ma60",        label: "MA60",  color: COLORS.ma60 },
+  { key: "ma120",       label: "MA120", color: COLORS.ma120 },
+  { key: "support",     label: "지지선", color: COLORS.support },
+  { key: "resistance",  label: "저항선", color: COLORS.resistance },
+];
+
 export default function StockPriceChart({ ohlcv, supports, resistances, currentPrice }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
+  const seriesRefs = useRef<{
+    ma5?: ISeriesApi<"Line">;
+    ma20?: ISeriesApi<"Line">;
+    ma60?: ISeriesApi<"Line">;
+    ma120?: ISeriesApi<"Line">;
+    supportLines?: IPriceLine[];
+    resistanceLines?: IPriceLine[];
+  }>({});
 
+  const [visible, setVisible] = useState<Record<VisibilityKey, boolean>>({
+    ma5: true, ma20: true, ma60: true, ma120: true,
+    support: true, resistance: true,
+  });
+
+  // 차트 생성
   useEffect(() => {
     if (!containerRef.current || ohlcv.length === 0) return;
 
@@ -102,32 +128,36 @@ export default function StockPriceChart({ ohlcv, supports, resistances, currentP
       }))
     );
 
-    const ma5 = chart.addSeries(LineSeries, {
+    const ma5Series = chart.addSeries(LineSeries, {
       color: COLORS.ma5, lineWidth: 1, title: "MA5",
       priceLineVisible: false, lastValueVisible: false,
     });
-    ma5.setData(calcMA(ohlcv, 5));
+    ma5Series.setData(calcMA(ohlcv, 5));
+    seriesRefs.current.ma5 = ma5Series;
 
-    const ma20 = chart.addSeries(LineSeries, {
+    const ma20Series = chart.addSeries(LineSeries, {
       color: COLORS.ma20, lineWidth: 1, title: "MA20",
       priceLineVisible: false, lastValueVisible: false,
     });
-    ma20.setData(calcMA(ohlcv, 20));
+    ma20Series.setData(calcMA(ohlcv, 20));
+    seriesRefs.current.ma20 = ma20Series;
 
     if (ohlcv.length >= 60) {
-      const ma60 = chart.addSeries(LineSeries, {
+      const ma60Series = chart.addSeries(LineSeries, {
         color: COLORS.ma60, lineWidth: 1, title: "MA60",
         priceLineVisible: false, lastValueVisible: false,
       });
-      ma60.setData(calcMA(ohlcv, 60));
+      ma60Series.setData(calcMA(ohlcv, 60));
+      seriesRefs.current.ma60 = ma60Series;
     }
 
     if (ohlcv.length >= 120) {
-      const ma120 = chart.addSeries(LineSeries, {
+      const ma120Series = chart.addSeries(LineSeries, {
         color: COLORS.ma120, lineWidth: 1, title: "MA120",
         priceLineVisible: false, lastValueVisible: false,
       });
-      ma120.setData(calcMA(ohlcv, 120));
+      ma120Series.setData(calcMA(ohlcv, 120));
+      seriesRefs.current.ma120 = ma120Series;
     }
 
     const volumeSeries = chart.addSeries(HistogramSeries, {
@@ -147,40 +177,40 @@ export default function StockPriceChart({ ohlcv, supports, resistances, currentP
       }))
     );
 
-    supports.forEach((s) => {
+    const supportLines: IPriceLine[] = supports.map((s) =>
       candleSeries.createPriceLine({
         price: s.price, color: COLORS.support,
         lineWidth: 1, lineStyle: 2, axisLabelVisible: true,
         title: `지지 ${(s.price / 1000).toFixed(0)}K`,
-      });
-    });
+      })
+    );
+    seriesRefs.current.supportLines = supportLines;
 
-    resistances.forEach((r) => {
+    const resistanceLines: IPriceLine[] = resistances.map((r) =>
       candleSeries.createPriceLine({
         price: r.price, color: COLORS.resistance,
         lineWidth: 1, lineStyle: 2, axisLabelVisible: true,
         title: `저항 ${(r.price / 1000).toFixed(0)}K`,
-      });
-    });
+      })
+    );
+    seriesRefs.current.resistanceLines = resistanceLines;
 
-    // 데이터 범위 밖으로 스크롤 방지
     const barCount = ohlcv.length;
-
-    // 기본 뷰: 최근 3개월(약 65거래일)
     const defaultBars = 65;
     const from = Math.max(0, barCount - defaultBars);
     chart.timeScale().setVisibleLogicalRange({ from: from as Logical, to: (barCount - 1) as Logical });
+
     let clamping = false;
     const onRangeChange: LogicalRangeChangeEventHandler = (range) => {
       if (!range || clamping) return;
       const width = range.to - range.from;
-      let from = range.from as number;
-      let to = range.to as number;
-      if (from < 0) { from = 0; to = width; }
-      if (to > barCount - 1) { to = barCount - 1; from = Math.max(0, to - width); }
-      if (from !== (range.from as number) || to !== (range.to as number)) {
+      let f = range.from as number;
+      let t = range.to as number;
+      if (f < 0) { f = 0; t = width; }
+      if (t > barCount - 1) { t = barCount - 1; f = Math.max(0, t - width); }
+      if (f !== (range.from as number) || t !== (range.to as number)) {
         clamping = true;
-        chart.timeScale().setVisibleLogicalRange({ from: from as Logical, to: to as Logical });
+        chart.timeScale().setVisibleLogicalRange({ from: f as Logical, to: t as Logical });
         clamping = false;
       }
     };
@@ -196,32 +226,57 @@ export default function StockPriceChart({ ohlcv, supports, resistances, currentP
       ro.disconnect();
       chart.remove();
       chartRef.current = null;
+      seriesRefs.current = {};
     };
   }, [ohlcv, supports, resistances, currentPrice]);
 
+  // 가시성 토글
+  useEffect(() => {
+    const refs = seriesRefs.current;
+    refs.ma5?.applyOptions({ visible: visible.ma5 });
+    refs.ma20?.applyOptions({ visible: visible.ma20 });
+    refs.ma60?.applyOptions({ visible: visible.ma60 });
+    refs.ma120?.applyOptions({ visible: visible.ma120 });
+    refs.supportLines?.forEach((line) =>
+      line.applyOptions({
+        color: visible.support ? COLORS.support : "transparent",
+        axisLabelVisible: visible.support,
+      })
+    );
+    refs.resistanceLines?.forEach((line) =>
+      line.applyOptions({
+        color: visible.resistance ? COLORS.resistance : "transparent",
+        axisLabelVisible: visible.resistance,
+      })
+    );
+  }, [visible]);
+
   if (ohlcv.length === 0) return null;
+
+  function toggle(key: VisibilityKey) {
+    setVisible((v) => ({ ...v, [key]: !v[key] }));
+  }
 
   return (
     <div className="space-y-2">
-      <div className="flex items-center gap-4 text-xs text-muted">
-        <span className="flex items-center gap-1.5">
-          <span className="w-3 h-0.5 inline-block rounded" style={{ background: COLORS.ma5 }} /> MA5
-        </span>
-        <span className="flex items-center gap-1.5">
-          <span className="w-3 h-0.5 inline-block rounded" style={{ background: COLORS.ma20 }} /> MA20
-        </span>
-        <span className="flex items-center gap-1.5">
-          <span className="w-3 h-0.5 inline-block rounded" style={{ background: COLORS.ma60 }} /> MA60
-        </span>
-        <span className="flex items-center gap-1.5">
-          <span className="w-3 h-0.5 inline-block rounded" style={{ background: COLORS.ma120 }} /> MA120
-        </span>
-        <span className="flex items-center gap-1.5">
-          <span className="w-3 h-0.5 inline-block border-t border-dashed" style={{ borderColor: COLORS.support }} /> 지지선
-        </span>
-        <span className="flex items-center gap-1.5">
-          <span className="w-3 h-0.5 inline-block border-t border-dashed" style={{ borderColor: COLORS.resistance }} /> 저항선
-        </span>
+      <div className="flex items-center gap-3 text-xs text-muted">
+        {LEGEND.map(({ key, label, color }) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => toggle(key)}
+            className="flex items-center gap-1.5 cursor-pointer hover:opacity-80 transition-opacity"
+          >
+            <span
+              className="w-2.5 h-2.5 rounded-full border-2 transition-colors"
+              style={{
+                backgroundColor: visible[key] ? color : "transparent",
+                borderColor: color,
+              }}
+            />
+            <span style={{ color: visible[key] ? color : "#8B95A1" }}>{label}</span>
+          </button>
+        ))}
       </div>
       <div ref={containerRef} className="w-full rounded-xl overflow-hidden border border-hairline-on-dark" />
     </div>
