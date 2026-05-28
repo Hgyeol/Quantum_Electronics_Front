@@ -447,17 +447,23 @@ export default function Home() {
       ) : (
 
         /* ── 3-컬럼 홈 레이아웃 ──────────────────────────── */
-        <>
-          {/* 중앙 컬럼 */}
-          <div className="flex-1 flex flex-col overflow-hidden bg-white">
-            <header
-              className="h-[52px] shrink-0 flex items-center justify-between px-5 bg-white"
-              style={{ borderBottom: "1px solid rgba(2,32,71,0.06)" }}
-            >
-              <span className="text-[15px] font-bold text-ink">{HOME_TABS[homeTab]}</span>
-              <StockSearchBox onSelect={handleSelectStock} />
-            </header>
+        <div className="flex-1 flex flex-col overflow-hidden bg-white">
 
+          {/* 공통 헤더 (center + right 패널 전체 너비) */}
+          <header
+            className="h-[52px] shrink-0 relative flex items-center px-5 bg-white"
+            style={{ borderBottom: "1px solid rgba(2,32,71,0.06)" }}
+          >
+            <span className="text-[15px] font-bold text-ink">{HOME_TABS[homeTab]}</span>
+            <div className="absolute right-[440px]">
+              <StockSearchBox onSelect={handleSelectStock} />
+            </div>
+          </header>
+
+          {/* 헤더 아래 center + right 영역 */}
+          <div className="flex-1 flex overflow-hidden">
+
+            {/* 중앙 컬럼 */}
             <div className="flex-1 overflow-y-auto">
               {homeTab === 0 && (
                 <>
@@ -500,13 +506,12 @@ export default function Home() {
               )}
               {homeTab === 2 && <ScreenerSection onSelect={handleSelectStock} />}
             </div>
-          </div>
 
-          {/* 우측 프리뷰 패널 */}
-          <aside
-            className="w-[420px] shrink-0 bg-white flex flex-col overflow-hidden"
-            style={{ borderLeft: "1px solid rgba(2,32,71,0.06)" }}
-          >
+            {/* 우측 프리뷰 패널 */}
+            <aside
+              className="w-[420px] shrink-0 bg-white flex flex-col overflow-hidden"
+              style={{ borderLeft: "1px solid rgba(2,32,71,0.06)" }}
+            >
             {hoveredStock ? (
               (() => {
                 const up = hoveredStock.changeRate > 0;
@@ -552,8 +557,10 @@ export default function Home() {
                 </p>
               </div>
             )}
-          </aside>
-        </>
+            </aside>
+
+          </div>
+        </div>
 
       )}
 
