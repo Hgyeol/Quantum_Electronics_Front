@@ -54,6 +54,15 @@ function calcMA(ohlcv: OHLCVBar[], period: number) {
 }
 
 type VisibilityKey = "ma5" | "ma20" | "ma60" | "ma120" | "support" | "resistance";
+type Period = "1W" | "1M" | "3M" | "6M" | "1Y";
+
+const PERIODS: { id: Period; label: string; bars: number }[] = [
+  { id: "1W",  label: "1주",   bars: 5 },
+  { id: "1M",  label: "1개월", bars: 22 },
+  { id: "3M",  label: "3개월", bars: 65 },
+  { id: "6M",  label: "6개월", bars: 130 },
+  { id: "1Y",  label: "1년",   bars: 260 },
+];
 
 const LEGEND: { key: VisibilityKey; label: string; color: string }[] = [
   { key: "ma5",         label: "MA5",   color: COLORS.ma5 },
@@ -80,6 +89,7 @@ export default function StockPriceChart({ ohlcv, supports, resistances, currentP
     ma5: true, ma20: true, ma60: true, ma120: true,
     support: true, resistance: true,
   });
+  const [period, setPeriod] = useState<Period>("3M");
 
   // 차트 생성
   useEffect(() => {
@@ -234,6 +244,16 @@ export default function StockPriceChart({ ohlcv, supports, resistances, currentP
     };
   }, [ohlcv, supports, resistances, currentPrice]);
 
+  // 기간 탭 변경 시 차트 범위 조정
+  useEffect(() => {
+    const chart = chartRef.current;
+    if (!chart || ohlcv.length === 0) return;
+    const bars = PERIODS.find((p) => p.id === period)?.bars ?? 65;
+    const barCount = ohlcv.length;
+    const from = Math.max(0, barCount - bars);
+    chart.timeScale().setVisibleLogicalRange({ from: from as Logical, to: (barCount - 1) as Logical });
+  }, [period, ohlcv.length]);
+
   // 가시성 토글
   useEffect(() => {
     const refs = seriesRefs.current;
@@ -262,8 +282,39 @@ export default function StockPriceChart({ ohlcv, supports, resistances, currentP
   }
 
   return (
-    <div className="space-y-2">
-      <div className="flex items-center gap-3 text-xs text-muted">
+    <div className="space-y-0">
+      {/* 기간 탭 (TDS Segmented Control) */}
+      <div className="flex items-center px-5 pt-4 pb-3">
+        <div
+          className="flex gap-0 p-[3px] rounded-[10px]"
+          style={{ background: "rgba(2,32,71,0.05)" }}
+        >
+          {PERIODS.map(({ id, label }) => (
+            <button
+              key={id}
+              type="button"
+              onClick={() => setPeriod(id)}
+              className={`px-3 py-1.5 rounded-[8px] text-[12px] font-semibold transition-all cursor-pointer ${
+                period === id
+                  ? "bg-white text-body"
+                  : "text-muted hover:text-body"
+              }`}
+              style={period === id ? { boxShadow: "0 1px 4px rgba(0,29,58,0.12)" } : {}}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* 차트 */}
+      <div ref={containerRef} className="w-full" />
+
+      {/* MA / 지지저항 토글 */}
+      <div
+        className="flex items-center gap-3 px-5 py-3 flex-wrap text-xs"
+        style={{ borderTop: "1px solid rgba(2,32,71,0.06)" }}
+      >
         {LEGEND.map(({ key, label, color }) => (
           <button
             key={key}
@@ -272,7 +323,7 @@ export default function StockPriceChart({ ohlcv, supports, resistances, currentP
             className="flex items-center gap-1.5 cursor-pointer hover:opacity-80 transition-opacity"
           >
             <span
-              className="w-2.5 h-2.5 rounded-full border-2 transition-colors"
+              className="w-2 h-2 rounded-full border-2 transition-colors"
               style={{
                 backgroundColor: visible[key] ? color : "transparent",
                 borderColor: color,
@@ -282,7 +333,6 @@ export default function StockPriceChart({ ohlcv, supports, resistances, currentP
           </button>
         ))}
       </div>
-      <div ref={containerRef} className="w-full rounded-xl overflow-hidden border border-hairline-on-dark" />
     </div>
   );
 }
