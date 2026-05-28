@@ -21,7 +21,6 @@ import RankingSection from "@/components/RankingSection";
 import ScreenerSection from "@/components/ScreenerSection";
 import StockLogo from "@/components/StockLogo";
 import StockSearchBox from "@/components/StockSearchBox";
-import SparklineChart from "@/components/SparklineChart";
 
 const WS_BASE = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000").replace(/^http/, "ws");
 
@@ -516,7 +515,7 @@ export default function Home() {
                   ? "bg-[rgba(2,32,71,0.05)] text-muted"
                   : up ? "bg-trading-up/10 text-trading-up" : "bg-trading-down/10 text-trading-down";
                 return (
-                  <div className="flex-1 flex flex-col overflow-hidden">
+                  <div className="flex-1 flex flex-col overflow-y-auto">
                     <div className="px-5 pt-5 pb-4" style={{ borderBottom: "1px solid rgba(2,32,71,0.06)" }}>
                       <div className="flex items-center gap-3 mb-4">
                         <StockLogo code={hoveredStock.code} name={hoveredStock.name} size={40} rounded="xl" />
@@ -535,24 +534,10 @@ export default function Home() {
                         {flat ? "0.00%" : `${up ? "+" : ""}${hoveredStock.changeRate.toFixed(2)}%`}
                       </span>
                     </div>
-                    <div className="px-5 py-5 flex flex-col gap-2">
-                      <span className="text-[11px] text-muted uppercase tracking-widest font-semibold">최근 20일</span>
-                      <SparklineChart
-                        code={hoveredStock.code}
-                        positive={flat ? null : up}
-                        width={380}
-                        height={140}
-                      />
-                    </div>
-                    <div className="px-5 mt-auto pb-6">
-                      <div className="flex items-center justify-center gap-1.5 py-3 rounded-xl text-[13px] text-muted-strong font-medium cursor-default"
-                        style={{ background: "rgba(2,32,71,0.03)", border: "1px solid rgba(2,32,71,0.07)" }}>
-                        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                          <path d="M7 1v12M1 7h12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-                        </svg>
-                        클릭하면 상세 분석을 볼 수 있어요
-                      </div>
-                    </div>
+                    <ChartAnalysisCard
+                      stockCode={hoveredStock.code}
+                      chartOnly
+                    />
                   </div>
                 );
               })()

@@ -9,7 +9,6 @@ import {
   type RankInvestor,
 } from "@/lib/api";
 import StockLogo from "@/components/StockLogo";
-import SparklineChart from "@/components/SparklineChart";
 
 type TabId = "volume" | "amount" | "foreign" | "institution";
 
@@ -224,7 +223,7 @@ export default function RankingSection({ onSelect, onHover, onHoverEnd }: Props)
                 {item.rank}
               </span>
 
-              {/* 종목명 + 스파크라인 */}
+              {/* 종목명 */}
               <span className="flex items-center gap-2 min-w-0">
                 <StockLogo code={item.stock_code} name={item.stock_name} size={34} />
                 <span className="min-w-0 flex-1">
@@ -233,12 +232,6 @@ export default function RankingSection({ onSelect, onHover, onHoverEnd }: Props)
                   </span>
                   <span className="block text-[11px] text-muted font-mono">{item.stock_code}</span>
                 </span>
-                <SparklineChart
-                  code={item.stock_code}
-                  positive={flat ? null : up}
-                  width={52}
-                  height={26}
-                />
               </span>
 
               {/* 현재가 */}

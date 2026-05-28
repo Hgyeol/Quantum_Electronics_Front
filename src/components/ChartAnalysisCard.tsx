@@ -175,9 +175,10 @@ interface Props {
   onNameResolved?: (name: string) => void;
   onBarHover?: (bar: OHLCVBar | null) => void;
   onBarClick?: (bar: OHLCVBar | null) => void;
+  chartOnly?: boolean;
 }
 
-export default function ChartAnalysisCard({ stockCode, stockName, onNameResolved, onBarHover, onBarClick }: Props) {
+export default function ChartAnalysisCard({ stockCode, stockName, onNameResolved, onBarHover, onBarClick, chartOnly }: Props) {
   const [data, setData] = useState<ChartAnalysis | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -195,6 +196,34 @@ export default function ChartAnalysisCard({ stockCode, stockName, onNameResolved
       .catch((e: unknown) => setError(e instanceof Error ? e.message : String(e)))
       .finally(() => setLoading(false));
   }, [stockCode]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (chartOnly) {
+    return (
+      <section className="space-y-0">
+        {loading && (
+          <div className="flex items-center justify-center gap-2 py-12 text-muted text-sm">
+            <span className="w-4 h-4 border-2 border-muted border-t-primary rounded-full animate-spin" />
+            차트 불러오는 중…
+          </div>
+        )}
+        {error && !loading && (
+          <p className="text-trading-down text-sm py-4 px-5">{error}</p>
+        )}
+        {data && !loading && (
+          <StockPriceChart
+            ohlcv={data.ohlcv}
+            supports={[]}
+            resistances={[]}
+            currentPrice={data.current_price}
+            onBarHover={onBarHover}
+            onBarClick={onBarClick}
+            defaultPeriod="3M"
+            minimal
+          />
+        )}
+      </section>
+    );
+  }
 
   return (
     <section className="space-y-0">

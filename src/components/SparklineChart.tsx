@@ -14,10 +14,16 @@ interface Props {
 
 export default function SparklineChart({ code, positive, width = 64, height = 32 }: Props) {
   const [prices, setPrices] = useState<number[]>(_cache.get(code) ?? []);
+  const [loading, setLoading] = useState(!_cache.has(code));
 
   useEffect(() => {
-    if (_cache.has(code)) { setPrices(_cache.get(code)!); return; }
-    fetch(`${API_BASE}/chart/${encodeURIComponent(code)}?days=30`, {
+    if (_cache.has(code)) {
+      setPrices(_cache.get(code)!);
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    fetch(`${API_BASE}/chart/${encodeURIComponent(code)}?days=60`, {
       credentials: "include",
       cache: "no-store",
     })
@@ -29,8 +35,21 @@ export default function SparklineChart({ code, positive, width = 64, height = 32
           setPrices(closes);
         }
       })
-      .catch(() => {});
-  }, [code]);
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [code]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (loading) {
+    if (height >= 80) {
+      return (
+        <div
+          style={{ width, height, background: "rgba(2,32,71,0.04)", borderRadius: 6 }}
+          className="animate-pulse"
+        />
+      );
+    }
+    return <div style={{ width, height }} />;
+  }
 
   if (prices.length < 2) {
     return <div style={{ width, height }} />;

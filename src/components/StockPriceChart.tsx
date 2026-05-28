@@ -40,6 +40,8 @@ interface Props {
   currentPrice: number;
   onBarHover?: (bar: OHLCVBar | null) => void;
   onBarClick?: (bar: OHLCVBar | null) => void;
+  defaultPeriod?: Period;
+  minimal?: boolean;
 }
 
 function calcMA(ohlcv: OHLCVBar[], period: number) {
@@ -73,7 +75,7 @@ const LEGEND: { key: VisibilityKey; label: string; color: string }[] = [
   { key: "resistance",  label: "저항선", color: COLORS.resistance },
 ];
 
-export default function StockPriceChart({ ohlcv, supports, resistances, currentPrice, onBarHover, onBarClick }: Props) {
+export default function StockPriceChart({ ohlcv, supports, resistances, currentPrice, onBarHover, onBarClick, defaultPeriod = "3M", minimal = false }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const seriesRefs = useRef<{
@@ -86,10 +88,10 @@ export default function StockPriceChart({ ohlcv, supports, resistances, currentP
   }>({});
 
   const [visible, setVisible] = useState<Record<VisibilityKey, boolean>>({
-    ma5: true, ma20: true, ma60: true, ma120: true,
-    support: true, resistance: true,
+    ma5: !minimal, ma20: !minimal, ma60: !minimal, ma120: !minimal,
+    support: !minimal, resistance: !minimal,
   });
-  const [period, setPeriod] = useState<Period>("3M");
+  const [period, setPeriod] = useState<Period>(defaultPeriod);
 
   // 차트 생성
   useEffect(() => {
@@ -98,7 +100,7 @@ export default function StockPriceChart({ ohlcv, supports, resistances, currentP
     const container = containerRef.current;
     const chart = createChart(container, {
       width: container.clientWidth,
-      height: 360,
+      height: minimal ? 240 : 360,
       layout: {
         background: { type: ColorType.Solid, color: COLORS.bg },
         textColor: COLORS.text,
@@ -116,6 +118,7 @@ export default function StockPriceChart({ ohlcv, supports, resistances, currentP
       rightPriceScale: {
         borderColor: COLORS.border,
         mode: PriceScaleMode.Normal,
+        visible: !minimal,
       },
       timeScale: {
         borderColor: COLORS.border,
@@ -140,26 +143,28 @@ export default function StockPriceChart({ ohlcv, supports, resistances, currentP
       }))
     );
 
-    const maOptions = { priceLineVisible: false, lastValueVisible: false, autoscaleInfoProvider: () => null };
+    if (!minimal) {
+      const maOptions = { priceLineVisible: false, lastValueVisible: false, autoscaleInfoProvider: () => null };
 
-    const ma5Series = chart.addSeries(LineSeries, { color: COLORS.ma5, lineWidth: 1, title: "MA5", ...maOptions });
-    ma5Series.setData(calcMA(ohlcv, 5));
-    seriesRefs.current.ma5 = ma5Series;
+      const ma5Series = chart.addSeries(LineSeries, { color: COLORS.ma5, lineWidth: 1, title: "MA5", ...maOptions });
+      ma5Series.setData(calcMA(ohlcv, 5));
+      seriesRefs.current.ma5 = ma5Series;
 
-    const ma20Series = chart.addSeries(LineSeries, { color: COLORS.ma20, lineWidth: 1, title: "MA20", ...maOptions });
-    ma20Series.setData(calcMA(ohlcv, 20));
-    seriesRefs.current.ma20 = ma20Series;
+      const ma20Series = chart.addSeries(LineSeries, { color: COLORS.ma20, lineWidth: 1, title: "MA20", ...maOptions });
+      ma20Series.setData(calcMA(ohlcv, 20));
+      seriesRefs.current.ma20 = ma20Series;
 
-    if (ohlcv.length >= 60) {
-      const ma60Series = chart.addSeries(LineSeries, { color: COLORS.ma60, lineWidth: 1, title: "MA60", ...maOptions });
-      ma60Series.setData(calcMA(ohlcv, 60));
-      seriesRefs.current.ma60 = ma60Series;
-    }
+      if (ohlcv.length >= 60) {
+        const ma60Series = chart.addSeries(LineSeries, { color: COLORS.ma60, lineWidth: 1, title: "MA60", ...maOptions });
+        ma60Series.setData(calcMA(ohlcv, 60));
+        seriesRefs.current.ma60 = ma60Series;
+      }
 
-    if (ohlcv.length >= 120) {
-      const ma120Series = chart.addSeries(LineSeries, { color: COLORS.ma120, lineWidth: 1, title: "MA120", ...maOptions });
-      ma120Series.setData(calcMA(ohlcv, 120));
-      seriesRefs.current.ma120 = ma120Series;
+      if (ohlcv.length >= 120) {
+        const ma120Series = chart.addSeries(LineSeries, { color: COLORS.ma120, lineWidth: 1, title: "MA120", ...maOptions });
+        ma120Series.setData(calcMA(ohlcv, 120));
+        seriesRefs.current.ma120 = ma120Series;
+      }
     }
 
     const volumeSeries = chart.addSeries(HistogramSeries, {
@@ -284,55 +289,59 @@ export default function StockPriceChart({ ohlcv, supports, resistances, currentP
   return (
     <div className="space-y-0">
       {/* 기간 탭 (TDS Segmented Control) */}
-      <div className="flex items-center px-5 pt-4 pb-3">
+      {!minimal && (
+        <div className="flex items-center px-5 pt-4 pb-3">
+          <div
+            className="flex gap-0 p-[3px] rounded-[10px]"
+            style={{ background: "rgba(2,32,71,0.05)" }}
+          >
+            {PERIODS.map(({ id, label }) => (
+              <button
+                key={id}
+                type="button"
+                onClick={() => setPeriod(id)}
+                className={`px-3 py-1.5 rounded-[8px] text-[12px] font-semibold transition-all cursor-pointer ${
+                  period === id
+                    ? "bg-white text-body"
+                    : "text-muted hover:text-body"
+                }`}
+                style={period === id ? { boxShadow: "0 1px 4px rgba(0,29,58,0.12)" } : {}}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 차트 */}
+      <div ref={containerRef} className={minimal ? "mr-[72px]" : "w-full"} />
+
+      {/* MA / 지지저항 토글 */}
+      {!minimal && (
         <div
-          className="flex gap-0 p-[3px] rounded-[10px]"
-          style={{ background: "rgba(2,32,71,0.05)" }}
+          className="flex items-center gap-3 px-5 py-3 flex-wrap text-xs"
+          style={{ borderTop: "1px solid rgba(2,32,71,0.06)" }}
         >
-          {PERIODS.map(({ id, label }) => (
+          {LEGEND.map(({ key, label, color }) => (
             <button
-              key={id}
+              key={key}
               type="button"
-              onClick={() => setPeriod(id)}
-              className={`px-3 py-1.5 rounded-[8px] text-[12px] font-semibold transition-all cursor-pointer ${
-                period === id
-                  ? "bg-white text-body"
-                  : "text-muted hover:text-body"
-              }`}
-              style={period === id ? { boxShadow: "0 1px 4px rgba(0,29,58,0.12)" } : {}}
+              onClick={() => toggle(key)}
+              className="flex items-center gap-1.5 cursor-pointer hover:opacity-80 transition-opacity"
             >
-              {label}
+              <span
+                className="w-2 h-2 rounded-full border-2 transition-colors"
+                style={{
+                  backgroundColor: visible[key] ? color : "transparent",
+                  borderColor: color,
+                }}
+              />
+              <span style={{ color: visible[key] ? color : "#8B95A1" }}>{label}</span>
             </button>
           ))}
         </div>
-      </div>
-
-      {/* 차트 */}
-      <div ref={containerRef} className="w-full" />
-
-      {/* MA / 지지저항 토글 */}
-      <div
-        className="flex items-center gap-3 px-5 py-3 flex-wrap text-xs"
-        style={{ borderTop: "1px solid rgba(2,32,71,0.06)" }}
-      >
-        {LEGEND.map(({ key, label, color }) => (
-          <button
-            key={key}
-            type="button"
-            onClick={() => toggle(key)}
-            className="flex items-center gap-1.5 cursor-pointer hover:opacity-80 transition-opacity"
-          >
-            <span
-              className="w-2 h-2 rounded-full border-2 transition-colors"
-              style={{
-                backgroundColor: visible[key] ? color : "transparent",
-                borderColor: color,
-              }}
-            />
-            <span style={{ color: visible[key] ? color : "#8B95A1" }}>{label}</span>
-          </button>
-        ))}
-      </div>
+      )}
     </div>
   );
 }
