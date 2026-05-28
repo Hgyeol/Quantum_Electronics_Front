@@ -21,6 +21,7 @@ import RankingSection from "@/components/RankingSection";
 import ScreenerSection from "@/components/ScreenerSection";
 import StockLogo from "@/components/StockLogo";
 import StockSearchBox from "@/components/StockSearchBox";
+import ThemeToggle from "@/components/ThemeToggle";
 
 const WS_BASE = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000").replace(/^http/, "ws");
 
@@ -42,49 +43,46 @@ interface HoveredStock {
 
 // ── 좌측 내비 아이콘 ────────────────────────────────────────────
 function IconStar({ active }: { active: boolean }) {
-  const c = active ? "#191f28" : "#8b95a1";
   return (
-    <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+    <svg width="22" height="22" viewBox="0 0 22 22" fill="none" className={active ? "text-ink" : "text-muted"}>
       <path d="M11 2.5L13.2 8.3L19.5 8.8L15 12.5L16.5 18.8L11 15.6L5.5 18.8L7 12.5L2.5 8.8L8.8 8.3L11 2.5Z"
-        stroke={c} strokeWidth="1.6" strokeLinejoin="round"
-        fill={active ? c : "none"} />
+        stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round"
+        fill={active ? "currentColor" : "none"} />
     </svg>
   );
 }
 
 function IconBarChart({ active }: { active: boolean }) {
-  const c = active ? "#191f28" : "#8b95a1";
   return (
-    <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-      <rect x="3" y="12" width="4" height="7" rx="1.5" fill={c} />
-      <rect x="9" y="7" width="4" height="12" rx="1.5" fill={c} />
-      <rect x="15" y="3" width="4" height="16" rx="1.5" fill={c} />
+    <svg width="22" height="22" viewBox="0 0 22 22" fill="none" className={active ? "text-ink" : "text-muted"}>
+      <rect x="3" y="12" width="4" height="7" rx="1.5" fill="currentColor" />
+      <rect x="9" y="7" width="4" height="12" rx="1.5" fill="currentColor" />
+      <rect x="15" y="3" width="4" height="16" rx="1.5" fill="currentColor" />
     </svg>
   );
 }
 
 function IconFilter({ active }: { active: boolean }) {
-  const c = active ? "#191f28" : "#8b95a1";
   return (
-    <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-      <path d="M3 6H19M6 11H16M10 16H12" stroke={c} strokeWidth="1.8" strokeLinecap="round" />
+    <svg width="22" height="22" viewBox="0 0 22 22" fill="none" className={active ? "text-ink" : "text-muted"}>
+      <path d="M3 6H19M6 11H16M10 16H12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
     </svg>
   );
 }
 
 function IconLogout() {
   return (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-      <path d="M13 3H16.5C17.3 3 18 3.7 18 4.5V15.5C18 16.3 17.3 17 16.5 17H13" stroke="#8b95a1" strokeWidth="1.5" strokeLinecap="round" />
-      <path d="M8 13L4 10L8 7M4 10H14" stroke="#8b95a1" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="text-muted">
+      <path d="M13 3H16.5C17.3 3 18 3.7 18 4.5V15.5C18 16.3 17.3 17 16.5 17H13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <path d="M8 13L4 10L8 7M4 10H14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
 
 function IconBack() {
   return (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-      <path d="M12.5 4L6 10L12.5 16" stroke="#191f28" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="text-ink">
+      <path d="M12.5 4L6 10L12.5 16" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -192,16 +190,17 @@ export default function Home() {
   const priceFlat = tick ? tick.change === 0 : null;
   const priceColor = priceFlat ? "text-body" : priceUp ? "text-trading-up" : "text-trading-down";
   const badgeBg = priceFlat
-    ? "bg-[rgba(2,32,71,0.05)] text-muted"
+    ? "text-muted"
     : priceUp
       ? "bg-trading-up/10 text-trading-up"
       : "bg-trading-down/10 text-trading-down";
+  const badgeStyle = priceFlat ? { background: "var(--c-bg-muted)" } : {};
 
   // ── 좌측 내비 (공통) ────────────────────────────────────────────
   const leftNav = (
     <aside
       className="w-[72px] shrink-0 bg-white flex flex-col items-center py-5 gap-1 z-10"
-      style={{ borderRight: "1px solid rgba(2,32,71,0.06)" }}
+      style={{ borderRight: "1px solid var(--c-border)" }}
     >
       <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center mb-5 shrink-0">
         <span className="text-white font-extrabold text-[15px] tracking-tight">Q</span>
@@ -209,24 +208,26 @@ export default function Home() {
 
       {selectedCode ? (
         <button type="button" onClick={handleBack} title="뒤로"
-          className="w-12 h-12 flex items-center justify-center rounded-xl transition-colors cursor-pointer hover:bg-[rgba(2,32,71,0.06)]">
+          className="w-12 h-12 flex items-center justify-center rounded-xl transition-colors cursor-pointer"
+          onMouseEnter={(e) => (e.currentTarget.style.background = "var(--c-hover-md)")}
+          onMouseLeave={(e) => (e.currentTarget.style.background = "")}>
           <IconBack />
         </button>
       ) : (
         <>
           <button type="button" onClick={() => setHomeTab(0)} title="관심종목"
             className="w-12 h-12 flex items-center justify-center rounded-xl transition-colors cursor-pointer"
-            style={{ background: homeTab === 0 ? "rgba(2,32,71,0.06)" : undefined }}>
+            style={{ background: homeTab === 0 ? "var(--c-hover-md)" : undefined }}>
             <IconStar active={homeTab === 0} />
           </button>
           <button type="button" onClick={() => setHomeTab(1)} title="시장현황"
             className="w-12 h-12 flex items-center justify-center rounded-xl transition-colors cursor-pointer"
-            style={{ background: homeTab === 1 ? "rgba(2,32,71,0.06)" : undefined }}>
+            style={{ background: homeTab === 1 ? "var(--c-hover-md)" : undefined }}>
             <IconBarChart active={homeTab === 1} />
           </button>
           <button type="button" onClick={() => setHomeTab(2)} title="스크리너"
             className="w-12 h-12 flex items-center justify-center rounded-xl transition-colors cursor-pointer"
-            style={{ background: homeTab === 2 ? "rgba(2,32,71,0.06)" : undefined }}>
+            style={{ background: homeTab === 2 ? "var(--c-hover-md)" : undefined }}>
             <IconFilter active={homeTab === 2} />
           </button>
         </>
@@ -234,14 +235,16 @@ export default function Home() {
 
       <div className="flex-1" />
       <button type="button" onClick={handleLogout} title="로그아웃"
-        className="w-12 h-12 flex items-center justify-center rounded-xl transition-colors cursor-pointer hover:bg-[rgba(2,32,71,0.05)]">
+        className="w-12 h-12 flex items-center justify-center rounded-xl transition-colors cursor-pointer"
+        onMouseEnter={(e) => (e.currentTarget.style.background = "var(--c-hover)")}
+        onMouseLeave={(e) => (e.currentTarget.style.background = "")}>
         <IconLogout />
       </button>
     </aside>
   );
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#f6f7f9]">
+    <div className="flex h-screen overflow-hidden bg-canvas-dark">
 
       {leftNav}
 
@@ -253,7 +256,7 @@ export default function Home() {
           {/* 상세 헤더 */}
           <header
             className="h-[52px] shrink-0 flex items-center justify-between px-5 bg-white"
-            style={{ borderBottom: "1px solid rgba(2,32,71,0.06)" }}
+            style={{ borderBottom: "1px solid var(--c-border)" }}
           >
             <div className="flex items-center gap-3">
               <StockLogo code={selectedCode} name={displayName} size={28} rounded="lg" />
@@ -272,7 +275,7 @@ export default function Home() {
                   {tick.price.toLocaleString("ko-KR")}
                 </span>
                 <span className="text-[12px] text-muted">원</span>
-                <span className={`font-mono tabular text-[13px] font-bold px-2.5 py-1 rounded-full ${badgeBg}`}>
+                <span className={`font-mono tabular text-[13px] font-bold px-2.5 py-1 rounded-full ${badgeBg}`} style={badgeStyle}>
                   {tick.change_rate > 0 ? "+" : ""}{tick.change_rate.toFixed(2)}%
                 </span>
               </div>
@@ -284,7 +287,7 @@ export default function Home() {
             <div className="max-w-[900px] mx-auto">
 
               {/* 종목 헤더 + 가격 */}
-              <div className="px-8 pt-8 pb-6" style={{ borderBottom: "1px solid rgba(2,32,71,0.06)" }}>
+              <div className="px-8 pt-8 pb-6" style={{ borderBottom: "1px solid var(--c-border)" }}>
                 <div className="flex items-center gap-4 mb-5">
                   <StockLogo code={selectedCode} name={displayName} size={52} rounded="xl" />
                   <div className="min-w-0 flex-1">
@@ -299,7 +302,7 @@ export default function Home() {
                           ? "border-primary/30 text-primary bg-primary/5 hover:bg-primary/10"
                           : "text-body hover:text-ink"
                       }`}
-                      style={inWatchlist ? {} : { border: "1px solid rgba(2,32,71,0.15)", background: "rgba(2,32,71,0.03)" }}>
+                      style={inWatchlist ? {} : { border: "1px solid var(--c-border-strong)", background: "var(--c-bg-subtle)" }}>
                       {inWatchlist ? "★ 관심 해제" : "☆ 관심 추가"}
                     </button>
                     {!report && (
@@ -325,20 +328,20 @@ export default function Home() {
                     <span className={`font-mono tabular text-[15px] font-semibold ${priceColor}`}>
                       {tick.change > 0 ? "+" : ""}{tick.change.toLocaleString("ko-KR")}
                     </span>
-                    <span className={`font-mono tabular text-[14px] font-bold px-3 py-1.5 rounded-full ${badgeBg}`}>
+                    <span className={`font-mono tabular text-[14px] font-bold px-3 py-1.5 rounded-full ${badgeBg}`} style={badgeStyle}>
                       {tick.change_rate > 0 ? "+" : ""}{tick.change_rate.toFixed(2)}%
                     </span>
                   </div>
                 ) : (
                   <div className="space-y-2 animate-pulse">
-                    <div className="h-12 w-48 rounded-lg bg-[rgba(2,32,71,0.05)]" />
-                    <div className="h-6 w-28 rounded-full bg-[rgba(2,32,71,0.05)]" />
+                    <div className="h-12 w-48 rounded-lg" style={{ background: "var(--c-bg-muted)" }} />
+                    <div className="h-6 w-28 rounded-full" style={{ background: "var(--c-bg-muted)" }} />
                   </div>
                 )}
               </div>
 
               {/* 차트 */}
-              <div className="relative" style={{ borderBottom: "1px solid rgba(2,32,71,0.06)" }}>
+              <div className="relative" style={{ borderBottom: "1px solid var(--c-border)" }}>
                 <ChartAnalysisCard
                   stockCode={selectedCode}
                   stockName={report?.stock_name ?? selectedName ?? null}
@@ -347,14 +350,14 @@ export default function Home() {
                   onBarClick={(bar) => { if (bar) setPinnedBar(bar); }}
                 />
                 {(pinnedBar ?? hoveredBar) && (
-                  <div className="absolute top-3 right-3 z-10 w-36 rounded-xl bg-white shadow-[0_4px_20px_rgba(0,29,58,0.12)] px-3.5 py-3 text-xs font-mono space-y-1.5 pointer-events-auto"
-                    style={{ border: "1px solid rgba(2,32,71,0.08)" }}>
-                    <div className="flex items-center justify-between pb-1.5" style={{ borderBottom: "1px solid rgba(2,32,71,0.07)" }}>
+                  <div className="absolute top-3 right-3 z-10 w-36 rounded-xl bg-white px-3.5 py-3 text-xs font-mono space-y-1.5 pointer-events-auto"
+                    style={{ border: "1px solid var(--c-border-md)", boxShadow: "0 4px 20px var(--c-shadow)" }}>
+                    <div className="flex items-center justify-between pb-1.5" style={{ borderBottom: "1px solid var(--c-border)" }}>
                       <span className="text-muted text-[10px] font-sans">{(pinnedBar ?? hoveredBar)!.date}</span>
                       {pinnedBar && (
                         <button type="button" onClick={() => setPinnedBar(null)}
                           className="text-muted hover:text-body w-4 h-4 flex items-center justify-center rounded cursor-pointer"
-                          style={{ background: "rgba(2,32,71,0.05)" }}>✕</button>
+                          style={{ background: "var(--c-bg-muted)" }}>✕</button>
                       )}
                     </div>
                     {[
@@ -368,7 +371,7 @@ export default function Home() {
                         <span className={color}>{value}</span>
                       </div>
                     ))}
-                    <div className="flex justify-between gap-2 pt-1.5" style={{ borderTop: "1px solid rgba(2,32,71,0.07)" }}>
+                    <div className="flex justify-between gap-2 pt-1.5" style={{ borderTop: "1px solid var(--c-border)" }}>
                       <span className="text-muted font-sans">거래량</span>
                       <span className="text-body">{((pinnedBar ?? hoveredBar)!.volume / 1000).toFixed(0)}K</span>
                     </div>
@@ -378,7 +381,7 @@ export default function Home() {
 
               {/* 시세 상세 */}
               {(marketQuote ?? report?.market_quote) && (
-                <div className="px-8 py-6" style={{ borderBottom: "1px solid rgba(2,32,71,0.06)" }}>
+                <div className="px-8 py-6" style={{ borderBottom: "1px solid var(--c-border)" }}>
                   <MarketQuoteCard
                     quote={tick
                       ? { ...(marketQuote ?? report!.market_quote!), price: tick.price, change: tick.change, change_rate: tick.change_rate }
@@ -391,7 +394,7 @@ export default function Home() {
               {/* 에러 */}
               {outlookError && (
                 <div className="px-8 py-4 text-[14px] text-trading-down border-l-4 border-trading-down"
-                  style={{ borderBottom: "1px solid rgba(2,32,71,0.06)" }}>
+                  style={{ borderBottom: "1px solid var(--c-border)" }}>
                   {outlookError}
                 </div>
               )}
@@ -399,30 +402,30 @@ export default function Home() {
               {/* 로딩 스켈레톤 */}
               {outlookLoading && !report && (
                 <div className="px-8 py-6 space-y-3 animate-pulse">
-                  <div className="h-4 w-20 rounded-lg bg-[rgba(2,32,71,0.05)]" />
-                  <div className="h-8 w-36 rounded-lg bg-[rgba(2,32,71,0.05)]" />
-                  <div className="h-3 w-52 rounded-lg bg-[rgba(2,32,71,0.05)]" />
+                  <div className="h-4 w-20 rounded-lg" style={{ background: "var(--c-bg-muted)" }} />
+                  <div className="h-8 w-36 rounded-lg" style={{ background: "var(--c-bg-muted)" }} />
+                  <div className="h-3 w-52 rounded-lg" style={{ background: "var(--c-bg-muted)" }} />
                 </div>
               )}
 
               {/* 전망 결과 */}
               {report && (
                 <>
-                  <div className="px-8 py-6" style={{ borderBottom: "1px solid rgba(2,32,71,0.06)" }}>
+                  <div className="px-8 py-6" style={{ borderBottom: "1px solid var(--c-border)" }}>
                     <FinalVerdictCard score={report.score} ai={report.ai_signals[0]} autoSummary={report.summary} />
                   </div>
-                  <div className="px-8 py-6" style={{ borderBottom: "1px solid rgba(2,32,71,0.06)" }}>
+                  <div className="px-8 py-6" style={{ borderBottom: "1px solid var(--c-border)" }}>
                     <SignalBreakdownPanel quant={report.quant_signals} ai={report.ai_signals} />
                   </div>
-                  <div className="px-8 py-6" style={{ borderBottom: "1px solid rgba(2,32,71,0.06)" }}>
+                  <div className="px-8 py-6" style={{ borderBottom: "1px solid var(--c-border)" }}>
                     <TechnicalIndicatorsPanel stockCode={report.stock_code} />
                   </div>
                   {report.position_context && (
-                    <div className="px-8 py-6" style={{ borderBottom: "1px solid rgba(2,32,71,0.06)" }}>
+                    <div className="px-8 py-6" style={{ borderBottom: "1px solid var(--c-border)" }}>
                       <PositionContextCard ctx={report.position_context} />
                     </div>
                   )}
-                  <div className="px-8 py-6" style={{ borderBottom: "1px solid rgba(2,32,71,0.06)" }}>
+                  <div className="px-8 py-6" style={{ borderBottom: "1px solid var(--c-border)" }}>
                     <QuantSignalsTable
                       quant={report.quant_signals}
                       financial={report.financial_signals}
@@ -430,7 +433,7 @@ export default function Home() {
                       evidence={report.evidence}
                     />
                   </div>
-                  <div className="px-8 py-6" style={{ borderBottom: "1px solid rgba(2,32,71,0.06)" }}>
+                  <div className="px-8 py-6" style={{ borderBottom: "1px solid var(--c-border)" }}>
                     <EvidenceList evidence={report.evidence} />
                   </div>
                   <ErrorsBanner errors={report.errors} />
@@ -452,7 +455,7 @@ export default function Home() {
           {/* 공통 헤더 (center + right 패널 전체 너비) */}
           <header
             className="h-[52px] shrink-0 relative flex items-center px-5 bg-white"
-            style={{ borderBottom: "1px solid rgba(2,32,71,0.06)" }}
+            style={{ borderBottom: "1px solid var(--c-border)" }}
           >
             <span className="text-[15px] font-bold text-ink">{HOME_TABS[homeTab]}</span>
             <div className="absolute right-[440px]">
@@ -468,14 +471,14 @@ export default function Home() {
               {homeTab === 0 && (
                 <>
                   <div className="flex items-center gap-3 px-5 py-3 flex-wrap"
-                    style={{ borderBottom: "1px solid rgba(2,32,71,0.05)" }}>
+                    style={{ borderBottom: "1px solid var(--c-border)" }}>
                     <span className="text-[11px] font-semibold text-muted uppercase tracking-widest shrink-0">빠른 조회</span>
                     {QUICK_PICKS.map((p) => (
                       <button key={p.code} type="button" onClick={() => handleSelectStock(p.code, p.name)}
                         className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] text-muted-strong hover:text-ink transition-colors cursor-pointer"
-                        style={{ background: "rgba(2,32,71,0.04)" }}
-                        onMouseEnter={(e) => (e.currentTarget.style.background = "rgba(2,32,71,0.08)")}
-                        onMouseLeave={(e) => (e.currentTarget.style.background = "rgba(2,32,71,0.04)")}>
+                        style={{ background: "var(--c-hover)" }}
+                        onMouseEnter={(e) => (e.currentTarget.style.background = "var(--c-hover-lg)")}
+                        onMouseLeave={(e) => (e.currentTarget.style.background = "var(--c-hover)")}>
                         <StockLogo code={p.code} name={p.name} size={16} rounded="lg" />
                         <span className="font-medium">{p.name}</span>
                       </button>
@@ -510,18 +513,19 @@ export default function Home() {
             {/* 우측 프리뷰 패널 */}
             <aside
               className="w-[420px] shrink-0 bg-white flex flex-col overflow-hidden"
-              style={{ borderLeft: "1px solid rgba(2,32,71,0.06)" }}
+              style={{ borderLeft: "1px solid var(--c-border)" }}
             >
             {hoveredStock ? (
               (() => {
                 const up = hoveredStock.changeRate > 0;
                 const flat = hoveredStock.changeRate === 0;
                 const previewBadge = flat
-                  ? "bg-[rgba(2,32,71,0.05)] text-muted"
+                  ? "text-muted"
                   : up ? "bg-trading-up/10 text-trading-up" : "bg-trading-down/10 text-trading-down";
+                const previewBadgeStyle = flat ? { background: "var(--c-bg-muted)" } : {};
                 return (
                   <div className="flex-1 flex flex-col overflow-y-auto">
-                    <div className="px-5 pt-5 pb-4" style={{ borderBottom: "1px solid rgba(2,32,71,0.06)" }}>
+                    <div className="px-5 pt-5 pb-4" style={{ borderBottom: "1px solid var(--c-border)" }}>
                       <div className="flex items-center gap-3 mb-4">
                         <StockLogo code={hoveredStock.code} name={hoveredStock.name} size={40} rounded="xl" />
                         <div className="min-w-0 flex-1">
@@ -535,7 +539,7 @@ export default function Home() {
                         </span>
                         <span className="text-[14px] text-muted">원</span>
                       </div>
-                      <span className={`font-mono tabular text-[13px] font-bold px-2.5 py-1 rounded-full ${previewBadge}`}>
+                      <span className={`font-mono tabular text-[13px] font-bold px-2.5 py-1 rounded-full ${previewBadge}`} style={previewBadgeStyle}>
                         {flat ? "0.00%" : `${up ? "+" : ""}${hoveredStock.changeRate.toFixed(2)}%`}
                       </span>
                     </div>
@@ -548,7 +552,7 @@ export default function Home() {
               })()
             ) : (
               <div className="flex-1 flex flex-col items-center justify-center gap-2 text-center px-6">
-                <div className="w-12 h-12 rounded-2xl bg-[rgba(2,32,71,0.04)] flex items-center justify-center mb-1">
+                <div className="w-12 h-12 rounded-2xl flex items-center justify-center mb-1" style={{ background: "var(--c-hover)" }}>
                   <IconBarChart active={false} />
                 </div>
                 <p className="text-[15px] font-bold text-ink">종목을 선택하세요</p>
@@ -564,6 +568,7 @@ export default function Home() {
 
       )}
 
+      <ThemeToggle />
     </div>
   );
 }

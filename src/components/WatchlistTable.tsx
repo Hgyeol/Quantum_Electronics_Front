@@ -183,7 +183,7 @@ export default function WatchlistTable({
   return (
     <section>
       {/* Header */}
-      <header className="px-5 pt-4 pb-0 bg-white" style={{ borderBottom: "1px solid rgba(2,32,71,0.07)" }}>
+      <header className="px-5 pt-4 pb-0 bg-white" style={{ borderBottom: "1px solid var(--c-border)" }}>
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-[15px] font-bold text-ink">관심종목</h2>
           <div className="flex items-center gap-2">
@@ -221,7 +221,7 @@ export default function WatchlistTable({
       </header>
 
       {/* Column labels */}
-      <div className="grid grid-cols-[2.5rem_1fr_6.5rem_6rem_5.5rem_2rem] gap-3 px-5 py-2 text-[10px] text-muted" style={{ background: "rgba(2,32,71,0.02)" }}>
+      <div className="grid grid-cols-[2.5rem_1fr_6.5rem_6rem_5.5rem_2rem] gap-3 px-5 py-2 text-[10px] text-muted" style={{ background: "var(--c-bg-subtle)" }}>
         <span className="text-center">순위</span>
         <span>종목명</span>
         <span className="text-right">현재가</span>
@@ -242,24 +242,25 @@ export default function WatchlistTable({
               const flat = item ? item.change_rate === 0 : null;
 
               const badgeBg = flat
-                ? "bg-[rgba(2,32,71,0.05)] text-muted"
+                ? "text-muted"
                 : up
                   ? "bg-trading-up/10 text-trading-up"
                   : "bg-trading-down/10 text-trading-down";
+              const badgeStyle = flat ? { background: "var(--c-bg-muted)" } : {};
 
               return (
                 <li
                   key={code}
                   className="group"
                   style={{
-                    borderTop: idx > 0 ? "1px solid rgba(2,32,71,0.05)" : undefined,
-                    background: isActive ? "rgba(49,130,246,0.04)" : undefined,
+                    borderTop: idx > 0 ? "1px solid var(--c-border)" : undefined,
+                    background: isActive ? "rgba(49,130,246,0.06)" : undefined,
                   }}
                 >
                   <div
                     className="grid grid-cols-[2.5rem_1fr_6.5rem_6rem_5.5rem_2rem] gap-3 items-center px-5 py-3 cursor-pointer transition-colors"
                     onMouseEnter={(e) => {
-                      if (!isActive) e.currentTarget.style.background = "rgba(2,32,71,0.04)";
+                      if (!isActive) e.currentTarget.style.background = "var(--c-hover)";
                       if (item) onHover?.({ code, name: item.stock_name ?? code, price: item.price, changeRate: item.change_rate });
                     }}
                     onMouseLeave={(e) => {
@@ -293,7 +294,7 @@ export default function WatchlistTable({
                     {/* 현재가 */}
                     <span className="text-right whitespace-nowrap">
                       {loading && !fetched ? (
-                        <span className="inline-block w-16 h-3 rounded animate-pulse" style={{ background: "rgba(2,32,71,0.06)" }} />
+                        <span className="inline-block w-16 h-3 rounded animate-pulse" style={{ background: "var(--c-border)" }} />
                       ) : item ? (
                         <span className="font-mono tabular text-[13px] font-semibold text-ink">
                           {item.price.toLocaleString("ko-KR")}<span className="text-[10px] text-muted font-normal ml-0.5">원</span>
@@ -306,9 +307,9 @@ export default function WatchlistTable({
                     {/* 등락률 뱃지 */}
                     <span className="flex justify-end">
                       {loading && !fetched ? (
-                        <span className="inline-block w-14 h-6 rounded-full animate-pulse" style={{ background: "rgba(2,32,71,0.06)" }} />
+                        <span className="inline-block w-14 h-6 rounded-full animate-pulse" style={{ background: "var(--c-border)" }} />
                       ) : item ? (
-                        <span className={`font-mono tabular text-[12px] font-bold px-2 py-1 rounded-full ${badgeBg}`}>
+                        <span className={`font-mono tabular text-[12px] font-bold px-2 py-1 rounded-full ${badgeBg}`} style={badgeStyle}>
                           {flat ? "0.00%" : `${up ? "+" : ""}${item.change_rate.toFixed(2)}%`}
                         </span>
                       ) : (
@@ -319,7 +320,7 @@ export default function WatchlistTable({
                     {/* 거래량/거래대금/순매수 */}
                     <span className="text-right">
                       {loading && !fetched ? (
-                        <span className="inline-block w-12 h-3 rounded animate-pulse" style={{ background: "rgba(2,32,71,0.06)" }} />
+                        <span className="inline-block w-12 h-3 rounded animate-pulse" style={{ background: "var(--c-border)" }} />
                       ) : item ? (
                         <span className="font-mono tabular text-[12px] text-muted-strong">
                           {sortBy === "volume"

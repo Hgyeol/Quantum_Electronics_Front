@@ -109,7 +109,7 @@ export default function StockSearchBox({ onSelect }: Props) {
           placeholder="종목코드 · 종목명"
           autoComplete="off"
           className="w-44 h-9 px-3 rounded-lg text-sm text-ink placeholder:text-muted font-mono focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors"
-          style={{ border: "1px solid rgba(2,32,71,0.12)", background: "rgba(2,32,71,0.03)" }}
+          style={{ border: "1px solid var(--c-border-strong)", background: "var(--c-bg-subtle)" }}
         />
         <button
           type="submit"
@@ -125,7 +125,7 @@ export default function StockSearchBox({ onSelect }: Props) {
         const list = isEmpty ? popular : suggestions;
         if (list.length === 0) return null;
         return (
-          <ul className="absolute right-0 top-full mt-1.5 w-64 bg-white rounded-xl overflow-hidden z-50" style={{ boxShadow: "0 8px 32px rgba(0,29,58,0.12)", border: "1px solid rgba(2,32,71,0.08)" }}>
+          <ul className="absolute right-0 top-full mt-1.5 w-64 bg-white rounded-xl overflow-hidden z-50" style={{ boxShadow: "0 8px 32px var(--c-shadow)", border: "1px solid var(--c-border-md)" }}>
             {isEmpty && (
               <li className="px-4 pt-3 pb-1">
                 <span className="text-[10px] uppercase tracking-widest text-muted">인기 종목</span>

@@ -17,19 +17,16 @@ import {
 } from "lightweight-charts";
 import type { OHLCVBar, SupportResistanceLevel } from "@/lib/api";
 
+const CHART_LIGHT = { bg: "#FFFFFF", text: "#8B95A1", grid: "#F0F2F5", border: "#E5E8EB", crosshair: "#88929f" };
+const CHART_DARK  = { bg: "#161b22", text: "#6e7681", grid: "#21262d", border: "#30363d", crosshair: "#6e7681" };
 const COLORS = {
-  bg: "#FFFFFF",
-  text: "#8B95A1",
-  grid: "#F0F2F5",
-  border: "#E5E8EB",
-  crosshair: "#88929f",
   up: "#F04452",
-  down: "#1B64DA",
+  down: "#3182f6",
   ma5:  "#26C6DA",
   ma20: "#F5A623",
   ma60: "#9B59B6",
   ma120: "#2ECC71",
-  support: "#1B64DA",
+  support: "#3182f6",
   resistance: "#F04452",
 } as const;
 
@@ -92,36 +89,48 @@ export default function StockPriceChart({ ohlcv, supports, resistances, currentP
     support: !minimal, resistance: !minimal,
   });
   const [period, setPeriod] = useState<Period>(defaultPeriod);
+  const [isDark, setIsDark] = useState(() =>
+    typeof document !== "undefined" && document.documentElement.classList.contains("dark")
+  );
+
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      setIsDark(document.documentElement.classList.contains("dark"));
+    });
+    observer.observe(document.documentElement, { attributeFilter: ["class"] });
+    return () => observer.disconnect();
+  }, []);
 
   // 차트 생성
   useEffect(() => {
     if (!containerRef.current || ohlcv.length === 0) return;
 
+    const theme = isDark ? CHART_DARK : CHART_LIGHT;
     const container = containerRef.current;
     const chart = createChart(container, {
       width: container.clientWidth,
       height: minimal ? 240 : 360,
       layout: {
-        background: { type: ColorType.Solid, color: COLORS.bg },
-        textColor: COLORS.text,
+        background: { type: ColorType.Solid, color: theme.bg },
+        textColor: theme.text,
         fontSize: 11,
       },
       grid: {
-        vertLines: { color: COLORS.grid },
-        horzLines: { color: COLORS.grid },
+        vertLines: { color: theme.grid },
+        horzLines: { color: theme.grid },
       },
       crosshair: {
         mode: CrosshairMode.Normal,
-        vertLine: { color: COLORS.crosshair, labelBackgroundColor: COLORS.crosshair },
-        horzLine: { color: COLORS.crosshair, labelBackgroundColor: COLORS.crosshair },
+        vertLine: { color: theme.crosshair, labelBackgroundColor: theme.crosshair },
+        horzLine: { color: theme.crosshair, labelBackgroundColor: theme.crosshair },
       },
       rightPriceScale: {
-        borderColor: COLORS.border,
+        borderColor: theme.border,
         mode: PriceScaleMode.Normal,
         visible: !minimal,
       },
       timeScale: {
-        borderColor: COLORS.border,
+        borderColor: theme.border,
         timeVisible: true,
         secondsVisible: false,
       },
@@ -247,7 +256,7 @@ export default function StockPriceChart({ ohlcv, supports, resistances, currentP
       chartRef.current = null;
       seriesRefs.current = {};
     };
-  }, [ohlcv, supports, resistances, currentPrice]);
+  }, [ohlcv, supports, resistances, currentPrice, isDark]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // 기간 탭 변경 시 차트 범위 조정
   useEffect(() => {
@@ -293,7 +302,7 @@ export default function StockPriceChart({ ohlcv, supports, resistances, currentP
         <div className="flex items-center px-5 pt-4 pb-3">
           <div
             className="flex gap-0 p-[3px] rounded-[10px]"
-            style={{ background: "rgba(2,32,71,0.05)" }}
+            style={{ background: "var(--c-bg-muted)" }}
           >
             {PERIODS.map(({ id, label }) => (
               <button
@@ -305,7 +314,7 @@ export default function StockPriceChart({ ohlcv, supports, resistances, currentP
                     ? "bg-white text-body"
                     : "text-muted hover:text-body"
                 }`}
-                style={period === id ? { boxShadow: "0 1px 4px rgba(0,29,58,0.12)" } : {}}
+                style={period === id ? { boxShadow: "0 1px 4px var(--c-shadow)" } : {}}
               >
                 {label}
               </button>
@@ -321,7 +330,7 @@ export default function StockPriceChart({ ohlcv, supports, resistances, currentP
       {!minimal && (
         <div
           className="flex items-center gap-3 px-5 py-3 flex-wrap text-xs"
-          style={{ borderTop: "1px solid rgba(2,32,71,0.06)" }}
+          style={{ borderTop: "1px solid var(--c-border)" }}
         >
           {LEGEND.map(({ key, label, color }) => (
             <button

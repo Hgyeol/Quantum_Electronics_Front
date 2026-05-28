@@ -75,3 +75,47 @@ html, body {
 .shadow-card {
   box-shadow: 0 1px 2px rgba(0,0,0,0.03), 0 2px 8px rgba(0,29,58,0.06);
 }
+
+/* ── Theme runtime CSS variables ─────────────────────────── */
+:root {
+  --c-border:        rgba(2, 32, 71, 0.06);
+  --c-border-md:     rgba(2, 32, 71, 0.08);
+  --c-border-strong: rgba(2, 32, 71, 0.12);
+  --c-hover:         rgba(2, 32, 71, 0.04);
+  --c-hover-md:      rgba(2, 32, 71, 0.06);
+  --c-hover-lg:      rgba(2, 32, 71, 0.08);
+  --c-bg-subtle:     rgba(2, 32, 71, 0.03);
+  --c-bg-muted:      rgba(2, 32, 71, 0.05);
+  --c-shadow:        rgba(0, 29, 58, 0.12);
+  --c-shadow-lg:     rgba(0, 29, 58, 0.20);
+}
+
+/* ── Dark mode overrides ─────────────────────────────────── */
+html.dark {
+  color-scheme: dark;
+
+  --color-ink:                   #e6edf3;
+  --color-body:                  #c9d1d9;
+  --color-body-secondary:        #8b949e;
+  --color-muted:                 #6e7681;
+  --color-muted-strong:          #8b949e;
+  --color-on-dark:               #c9d1d9;
+  --color-canvas-dark:           #0d1117;
+  --color-surface-card-dark:     #161b22;
+  --color-surface-elevated-dark: #21262d;
+  --color-hairline-on-dark:      rgba(240, 246, 252, 0.10);
+
+  --c-border:        rgba(255, 255, 255, 0.10);
+  --c-border-md:     rgba(255, 255, 255, 0.13);
+  --c-border-strong: rgba(255, 255, 255, 0.20);
+  --c-hover:         rgba(255, 255, 255, 0.05);
+  --c-hover-md:      rgba(255, 255, 255, 0.08);
+  --c-hover-lg:      rgba(255, 255, 255, 0.12);
+  --c-bg-subtle:     rgba(255, 255, 255, 0.04);
+  --c-bg-muted:      rgba(255, 255, 255, 0.07);
+  --c-shadow:        rgba(0, 0, 0, 0.45);
+  --c-shadow-lg:     rgba(0, 0, 0, 0.65);
+}
+
+/* Tailwind literal-color class overrides in dark mode */
+html.dark .bg-white { background-color: var(--color-surface-card-dark) !important; }

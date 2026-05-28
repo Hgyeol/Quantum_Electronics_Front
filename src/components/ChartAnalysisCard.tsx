@@ -262,7 +262,7 @@ export default function ChartAnalysisCard({ stockCode, stockName, onNameResolved
             <LevelsTable data={data} />
           </div>
 
-          <p className="text-[11px] text-muted px-5 pb-5 pt-3" style={{ borderTop: "1px solid rgba(2,32,71,0.06)" }}>
+          <p className="text-[11px] text-muted px-5 pb-5 pt-3" style={{ borderTop: "1px solid var(--c-border)" }}>
             {data.disclaimer}
           </p>
         </div>

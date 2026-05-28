@@ -110,7 +110,7 @@ export default function RankingSection({ onSelect, onHover, onHoverEnd }: Props)
     <section>
 
       {/* 헤더 */}
-      <header className="px-5 pt-4 pb-0 bg-white" style={{ borderBottom: "1px solid rgba(2,32,71,0.07)" }}>
+      <header className="px-5 pt-4 pb-0 bg-white" style={{ borderBottom: "1px solid var(--c-border)" }}>
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-[15px] font-bold text-ink">시장 현황</h2>
           <div className="flex items-center gap-2 text-xs">
@@ -157,7 +157,7 @@ export default function RankingSection({ onSelect, onHover, onHoverEnd }: Props)
       {/* 컬럼 헤더 */}
       <div
         className="grid grid-cols-[2rem_1fr_5rem_5rem_5.5rem] gap-2 px-5 py-2 text-[10px] text-muted"
-        style={{ background: "rgba(2,32,71,0.02)" }}
+        style={{ background: "var(--c-bg-subtle)" }}
       >
         <span className="text-center">#</span>
         <span>종목명</span>
@@ -172,19 +172,19 @@ export default function RankingSection({ onSelect, onHover, onHoverEnd }: Props)
           <li
             key={i}
             className="grid grid-cols-[2rem_1fr_5rem_5rem_5.5rem] gap-2 px-5 py-3.5 animate-pulse"
-            style={{ borderTop: i > 0 ? "1px solid rgba(2,32,71,0.05)" : undefined }}
+            style={{ borderTop: i > 0 ? "1px solid var(--c-border)" : undefined }}
           >
-            <span className="w-4 h-3 rounded mx-auto mt-1" style={{ background: "rgba(2,32,71,0.06)" }} />
+            <span className="w-4 h-3 rounded mx-auto mt-1" style={{ background: "var(--c-border)" }} />
             <span className="flex items-center gap-2.5">
-              <span className="w-8 h-8 rounded-xl shrink-0" style={{ background: "rgba(2,32,71,0.06)" }} />
+              <span className="w-8 h-8 rounded-xl shrink-0" style={{ background: "var(--c-border)" }} />
               <span className="flex-1 space-y-1.5">
-                <span className="block w-20 h-3 rounded" style={{ background: "rgba(2,32,71,0.06)" }} />
-                <span className="block w-12 h-2 rounded" style={{ background: "rgba(2,32,71,0.04)" }} />
+                <span className="block w-20 h-3 rounded" style={{ background: "var(--c-border)" }} />
+                <span className="block w-12 h-2 rounded" style={{ background: "var(--c-hover)" }} />
               </span>
             </span>
-            <span className="w-14 h-3 rounded ml-auto mt-2" style={{ background: "rgba(2,32,71,0.06)" }} />
-            <span className="w-12 h-5 rounded-full ml-auto mt-1" style={{ background: "rgba(2,32,71,0.06)" }} />
-            <span className="w-12 h-3 rounded ml-auto mt-2" style={{ background: "rgba(2,32,71,0.06)" }} />
+            <span className="w-14 h-3 rounded ml-auto mt-2" style={{ background: "var(--c-border)" }} />
+            <span className="w-12 h-5 rounded-full ml-auto mt-1" style={{ background: "var(--c-border)" }} />
+            <span className="w-12 h-3 rounded ml-auto mt-2" style={{ background: "var(--c-border)" }} />
           </li>
         ))}
 
@@ -196,19 +196,20 @@ export default function RankingSection({ onSelect, onHover, onHoverEnd }: Props)
           const up = item.change_rate > 0;
           const flat = item.change_rate === 0;
           const badgeBg = flat
-            ? "bg-[rgba(2,32,71,0.05)] text-muted"
+            ? "text-muted"
             : up
               ? "bg-trading-up/10 text-trading-up"
               : "bg-trading-down/10 text-trading-down";
+          const badgeStyle = flat ? { background: "var(--c-bg-muted)" } : {};
 
           return (
             <li
               key={item.stock_code}
               onClick={() => onSelect(item.stock_code, item.stock_name)}
               className="grid grid-cols-[2rem_1fr_5rem_5rem_5.5rem] gap-2 items-center px-5 py-3 cursor-pointer transition-colors"
-              style={{ borderTop: idx > 0 ? "1px solid rgba(2,32,71,0.05)" : undefined }}
+              style={{ borderTop: idx > 0 ? "1px solid var(--c-border)" : undefined }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = "rgba(2,32,71,0.04)";
+                e.currentTarget.style.background = "var(--c-hover)";
                 onHover?.({ code: item.stock_code, name: item.stock_name, price: item.price, changeRate: item.change_rate });
               }}
               onMouseLeave={(e) => {
@@ -243,7 +244,7 @@ export default function RankingSection({ onSelect, onHover, onHoverEnd }: Props)
 
               {/* 등락률 */}
               <span className="flex justify-end">
-                <span className={`font-mono tabular text-[12px] font-bold px-2 py-1 rounded-full ${badgeBg}`}>
+                <span className={`font-mono tabular text-[12px] font-bold px-2 py-1 rounded-full ${badgeBg}`} style={badgeStyle}>
                   {flat ? "0.00%" : `${up ? "+" : ""}${item.change_rate.toFixed(2)}%`}
                 </span>
               </span>
