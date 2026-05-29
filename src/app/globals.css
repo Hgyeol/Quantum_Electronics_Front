@@ -1,50 +1,60 @@
 @import "tailwindcss";
 
 @theme {
-  /* ── 배경 & 서피스 (라이트 테마) ─────────────────────── */
-  --color-canvas-dark: #F2F4F6;          /* 페이지 배경 */
-  --color-surface-card-dark: #FFFFFF;    /* 카드 */
-  --color-surface-elevated-dark: #F8F9FA;/* 카드 내 강조 영역 */
+  /* ── 배경 & 서피스 (TDS light) ──────────────────────── */
+  --color-canvas-dark: #f6f7f9;            /* backgroundScreen */
+  --color-surface-card-dark: #ffffff;       /* card / layeredBackground */
+  --color-surface-elevated-dark: #f2f4f6;  /* backgroundLevelB01 */
 
-  --color-canvas-light: #FFFFFF;
-  --color-surface-soft-light: #F2F4F6;
-  --color-surface-strong-light: #EAECEF;
+  --color-canvas-light: #ffffff;
+  --color-surface-soft-light: #f2f4f6;
+  --color-surface-strong-light: #e5e8eb;
 
   /* ── 테두리 ──────────────────────────────────────────── */
-  --color-hairline-on-dark: #E5E8EB;
-  --color-hairline-on-light: #E5E8EB;
-  --color-border-strong: #C8D1DA;
+  --color-hairline-on-dark: #e5e8eb;       /* grey200 */
+  --color-hairline-on-light: #e5e8eb;
+  --color-border-strong: #d1d6db;          /* grey300 */
 
-  /* ── Toss 블루 Primary ───────────────────────────────── */
-  --color-primary: #3182F6;
-  --color-primary-active: #1C6EF2;
-  --color-primary-disabled: #C5D9FC;
-  --color-on-primary: #FFFFFF;
+  /* ── TDS greyOpacity (hover · divider · overlay) ──── */
+  --color-grey-opacity-50: rgba(0, 23, 51, 0.02);
+  --color-grey-opacity-100: rgba(2, 32, 71, 0.05);
+  --color-grey-opacity-200: rgba(0, 27, 55, 0.10);
+  --color-grey-opacity-300: rgba(0, 29, 58, 0.18);
 
-  /* ── 텍스트 ──────────────────────────────────────────── */
-  --color-ink: #191F28;
-  --color-body: #4E5968;
-  --color-body-on-light: #191F28;
-  --color-muted: #8B95A1;
-  --color-muted-strong: #6B7684;
-  --color-on-dark: #191F28;              /* "on-dark" = 이제 어두운 텍스트 */
+  /* ── TDS Blue — Primary ─────────────────────────────── */
+  --color-primary: #3182f6;           /* blue500 */
+  --color-primary-active: #2272eb;    /* blue600 */
+  --color-primary-disabled: #bfdbfe;
+  --color-on-primary: #ffffff;
 
-  /* ── 주가 방향 (한국 관행: 상승=빨강, 하락=파랑) ──── */
-  --color-trading-up: #F04452;
-  --color-trading-down: #1B64DA;
-  --color-info: #3182F6;
-  --color-accent-turquoise: #0DB3A8;
+  /* ── 텍스트 (TDS grey scale) ────────────────────────── */
+  --color-ink: #191f28;               /* grey900 — 최강조 */
+  --color-body: #333d4b;              /* grey800 — 기본 본문 */
+  --color-body-secondary: #4e5968;    /* grey700 */
+  --color-body-on-light: #191f28;
+  --color-muted: #8b95a1;             /* grey500 */
+  --color-muted-strong: #6b7684;      /* grey600 */
+  --color-on-dark: #333d4b;
 
-  /* ── 반경 (Toss: 더 둥근 모서리) ────────────────────── */
+  /* ── 주가 방향 (TDS 한국 관행: 상승=빨강, 하락=파랑) ── */
+  --color-trading-up: #f04452;        /* red500 */
+  --color-trading-down: #3182f6;      /* blue500 (TDS: same as primary) */
+  --color-info: #3182f6;
+  --color-accent-turquoise: #18a5a5;  /* teal500 */
+  --color-green: #03b26c;             /* green500 */
+
+  /* ── 반경 (TDS border-radius scale) ─────────────────── */
   --radius-xs: 4px;
   --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 14px;
-  --radius-xl: 18px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 20px;
   --radius-pill: 9999px;
 
   /* ── 폰트 ────────────────────────────────────────────── */
-  --font-display: var(--font-inter), "Pretendard", "Noto Sans KR", -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-display: "Toss Product Sans", var(--font-inter), "Pretendard", "Noto Sans KR",
+    -apple-system, BlinkMacSystemFont, sans-serif;
   --font-mono: var(--font-jetbrains-mono), "Noto Sans KR", ui-monospace, monospace;
 }
 
@@ -61,7 +71,51 @@ html, body {
   font-variant-numeric: tabular-nums;
 }
 
-/* 카드 그림자 (Toss 스타일) */
+/* TDS card shadow (very subtle) */
 .shadow-card {
-  box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 2px 8px rgba(0,0,0,0.06);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.03), 0 2px 8px rgba(0,29,58,0.06);
 }
+
+/* ── Theme runtime CSS variables ─────────────────────────── */
+:root {
+  --c-border:        rgba(2, 32, 71, 0.06);
+  --c-border-md:     rgba(2, 32, 71, 0.08);
+  --c-border-strong: rgba(2, 32, 71, 0.12);
+  --c-hover:         rgba(2, 32, 71, 0.04);
+  --c-hover-md:      rgba(2, 32, 71, 0.06);
+  --c-hover-lg:      rgba(2, 32, 71, 0.08);
+  --c-bg-subtle:     rgba(2, 32, 71, 0.03);
+  --c-bg-muted:      rgba(2, 32, 71, 0.05);
+  --c-shadow:        rgba(0, 29, 58, 0.12);
+  --c-shadow-lg:     rgba(0, 29, 58, 0.20);
+}
+
+/* ── Dark mode overrides ─────────────────────────────────── */
+html.dark {
+  color-scheme: dark;
+
+  --color-ink:                   #e6edf3;
+  --color-body:                  #c9d1d9;
+  --color-body-secondary:        #8b949e;
+  --color-muted:                 #6e7681;
+  --color-muted-strong:          #8b949e;
+  --color-on-dark:               #c9d1d9;
+  --color-canvas-dark:           #0d1117;
+  --color-surface-card-dark:     #161b22;
+  --color-surface-elevated-dark: #21262d;
+  --color-hairline-on-dark:      rgba(240, 246, 252, 0.10);
+
+  --c-border:        rgba(255, 255, 255, 0.10);
+  --c-border-md:     rgba(255, 255, 255, 0.13);
+  --c-border-strong: rgba(255, 255, 255, 0.20);
+  --c-hover:         rgba(255, 255, 255, 0.05);
+  --c-hover-md:      rgba(255, 255, 255, 0.08);
+  --c-hover-lg:      rgba(255, 255, 255, 0.12);
+  --c-bg-subtle:     rgba(255, 255, 255, 0.04);
+  --c-bg-muted:      rgba(255, 255, 255, 0.07);
+  --c-shadow:        rgba(0, 0, 0, 0.45);
+  --c-shadow-lg:     rgba(0, 0, 0, 0.65);
+}
+
+/* Tailwind literal-color class overrides in dark mode */
+html.dark .bg-white { background-color: var(--color-surface-card-dark) !important; }

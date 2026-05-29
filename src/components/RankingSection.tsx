@@ -19,7 +19,6 @@ const TABS: { id: TabId; label: string }[] = [
   { id: "institution", label: "기관 순매수" },
 ];
 
-// 거래량/거래대금만 15초 폴링, 외국인/기관은 하루 4회 가집계라 폴링 불필요
 const POLL_INTERVAL_MS = 15_000;
 const REALTIME_TABS = new Set<TabId>(["volume", "amount"]);
 
@@ -36,11 +35,20 @@ function formatVolume(n: number): string {
   return `${n.toLocaleString("ko-KR")}주`;
 }
 
-interface Props {
-  onSelect: (code: string, name: string) => void;
+interface HoverPayload {
+  code: string;
+  name: string;
+  price: number;
+  changeRate: number;
 }
 
-export default function RankingSection({ onSelect }: Props) {
+interface Props {
+  onSelect: (code: string, name: string) => void;
+  onHover?: (stock: HoverPayload) => void;
+  onHoverEnd?: () => void;
+}
+
+export default function RankingSection({ onSelect, onHover, onHoverEnd }: Props) {
   const [activeTab, setActiveTab] = useState<TabId>("volume");
   const [items, setItems] = useState<RankItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -77,19 +85,12 @@ export default function RankingSection({ onSelect }: Props) {
     }
   }, []);
 
-  // 탭 변경 시 초기 로드 + 폴링 설정
   useEffect(() => {
     fetchData(activeTab);
-
     if (REALTIME_TABS.has(activeTab)) {
-      timerRef.current = setInterval(() => {
-        fetchData(activeTab, true);
-      }, POLL_INTERVAL_MS);
+      timerRef.current = setInterval(() => fetchData(activeTab, true), POLL_INTERVAL_MS);
     }
-
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
+    return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [activeTab, fetchData]);
 
   function extraLabel(tab: TabId): string {
@@ -106,11 +107,12 @@ export default function RankingSection({ onSelect }: Props) {
   }
 
   return (
-    <section className="bg-surface-card-dark rounded-xl shadow-card overflow-hidden">
+    <section>
+
       {/* 헤더 */}
-      <header className="px-6 pt-4 pb-0 border-b border-hairline-on-dark">
+      <header className="px-5 pt-4 pb-0 bg-white" style={{ borderBottom: "1px solid var(--c-border)" }}>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-semibold text-on-dark">시장 현황</h2>
+          <h2 className="text-[15px] font-bold text-ink">시장 현황</h2>
           <div className="flex items-center gap-2 text-xs">
             {REALTIME_TABS.has(activeTab) && (
               refreshing ? (
@@ -132,17 +134,18 @@ export default function RankingSection({ onSelect }: Props) {
             )}
           </div>
         </div>
-        {/* 탭 */}
-        <div className="flex gap-0">
+
+        {/* 탭 (TDS underline style) */}
+        <div className="flex">
           {TABS.map((tab) => (
             <button
               key={tab.id}
               type="button"
               onClick={() => setActiveTab(tab.id)}
-              className={`px-4 py-2 text-xs font-semibold border-b-2 transition-colors cursor-pointer ${
+              className={`px-4 py-2 text-[13px] transition-colors cursor-pointer border-b-2 ${
                 activeTab === tab.id
-                  ? "border-primary text-primary"
-                  : "border-transparent text-muted hover:text-muted-strong"
+                  ? "border-ink text-ink font-bold"
+                  : "border-transparent text-muted-strong hover:text-body font-medium"
               }`}
             >
               {tab.label}
@@ -151,63 +154,81 @@ export default function RankingSection({ onSelect }: Props) {
         </div>
       </header>
 
-      {/* 컬럼 레이블 */}
-      <div className="grid grid-cols-[2rem_1fr_6rem_5rem_6rem] gap-3 px-6 py-2.5 bg-surface-elevated-dark/60 border-b border-hairline-on-dark">
-        <span className="text-[10px] uppercase tracking-widest text-muted text-center">순위</span>
-        <span className="text-[10px] uppercase tracking-widest text-muted">종목명</span>
-        <span className="text-[10px] uppercase tracking-widest text-muted text-right">현재가</span>
-        <span className="text-[10px] uppercase tracking-widest text-muted text-right">등락률</span>
-        <span className="text-[10px] uppercase tracking-widest text-muted text-right">{extraLabel(activeTab)}</span>
+      {/* 컬럼 헤더 */}
+      <div
+        className="grid grid-cols-[2rem_1fr_5rem_5rem_5.5rem] gap-2 px-5 py-2 text-[10px] text-muted"
+        style={{ background: "var(--c-bg-subtle)" }}
+      >
+        <span className="text-center">#</span>
+        <span>종목명</span>
+        <span className="text-right">현재가</span>
+        <span className="text-right">등락률</span>
+        <span className="text-right">{extraLabel(activeTab)}</span>
       </div>
 
       {/* 목록 */}
       <ul>
-        {loading && (
-          Array.from({ length: 10 }).map((_, i) => (
-            <li key={i} className="grid grid-cols-[2rem_1fr_6rem_5rem_6rem] gap-3 px-6 py-3 border-t border-hairline-on-dark first:border-t-0 animate-pulse">
-              <span className="w-4 h-3 rounded bg-surface-elevated-dark mx-auto" />
-              <span className="flex items-center gap-2">
-                <span className="w-20 h-3 rounded bg-surface-elevated-dark" />
+        {loading && Array.from({ length: 10 }).map((_, i) => (
+          <li
+            key={i}
+            className="grid grid-cols-[2rem_1fr_5rem_5rem_5.5rem] gap-2 px-5 py-3.5 animate-pulse"
+            style={{ borderTop: i > 0 ? "1px solid var(--c-border)" : undefined }}
+          >
+            <span className="w-4 h-3 rounded mx-auto mt-1" style={{ background: "var(--c-border)" }} />
+            <span className="flex items-center gap-2.5">
+              <span className="w-8 h-8 rounded-xl shrink-0" style={{ background: "var(--c-border)" }} />
+              <span className="flex-1 space-y-1.5">
+                <span className="block w-20 h-3 rounded" style={{ background: "var(--c-border)" }} />
+                <span className="block w-12 h-2 rounded" style={{ background: "var(--c-hover)" }} />
               </span>
-              <span className="w-14 h-3 rounded bg-surface-elevated-dark ml-auto" />
-              <span className="w-12 h-5 rounded-lg bg-surface-elevated-dark ml-auto" />
-              <span className="w-12 h-3 rounded bg-surface-elevated-dark ml-auto" />
-            </li>
-          ))
-        )}
+            </span>
+            <span className="w-14 h-3 rounded ml-auto mt-2" style={{ background: "var(--c-border)" }} />
+            <span className="w-12 h-5 rounded-full ml-auto mt-1" style={{ background: "var(--c-border)" }} />
+            <span className="w-12 h-3 rounded ml-auto mt-2" style={{ background: "var(--c-border)" }} />
+          </li>
+        ))}
 
         {error && !loading && (
-          <li className="px-6 py-8 text-center text-sm text-muted">{error}</li>
+          <li className="px-5 py-8 text-center text-sm text-muted">{error}</li>
         )}
 
-        {!loading && !error && items.map((item) => {
+        {!loading && !error && items.map((item, idx) => {
           const up = item.change_rate > 0;
           const flat = item.change_rate === 0;
           const badgeBg = flat
-            ? "bg-surface-elevated-dark text-muted"
+            ? "text-muted"
             : up
               ? "bg-trading-up/10 text-trading-up"
               : "bg-trading-down/10 text-trading-down";
-          const glyph = flat ? "" : up ? "▲" : "▼";
+          const badgeStyle = flat ? { background: "var(--c-bg-muted)" } : {};
 
           return (
             <li
               key={item.stock_code}
               onClick={() => onSelect(item.stock_code, item.stock_name)}
-              className="grid grid-cols-[2rem_1fr_6rem_5rem_6rem] gap-3 items-center px-6 py-3 border-t border-hairline-on-dark first:border-t-0 hover:bg-canvas-dark cursor-pointer transition-colors"
+              className="grid grid-cols-[2rem_1fr_5rem_5rem_5.5rem] gap-2 items-center px-5 py-3 cursor-pointer transition-colors"
+              style={{ borderTop: idx > 0 ? "1px solid var(--c-border)" : undefined }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = "var(--c-hover)";
+                onHover?.({ code: item.stock_code, name: item.stock_name, price: item.price, changeRate: item.change_rate });
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = "";
+                onHoverEnd?.();
+              }}
             >
               {/* 순위 */}
-              <span className={`text-xs font-mono font-bold text-center select-none ${
+              <span className={`text-[13px] font-bold text-center select-none tabular font-mono ${
                 item.rank <= 3 ? "text-primary" : "text-muted"
               }`}>
                 {item.rank}
               </span>
 
               {/* 종목명 */}
-              <span className="flex items-center gap-2.5 min-w-0">
-                <StockLogo code={item.stock_code} name={item.stock_name} size={32} />
-                <span className="min-w-0">
-                  <span className="block text-sm font-semibold text-on-dark truncate leading-tight">
+              <span className="flex items-center gap-2 min-w-0">
+                <StockLogo code={item.stock_code} name={item.stock_name} size={34} />
+                <span className="min-w-0 flex-1">
+                  <span className="block text-[14px] font-semibold text-ink truncate leading-tight">
                     {item.stock_name || item.stock_code}
                   </span>
                   <span className="block text-[11px] text-muted font-mono">{item.stock_code}</span>
@@ -215,21 +236,21 @@ export default function RankingSection({ onSelect }: Props) {
               </span>
 
               {/* 현재가 */}
-              <span className="text-right font-mono text-sm font-semibold text-on-dark tabular">
-                {item.price.toLocaleString("ko-KR")}
-                <span className="text-[10px] text-muted font-normal ml-0.5">원</span>
+              <span className="text-right whitespace-nowrap">
+                <span className="font-mono text-[13px] font-semibold text-ink tabular">
+                  {item.price.toLocaleString("ko-KR")}<span className="text-[10px] text-muted font-normal ml-0.5">원</span>
+                </span>
               </span>
 
               {/* 등락률 */}
               <span className="flex justify-end">
-                <span className={`inline-flex items-center gap-0.5 font-mono tabular text-xs font-semibold px-2 py-1 rounded-lg ${badgeBg}`}>
-                  {glyph && <span className="text-[9px]">{glyph}</span>}
-                  {flat ? "0.00%" : `${Math.abs(item.change_rate).toFixed(2)}%`}
+                <span className={`font-mono tabular text-[12px] font-bold px-2 py-1 rounded-full ${badgeBg}`} style={badgeStyle}>
+                  {flat ? "0.00%" : `${up ? "+" : ""}${item.change_rate.toFixed(2)}%`}
                 </span>
               </span>
 
               {/* 거래량/거래대금/순매수 */}
-              <span className="text-right font-mono text-xs text-muted-strong tabular">
+              <span className="text-right font-mono text-[12px] text-muted tabular">
                 {extraValue(item, activeTab)}
               </span>
             </li>

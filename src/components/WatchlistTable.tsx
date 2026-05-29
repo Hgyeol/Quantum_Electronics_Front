@@ -17,11 +17,20 @@ const SORT_TABS: { id: SortType; label: string }[] = [
 const WS_BASE = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000")
   .replace(/^http/, "ws");
 
+interface HoverPayload {
+  code: string;
+  name: string;
+  price: number;
+  changeRate: number;
+}
+
 interface Props {
   codes: string[];
   onSelect: (code: string, name?: string | null) => void;
   onRemove: (code: string) => void;
   activeCode?: string | null;
+  onHover?: (stock: HoverPayload) => void;
+  onHoverEnd?: () => void;
 }
 
 function formatTradeValue(tradeValue: number): string {
@@ -52,6 +61,8 @@ export default function WatchlistTable({
   onSelect,
   onRemove,
   activeCode,
+  onHover,
+  onHoverEnd,
 }: Props) {
   const [items, setItems] = useState<WatchlistItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -170,11 +181,11 @@ export default function WatchlistTable({
   if (codes.length === 0) return null;
 
   return (
-    <section className="bg-surface-card-dark rounded-xl shadow-card overflow-hidden">
+    <section>
       {/* Header */}
-      <header className="px-6 pt-4 pb-0 border-b border-hairline-on-dark">
+      <header className="px-5 pt-4 pb-0 bg-white" style={{ borderBottom: "1px solid var(--c-border)" }}>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-semibold text-on-dark">관심종목</h2>
+          <h2 className="text-[15px] font-bold text-ink">관심종목</h2>
           <div className="flex items-center gap-2">
             <span className="text-xs text-muted font-mono">{codes.length}개 종목</span>
             {wsConnected ? (
@@ -187,17 +198,17 @@ export default function WatchlistTable({
             )}
           </div>
         </div>
-        {/* 정렬 탭 */}
+        {/* 정렬 탭 (TDS underline) */}
         <div className="flex gap-0">
           {SORT_TABS.map((tab) => (
             <button
               key={tab.id}
               type="button"
               onClick={() => setSortBy(tab.id)}
-              className={`px-3 py-2 text-xs font-semibold border-b-2 transition-colors cursor-pointer ${
+              className={`px-4 py-2 text-[13px] transition-colors cursor-pointer border-b-2 ${
                 sortBy === tab.id
-                  ? "border-primary text-primary"
-                  : "border-transparent text-muted hover:text-muted-strong"
+                  ? "border-ink text-ink font-bold"
+                  : "border-transparent text-muted-strong hover:text-body font-medium"
               }`}
             >
               {tab.label}
@@ -210,12 +221,12 @@ export default function WatchlistTable({
       </header>
 
       {/* Column labels */}
-      <div className="grid grid-cols-[2.5rem_1fr_6.5rem_6rem_5.5rem_2rem] gap-4 px-6 py-2.5 border-b border-hairline-on-dark bg-surface-elevated-dark/60">
-        <span className="text-[10px] uppercase tracking-widest text-muted text-center">순위</span>
-        <span className="text-[10px] uppercase tracking-widest text-muted">종목명</span>
-        <span className="text-[10px] uppercase tracking-widest text-muted text-right">현재가</span>
-        <span className="text-[10px] uppercase tracking-widest text-muted text-right">등락률</span>
-        <span className="text-[10px] uppercase tracking-widest text-muted text-right">
+      <div className="grid grid-cols-[2.5rem_1fr_6.5rem_6rem_5.5rem_2rem] gap-3 px-5 py-2 text-[10px] text-muted" style={{ background: "var(--c-bg-subtle)" }}>
+        <span className="text-center">순위</span>
+        <span>종목명</span>
+        <span className="text-right">현재가</span>
+        <span className="text-right">등락률</span>
+        <span className="text-right">
           {sortBy === "volume" ? "거래량" : sortBy === "foreign" ? "외국인순매수" : sortBy === "institution" ? "기관순매수" : "거래대금"}
         </span>
         <span />
@@ -230,23 +241,32 @@ export default function WatchlistTable({
               const up = item ? item.change_rate > 0 : null;
               const flat = item ? item.change_rate === 0 : null;
 
-              /* 등락률 뱃지 */
               const badgeBg = flat
-                ? "bg-surface-elevated-dark text-muted"
+                ? "text-muted"
                 : up
                   ? "bg-trading-up/10 text-trading-up"
                   : "bg-trading-down/10 text-trading-down";
-              const glyph = flat ? "" : up ? "▲" : "▼";
+              const badgeStyle = flat ? { background: "var(--c-bg-muted)" } : {};
 
               return (
                 <li
                   key={code}
-                  className={`border-t border-hairline-on-dark first:border-t-0 group ${
-                    isActive ? "bg-primary/[0.04]" : ""
-                  }`}
+                  className="group"
+                  style={{
+                    borderTop: idx > 0 ? "1px solid var(--c-border)" : undefined,
+                    background: isActive ? "rgba(49,130,246,0.06)" : undefined,
+                  }}
                 >
                   <div
-                    className="grid grid-cols-[2.5rem_1fr_6.5rem_6rem_5.5rem_2rem] gap-4 items-center px-6 py-4 hover:bg-canvas-dark transition-colors cursor-pointer"
+                    className="grid grid-cols-[2.5rem_1fr_6.5rem_6rem_5.5rem_2rem] gap-3 items-center px-5 py-3 cursor-pointer transition-colors"
+                    onMouseEnter={(e) => {
+                      if (!isActive) e.currentTarget.style.background = "var(--c-hover)";
+                      if (item) onHover?.({ code, name: item.stock_name ?? code, price: item.price, changeRate: item.change_rate });
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = "";
+                      onHoverEnd?.();
+                    }}
                     onClick={() => onSelect(code, item?.stock_name)}
                   >
                     {/* 순위 */}
@@ -272,13 +292,12 @@ export default function WatchlistTable({
                     </span>
 
                     {/* 현재가 */}
-                    <span className="text-right">
+                    <span className="text-right whitespace-nowrap">
                       {loading && !fetched ? (
-                        <span className="inline-block w-16 h-3.5 rounded bg-surface-elevated-dark animate-pulse" />
+                        <span className="inline-block w-16 h-3 rounded animate-pulse" style={{ background: "var(--c-border)" }} />
                       ) : item ? (
-                        <span className="font-mono tabular text-[15px] font-semibold text-on-dark">
-                          {item.price.toLocaleString("ko-KR")}
-                          <span className="text-[11px] text-muted font-normal ml-0.5">원</span>
+                        <span className="font-mono tabular text-[13px] font-semibold text-ink">
+                          {item.price.toLocaleString("ko-KR")}<span className="text-[10px] text-muted font-normal ml-0.5">원</span>
                         </span>
                       ) : (
                         <span className="font-mono text-sm text-muted">—</span>
@@ -288,25 +307,22 @@ export default function WatchlistTable({
                     {/* 등락률 뱃지 */}
                     <span className="flex justify-end">
                       {loading && !fetched ? (
-                        <span className="inline-block w-14 h-7 rounded-lg bg-surface-elevated-dark animate-pulse" />
+                        <span className="inline-block w-14 h-6 rounded-full animate-pulse" style={{ background: "var(--c-border)" }} />
                       ) : item ? (
-                        <span
-                          className={`inline-flex items-center gap-0.5 font-mono tabular text-sm font-semibold px-2.5 py-1 rounded-lg ${badgeBg}`}
-                        >
-                          {glyph && <span className="text-[10px]">{glyph}</span>}
-                          {flat ? "0.00%" : `${Math.abs(item.change_rate).toFixed(2)}%`}
+                        <span className={`font-mono tabular text-[12px] font-bold px-2 py-1 rounded-full ${badgeBg}`} style={badgeStyle}>
+                          {flat ? "0.00%" : `${up ? "+" : ""}${item.change_rate.toFixed(2)}%`}
                         </span>
                       ) : (
-                        <span className="font-mono text-sm text-muted px-2.5 py-1">—</span>
+                        <span className="font-mono text-sm text-muted px-2 py-1">—</span>
                       )}
                     </span>
 
                     {/* 거래량/거래대금/순매수 */}
                     <span className="text-right">
                       {loading && !fetched ? (
-                        <span className="inline-block w-12 h-3 rounded bg-surface-elevated-dark animate-pulse" />
+                        <span className="inline-block w-12 h-3 rounded animate-pulse" style={{ background: "var(--c-border)" }} />
                       ) : item ? (
-                        <span className="font-mono tabular text-sm text-muted-strong">
+                        <span className="font-mono tabular text-[12px] text-muted-strong">
                           {sortBy === "volume"
                             ? `${Math.round(item.volume / 1e4)}만주`
                             : sortBy === "foreign" || sortBy === "institution"

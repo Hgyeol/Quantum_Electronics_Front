@@ -175,9 +175,10 @@ interface Props {
   onNameResolved?: (name: string) => void;
   onBarHover?: (bar: OHLCVBar | null) => void;
   onBarClick?: (bar: OHLCVBar | null) => void;
+  chartOnly?: boolean;
 }
 
-export default function ChartAnalysisCard({ stockCode, stockName, onNameResolved, onBarHover, onBarClick }: Props) {
+export default function ChartAnalysisCard({ stockCode, stockName, onNameResolved, onBarHover, onBarClick, chartOnly }: Props) {
   const [data, setData] = useState<ChartAnalysis | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -196,27 +197,54 @@ export default function ChartAnalysisCard({ stockCode, stockName, onNameResolved
       .finally(() => setLoading(false));
   }, [stockCode]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  if (chartOnly) {
+    return (
+      <section className="space-y-0">
+        {loading && (
+          <div className="flex items-center justify-center gap-2 py-12 text-muted text-sm">
+            <span className="w-4 h-4 border-2 border-muted border-t-primary rounded-full animate-spin" />
+            차트 불러오는 중…
+          </div>
+        )}
+        {error && !loading && (
+          <p className="text-trading-down text-sm py-4 px-5">{error}</p>
+        )}
+        {data && !loading && (
+          <StockPriceChart
+            ohlcv={data.ohlcv}
+            supports={[]}
+            resistances={[]}
+            currentPrice={data.current_price}
+            onBarHover={onBarHover}
+            onBarClick={onBarClick}
+            defaultPeriod="3M"
+            minimal
+          />
+        )}
+      </section>
+    );
+  }
+
   return (
-    <section className="rounded-xl bg-surface-card-dark border border-hairline-on-dark shadow-card p-6 space-y-6">
-      <header className="flex items-baseline justify-between">
-        <h2 className="text-sm uppercase tracking-widest text-muted">Chart Analysis</h2>
-        <span className="text-xs text-muted-strong">저점 · 고점 · 진입·이탈 시점</span>
+    <section className="space-y-0">
+      <header className="flex items-baseline justify-between px-5 pt-5 pb-0">
+        <h2 className="text-[11px] uppercase tracking-widest text-muted font-semibold">Chart Analysis</h2>
+        <span className="text-[11px] text-muted">저점 · 고점 · 진입·이탈 시점</span>
       </header>
 
       {loading && (
-        <div className="flex items-center justify-center gap-2 py-12 text-muted-strong text-sm">
+        <div className="flex items-center justify-center gap-2 py-16 text-muted text-sm px-5">
           <span className="w-4 h-4 border-2 border-muted border-t-primary rounded-full animate-spin" />
           차트 분석 중…
         </div>
       )}
 
       {error && !loading && (
-        <p className="text-trading-down text-sm py-4">{error}</p>
+        <p className="text-trading-down text-sm py-4 px-5">{error}</p>
       )}
 
       {data && !loading && (
-        <div className="space-y-6">
-          {/* 1. 실제 가격 차트 */}
+        <div className="space-y-0">
           <StockPriceChart
             ohlcv={data.ohlcv}
             supports={data.support_levels}
@@ -226,13 +254,15 @@ export default function ChartAnalysisCard({ stockCode, stockName, onNameResolved
             onBarClick={onBarClick}
           />
 
-          {/* 2. 매수/매도 신호 요약 */}
-          <SignalSummary data={data} />
+          <div className="px-5 pt-4 pb-1">
+            <SignalSummary data={data} />
+          </div>
 
-          {/* 3. 지지/저항 레벨 목록 */}
-          <LevelsTable data={data} />
+          <div className="px-5 pb-4">
+            <LevelsTable data={data} />
+          </div>
 
-          <p className="text-xs text-muted border-t border-hairline-on-dark pt-3">
+          <p className="text-[11px] text-muted px-5 pb-5 pt-3" style={{ borderTop: "1px solid var(--c-border)" }}>
             {data.disclaimer}
           </p>
         </div>
