@@ -36,11 +36,20 @@ function formatVolume(n: number): string {
   return `${n.toLocaleString("ko-KR")}주`;
 }
 
-interface Props {
-  onSelect: (code: string, name: string) => void;
+interface HoverPayload {
+  code: string;
+  name: string;
+  price: number;
+  changeRate: number;
 }
 
-export default function ScreenerSection({ onSelect }: Props) {
+interface Props {
+  onSelect: (code: string, name: string) => void;
+  onHover?: (stock: HoverPayload) => void;
+  onHoverEnd?: () => void;
+}
+
+export default function ScreenerSection({ onSelect, onHover, onHoverEnd }: Props) {
   const [selected, setSelected] = useState<Set<ScreenerCondition>>(new Set(["volume_surge"]));
   const [volumeThreshold, setVolumeThreshold] = useState(2.0);
   const [consecutiveDays, setConsecutiveDays] = useState(3);
@@ -217,7 +226,15 @@ export default function ScreenerSection({ onSelect }: Props) {
               <li
                 key={item.stock_code}
                 onClick={() => onSelect(item.stock_code, item.stock_name)}
-                className="grid grid-cols-[1fr_6rem_5rem_5rem_10rem] gap-3 items-center px-6 py-3 border-t border-hairline-on-dark first:border-t-0 hover:bg-canvas-dark cursor-pointer transition-colors"
+                className="grid grid-cols-[1fr_6rem_5rem_5rem_10rem] gap-3 items-center px-6 py-3 border-t border-hairline-on-dark first:border-t-0 cursor-pointer transition-colors"
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "var(--c-hover)";
+                  onHover?.({ code: item.stock_code, name: item.stock_name, price: item.close, changeRate: 0 });
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "";
+                  onHoverEnd?.();
+                }}
               >
                 <span className="flex items-center gap-2.5 min-w-0">
                   <StockLogo code={item.stock_code} name={item.stock_name} size={32} />

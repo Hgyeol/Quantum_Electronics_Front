@@ -507,7 +507,13 @@ export default function Home() {
                   onHoverEnd={() => setHoveredStock(null)}
                 />
               )}
-              {homeTab === 2 && <ScreenerSection onSelect={handleSelectStock} />}
+              {homeTab === 2 && (
+                <ScreenerSection
+                  onSelect={handleSelectStock}
+                  onHover={setHoveredStock}
+                  onHoverEnd={() => setHoveredStock(null)}
+                />
+              )}
             </div>
 
             {/* 우측 프리뷰 패널 */}
