@@ -22,6 +22,22 @@ const TABS: { id: TabId; label: string }[] = [
 const POLL_INTERVAL_MS = 15_000;
 const REALTIME_TABS = new Set<TabId>(["volume", "amount"]);
 
+function kstMinutes(): number {
+  const now = new Date();
+  return ((now.getUTCHours() + 9) * 60 + now.getUTCMinutes()) % (24 * 60);
+}
+
+function isTabAvailable(tab: TabId): boolean {
+  if (tab === "foreign")     return kstMinutes() >= 9 * 60 + 30;   // 09:30 KST
+  if (tab === "institution") return kstMinutes() >= 10 * 60;        // 10:00 KST
+  return true;
+}
+
+const NOT_YET: Record<string, string> = {
+  foreign:     "외국인 순매수는 오전 9:30부터 첫 집계가 시작됩니다.",
+  institution: "기관 순매수는 오전 10:00부터 첫 집계가 시작됩니다.",
+};
+
 function formatNumber(n: number): string {
   if (n >= 1e12) return `${Math.floor(n / 1e11) / 10}조`;
   if (n >= 1e8) return `${Math.floor(n / 1e8)}억`;
@@ -59,6 +75,12 @@ export default function RankingSection({ onSelect, onHover, onHoverEnd }: Props)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const fetchData = useCallback(async (tab: TabId, isRefresh = false) => {
+    if (!isTabAvailable(tab)) {
+      setItems([]);
+      setLoading(false);
+      setRefreshing(false);
+      return;
+    }
     if (isRefresh) {
       setRefreshing(true);
     } else {
@@ -187,6 +209,13 @@ export default function RankingSection({ onSelect, onHover, onHoverEnd }: Props)
             <span className="w-12 h-3 rounded ml-auto mt-2" style={{ background: "var(--c-border)" }} />
           </li>
         ))}
+
+        {!loading && !isTabAvailable(activeTab) && (
+          <li className="px-5 py-10 text-center">
+            <p className="text-[13px] font-semibold text-ink mb-1">아직 집계 전이에요</p>
+            <p className="text-xs text-muted">{NOT_YET[activeTab]}</p>
+          </li>
+        )}
 
         {error && !loading && (
           <li className="px-5 py-8 text-center text-sm text-muted">{error}</li>

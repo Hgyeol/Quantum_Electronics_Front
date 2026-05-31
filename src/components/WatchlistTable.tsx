@@ -17,6 +17,22 @@ const SORT_TABS: { id: SortType; label: string }[] = [
 const WS_BASE = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000")
   .replace(/^http/, "ws");
 
+function kstMinutes(): number {
+  const now = new Date();
+  return ((now.getUTCHours() + 9) * 60 + now.getUTCMinutes()) % (24 * 60);
+}
+
+function isSortAvailable(sort: SortType): boolean {
+  if (sort === "foreign")     return kstMinutes() >= 9 * 60 + 30;
+  if (sort === "institution") return kstMinutes() >= 10 * 60;
+  return true;
+}
+
+const SORT_NOT_YET: Partial<Record<SortType, string>> = {
+  foreign:     "외국인 순매수는 오전 9:30부터 집계됩니다.",
+  institution: "기관 순매수는 오전 10:00부터 집계됩니다.",
+};
+
 interface HoverPayload {
   code: string;
   name: string;
@@ -78,6 +94,7 @@ export default function WatchlistTable({
   // 외국인/기관 정렬 선택 시 랭킹 데이터 조회
   useEffect(() => {
     if (sortBy !== "foreign" && sortBy !== "institution") { setExtraMap(new Map()); return; }
+    if (!isSortAvailable(sortBy)) { setExtraMap(new Map()); return; }
     setExtraLoading(true);
     const fetchFn = sortBy === "foreign"
       ? fetchForeignRanking("foreign", 100)
@@ -231,6 +248,12 @@ export default function WatchlistTable({
         </span>
         <span />
       </div>
+
+      {!isSortAvailable(sortBy) && SORT_NOT_YET[sortBy] && (
+        <div className="mx-5 my-3 px-4 py-3 rounded-lg text-xs text-muted-strong" style={{ background: "var(--c-bg-muted)" }}>
+          ⏰ {SORT_NOT_YET[sortBy]}
+        </div>
+      )}
 
       <ul>
         {loading && items.length === 0
