@@ -38,14 +38,14 @@ export default function CenturyToggle() {
       }}
     >
       {isOld ? (
-        <span style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1 }}>
-          <span style={{ fontSize: 9 }}>일반</span>
-          <span style={{ fontSize: 13 }}>🖥</span>
+        <span style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 0, lineHeight: 1.2 }}>
+          <span style={{ fontSize: 14 }}>🖥</span>
+          <span style={{ fontSize: 8, letterSpacing: 0 }}>일반</span>
         </span>
       ) : (
-        <span style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1 }}>
-          <span style={{ fontSize: 9 }}>큰글씨</span>
-          <span style={{ fontSize: 13 }}>🔎</span>
+        <span style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 0, lineHeight: 1.2 }}>
+          <span style={{ fontSize: 14 }}>🔎</span>
+          <span style={{ fontSize: 8, letterSpacing: 0 }}>큰글씨</span>
         </span>
       )}
     </button>
