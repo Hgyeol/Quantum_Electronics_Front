@@ -444,7 +444,15 @@ export async function fetchTechnicalIndicators({
 
 // ── Screener ─────────────────────────────────────────────────────────────────
 
-export type ScreenerCondition = "volume_surge" | "golden_cross" | "frgn_buy" | "orgn_buy" | "price_surge";
+export type ScreenerCondition =
+  | "volume_surge"
+  | "golden_cross"
+  | "frgn_buy"
+  | "orgn_buy"
+  | "price_surge"
+  | "volume_power"
+  | "near_high"
+  | "upper_limit";
 
 export interface ScreenerResultItem {
   stock_code: string;

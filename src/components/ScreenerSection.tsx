@@ -10,12 +10,15 @@ import {
 } from "@/lib/api";
 import StockLogo from "@/components/StockLogo";
 
-const CONDITIONS: { id: ScreenerCondition; label: string; desc: string }[] = [
+const CONDITIONS: { id: ScreenerCondition; label: string; desc: string; live?: boolean }[] = [
   { id: "volume_surge",  label: "거래량 급등",          desc: "오늘 거래량 > N배 × 20일 평균" },
   { id: "golden_cross",  label: "골든크로스 (5/20일)",   desc: "MA5가 MA20을 상향 돌파" },
   { id: "frgn_buy",      label: "외국인 연속 순매수",    desc: "최근 N일 연속 외국인 순매수" },
   { id: "orgn_buy",      label: "기관 연속 순매수",      desc: "최근 N일 연속 기관 순매수" },
   { id: "price_surge",   label: "급등주",               desc: "당일 등락률 > N% 이상" },
+  { id: "volume_power",  label: "체결강도 상위",         desc: "실시간 체결강도 상위 50종목", live: true },
+  { id: "near_high",     label: "신고가 근접",           desc: "52주 신고가 10% 이내 근접", live: true },
+  { id: "upper_limit",   label: "상한가 포착",           desc: "당일 상한가(+30%) 도달 종목", live: true },
 ];
 
 type SortType = "volume" | "amount";
@@ -141,9 +144,16 @@ export default function ScreenerSection({ onSelect, onHover, onHoverEnd }: Props
                   onChange={() => toggleCondition(c.id)}
                   className="mt-0.5 accent-primary shrink-0"
                 />
-                <span>
-                  <span className={`block text-xs font-semibold ${checked ? "text-primary" : "text-muted-strong"}`}>
-                    {c.label}
+                <span className="min-w-0">
+                  <span className="flex items-center gap-1.5">
+                    <span className={`text-xs font-semibold ${checked ? "text-primary" : "text-muted-strong"}`}>
+                      {c.label}
+                    </span>
+                    {c.live && (
+                      <span className="text-[9px] font-bold px-1 py-0.5 rounded bg-trading-up/15 text-trading-up leading-none">
+                        실시간
+                      </span>
+                    )}
                   </span>
                   <span className="block text-[11px] text-muted mt-0.5">{c.desc}</span>
                 </span>
