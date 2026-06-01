@@ -84,10 +84,12 @@ export default function WatchlistTable({
   const [loading, setLoading] = useState(false);
   const [fetched, setFetched] = useState(false);
   const [wsConnected, setWsConnected] = useState(false);
+  const [wsDisconnected, setWsDisconnected] = useState(false);
   const [sortBy, setSortBy] = useState<SortType>("default");
   const [extraMap, setExtraMap] = useState<Map<string, number>>(new Map());
   const [extraLoading, setExtraLoading] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
+  const [wsRetryKey, setWsRetryKey] = useState(0);
 
   const codesKey = codes.join(",");
 
@@ -151,11 +153,15 @@ export default function WatchlistTable({
       ws = new WebSocket(`${WS_BASE}/ws/watchlist?codes=${codesKey}`);
       wsRef.current = ws;
 
-      ws.onopen = () => { wsOk = true; setWsConnected(true); };
+      ws.onopen = () => { wsOk = true; setWsConnected(true); setWsDisconnected(false); };
 
       ws.onclose = () => {
         setWsConnected(false);
-        if (!wsOk) startPolling(); // WebSocket이 연결조차 안 됐으면 폴링
+        if (wsOk) {
+          setWsDisconnected(true); // 연결됐다가 끊긴 경우
+        } else {
+          startPolling(); // 연결 자체를 못 한 경우 폴링
+        }
       };
 
       ws.onerror = () => {
@@ -193,7 +199,7 @@ export default function WatchlistTable({
       setWsConnected(false);
       if (pollTimer) clearInterval(pollTimer);
     };
-  }, [codesKey]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [codesKey, wsRetryKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (codes.length === 0) return null;
 
@@ -209,6 +215,18 @@ export default function WatchlistTable({
               <span className="flex items-center gap-1 text-xs text-trading-up font-semibold">
                 <span className="w-1.5 h-1.5 rounded-full bg-trading-up animate-pulse inline-block" />
                 실시간
+              </span>
+            ) : wsDisconnected ? (
+              <span className="flex items-center gap-1.5">
+                <span className="text-xs text-trading-down font-semibold">실시간 연결 끊김</span>
+                <button
+                  type="button"
+                  onClick={() => { setWsRetryKey((k) => k + 1); setWsDisconnected(false); }}
+                  className="text-[11px] px-2 py-0.5 rounded-md font-semibold cursor-pointer transition-colors text-primary"
+                  style={{ border: "1px solid currentColor" }}
+                >
+                  재연결
+                </button>
               </span>
             ) : (
               <span className="text-xs text-muted">장중 기준</span>
