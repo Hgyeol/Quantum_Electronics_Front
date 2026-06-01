@@ -22,7 +22,7 @@ const TABS: { id: TabId; label: string }[] = [
 ];
 
 const POLL_INTERVAL_MS = 15_000;
-const REALTIME_TABS = new Set<TabId>(["volume", "amount"]);
+const REALTIME_TABS = new Set<TabId>(["volume", "amount", "gainer"]);
 
 function kstMinutes(): number {
   const now = new Date();
@@ -225,6 +225,13 @@ export default function RankingSection({ onSelect, onHover, onHoverEnd }: Props)
 
         {error && !loading && (
           <li className="px-5 py-8 text-center text-sm text-muted">{error}</li>
+        )}
+
+        {!loading && !error && isTabAvailable(activeTab) && items.length === 0 && (
+          <li className="px-5 py-10 text-center">
+            <p className="text-[13px] font-semibold text-ink mb-1">데이터가 없습니다</p>
+            <p className="text-xs text-muted">장 마감 후에는 데이터가 제공되지 않을 수 있습니다.</p>
+          </li>
         )}
 
         {!loading && !error && items.map((item, idx) => {
