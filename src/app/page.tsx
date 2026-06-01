@@ -22,6 +22,7 @@ import ScreenerSection from "@/components/ScreenerSection";
 import StockLogo from "@/components/StockLogo";
 import StockSearchBox from "@/components/StockSearchBox";
 import ThemeToggle from "@/components/ThemeToggle";
+import CenturyToggle from "@/components/CenturyToggle";
 
 const WS_BASE = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000").replace(/^http/, "ws");
 
@@ -458,7 +459,7 @@ export default function Home() {
             style={{ borderBottom: "1px solid var(--c-border)" }}
           >
             <span className="text-[15px] font-bold text-ink">{HOME_TABS[homeTab]}</span>
-            <div className="absolute right-[440px]">
+            <div className="absolute" style={{ left: "calc(50vw - 72px)", transform: "translateX(-50%)" }}>
               <StockSearchBox onSelect={handleSelectStock} />
             </div>
           </header>
@@ -574,6 +575,7 @@ export default function Home() {
 
       )}
 
+      <CenturyToggle />
       <ThemeToggle />
     </div>
   );

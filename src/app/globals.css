@@ -119,3 +119,192 @@ html.dark {
 
 /* Tailwind literal-color class overrides in dark mode */
 html.dark .bg-white { background-color: var(--color-surface-card-dark) !important; }
+
+/* ── 50대 친화 모드 (큰 글자·고대비·넉넉한 여백) ─────────── */
+html.century-old {
+  color-scheme: light;
+
+  /* 배경: 눈 편한 따뜻한 흰색 */
+  --color-canvas-dark:           #f7f6f3;
+  --color-surface-card-dark:     #ffffff;
+  --color-surface-elevated-dark: #eeece8;
+
+  /* 텍스트: 최고 대비 — 순수 검정에 가깝게 */
+  --color-ink:              #111111;
+  --color-body:             #1e1e1e;
+  --color-body-secondary:   #333333;
+  --color-muted:            #666666;
+  --color-muted-strong:     #444444;
+  --color-on-dark:          #1e1e1e;
+  --color-hairline-on-dark: rgba(0, 0, 0, 0.18);
+
+  /* 테두리: 뚜렷하게 */
+  --c-border:        rgba(0, 0, 0, 0.14);
+  --c-border-md:     rgba(0, 0, 0, 0.22);
+  --c-border-strong: rgba(0, 0, 0, 0.40);
+  --c-hover:         rgba(0, 0, 0, 0.05);
+  --c-hover-md:      rgba(0, 0, 0, 0.09);
+  --c-hover-lg:      rgba(0, 0, 0, 0.13);
+  --c-bg-subtle:     rgba(0, 0, 0, 0.03);
+  --c-bg-muted:      rgba(0, 0, 0, 0.06);
+  --c-shadow:        rgba(0, 0, 0, 0.18);
+  --c-shadow-lg:     rgba(0, 0, 0, 0.30);
+
+  /* 주색: 선명한 파랑 (충분한 대비) */
+  --color-primary:         #1158d4;
+  --color-primary-active:  #0d48b5;
+  --color-trading-up:      #d40f1f;
+  --color-trading-down:    #1158d4;
+}
+
+/* 기본 폰트: 시스템 산세리프 유지, 크기만 키움 */
+html.century-old,
+html.century-old body {
+  font-size: 18px;
+  line-height: 1.85;
+  letter-spacing: 0.01em;
+  -webkit-font-smoothing: auto;
+}
+
+/* ── 폰트 크기 전체 상향 (+4~6px) ── */
+html.century-old [class*="text-[10px]"] { font-size: 15px !important; }
+html.century-old [class*="text-[11px]"] { font-size: 15px !important; }
+html.century-old [class*="text-[12px]"] { font-size: 16px !important; }
+html.century-old [class*="text-[13px]"] { font-size: 18px !important; }
+html.century-old [class*="text-[14px]"] { font-size: 19px !important; }
+html.century-old [class*="text-[15px]"] { font-size: 20px !important; }
+html.century-old [class*="text-[16px]"] { font-size: 21px !important; }
+html.century-old [class*="text-[17px]"] { font-size: 22px !important; }
+html.century-old [class*="text-[18px]"] { font-size: 23px !important; }
+html.century-old [class*="text-[20px]"] { font-size: 26px !important; }
+html.century-old [class*="text-[22px]"] { font-size: 28px !important; }
+html.century-old [class*="text-[24px]"] { font-size: 30px !important; }
+html.century-old [class*="text-[28px]"] { font-size: 34px !important; }
+html.century-old [class*="text-[32px]"] { font-size: 38px !important; }
+html.century-old .text-xs   { font-size: 15px !important; }
+html.century-old .text-sm   { font-size: 17px !important; }
+html.century-old .text-base { font-size: 19px !important; }
+html.century-old .text-lg   { font-size: 21px !important; }
+html.century-old .text-xl   { font-size: 24px !important; }
+html.century-old .text-2xl  { font-size: 28px !important; }
+html.century-old .text-3xl  { font-size: 34px !important; }
+
+/* 숫자/표: 크고 굵게 — 주가·수익률 한눈에 */
+html.century-old .font-mono,
+html.century-old .tabular {
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+/* 폰트 굵기: 중요 정보는 더 굵게 */
+html.century-old .font-bold   { font-weight: 800 !important; }
+html.century-old .font-semibold { font-weight: 700 !important; }
+html.century-old .font-medium { font-weight: 600 !important; }
+
+/* 카드: 명확한 외곽선 */
+html.century-old .shadow-card {
+  box-shadow: 0 2px 12px rgba(0,0,0,0.10) !important;
+  border: 1.5px solid rgba(0, 0, 0, 0.14) !important;
+}
+
+/* bg-white */
+html.century-old .bg-white {
+  background-color: #ffffff !important;
+  border: 1.5px solid rgba(0, 0, 0, 0.10);
+}
+
+/* 테이블: 행 경계선 뚜렷하게, 행 높이 넉넉히 */
+html.century-old table { border-collapse: collapse !important; }
+html.century-old td,
+html.century-old th {
+  border-bottom: 1.5px solid rgba(0, 0, 0, 0.10) !important;
+  padding: 12px 16px !important;
+  line-height: 1.6 !important;
+}
+html.century-old th {
+  font-weight: 700 !important;
+  font-size: 17px !important;
+  background: rgba(0, 0, 0, 0.04) !important;
+  border-bottom: 2px solid rgba(0, 0, 0, 0.18) !important;
+}
+
+/* 버튼: 터치 영역 크게, 글씨 굵게 */
+html.century-old button {
+  min-height: 40px !important;
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  padding-left: 16px !important;
+  padding-right: 16px !important;
+}
+
+/* 입력 필드 */
+html.century-old input,
+html.century-old textarea,
+html.century-old select {
+  font-size: 18px !important;
+  padding: 10px 14px !important;
+  border: 2px solid rgba(0, 0, 0, 0.25) !important;
+  min-height: 44px !important;
+}
+
+/* 스크롤바: 두꺼워서 잡기 쉽게 */
+html.century-old ::-webkit-scrollbar       { width: 12px; }
+html.century-old ::-webkit-scrollbar-track { background: #eeece8; }
+html.century-old ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.30); border-radius: 6px; }
+
+/* 구분선 */
+html.century-old hr {
+  border-color: rgba(0, 0, 0, 0.20) !important;
+  border-width: 1.5px !important;
+}
+
+/* ── 큰 글씨 + 다크 모드 동시 적용 ──────────────────────── */
+html.dark.century-old {
+  color-scheme: dark;
+
+  /* 다크 모드 색상 복원 */
+  --color-ink:                   #e6edf3;
+  --color-body:                  #c9d1d9;
+  --color-body-secondary:        #8b949e;
+  --color-muted:                 #6e7681;
+  --color-muted-strong:          #8b949e;
+  --color-on-dark:               #c9d1d9;
+  --color-canvas-dark:           #0d1117;
+  --color-surface-card-dark:     #161b22;
+  --color-surface-elevated-dark: #21262d;
+  --color-hairline-on-dark:      rgba(240, 246, 252, 0.10);
+
+  --c-border:        rgba(255, 255, 255, 0.10);
+  --c-border-md:     rgba(255, 255, 255, 0.13);
+  --c-border-strong: rgba(255, 255, 255, 0.20);
+  --c-hover:         rgba(255, 255, 255, 0.05);
+  --c-hover-md:      rgba(255, 255, 255, 0.08);
+  --c-hover-lg:      rgba(255, 255, 255, 0.12);
+  --c-bg-subtle:     rgba(255, 255, 255, 0.04);
+  --c-bg-muted:      rgba(255, 255, 255, 0.07);
+  --c-shadow:        rgba(0, 0, 0, 0.45);
+  --c-shadow-lg:     rgba(0, 0, 0, 0.65);
+}
+
+/* 다크 + 큰 글씨: bg-white, 테이블, 스크롤바 */
+html.dark.century-old .bg-white {
+  background-color: var(--color-surface-card-dark) !important;
+  border-color: rgba(255, 255, 255, 0.10) !important;
+}
+html.dark.century-old th {
+  background: rgba(255, 255, 255, 0.05) !important;
+  border-bottom-color: rgba(255, 255, 255, 0.15) !important;
+}
+html.dark.century-old td,
+html.dark.century-old th {
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+html.dark.century-old input,
+html.dark.century-old textarea,
+html.dark.century-old select {
+  border-color: rgba(255, 255, 255, 0.20) !important;
+}
+html.dark.century-old ::-webkit-scrollbar-track { background: #21262d; }
+html.dark.century-old ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.25); }
+html.dark.century-old hr { border-color: rgba(255,255,255,0.15) !important; }
