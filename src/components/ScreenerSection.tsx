@@ -6,6 +6,7 @@ import {
   fetchScreenerStatus,
   type ScreenerCondition,
   type ScreenerResultItem,
+  type ScreenerParams,
 } from "@/lib/api";
 import StockLogo from "@/components/StockLogo";
 
@@ -14,6 +15,7 @@ const CONDITIONS: { id: ScreenerCondition; label: string; desc: string }[] = [
   { id: "golden_cross",  label: "골든크로스 (5/20일)",   desc: "MA5가 MA20을 상향 돌파" },
   { id: "frgn_buy",      label: "외국인 연속 순매수",    desc: "최근 N일 연속 외국인 순매수" },
   { id: "orgn_buy",      label: "기관 연속 순매수",      desc: "최근 N일 연속 기관 순매수" },
+  { id: "price_surge",   label: "급등주",               desc: "당일 등락률 > N% 이상" },
 ];
 
 type SortType = "volume" | "amount";
@@ -53,6 +55,7 @@ export default function ScreenerSection({ onSelect, onHover, onHoverEnd }: Props
   const [selected, setSelected] = useState<Set<ScreenerCondition>>(new Set(["volume_surge"]));
   const [volumeThreshold, setVolumeThreshold] = useState(2.0);
   const [consecutiveDays, setConsecutiveDays] = useState(3);
+  const [priceSurgeThreshold, setPriceSurgeThreshold] = useState(5.0);
   const [results, setResults] = useState<ScreenerResultItem[] | null>(null);
   const [sortBy, setSortBy] = useState<SortType>("volume");
   const [loading, setLoading] = useState(false);
@@ -81,7 +84,13 @@ export default function ScreenerSection({ onSelect, onHover, onHoverEnd }: Props
     setResults(null);
     setSortBy("volume");
     try {
-      const data = await fetchScreener(Array.from(selected) as ScreenerCondition[], volumeThreshold, consecutiveDays);
+      const params: ScreenerParams = {
+        conditions: Array.from(selected) as ScreenerCondition[],
+        volumeThreshold,
+        consecutiveDays,
+        priceSurgeThreshold,
+      };
+      const data = await fetchScreener(params);
       setResults(data);
     } catch (e) {
       setError(e instanceof Error ? e.message : "오류가 발생했습니다.");
@@ -92,6 +101,7 @@ export default function ScreenerSection({ onSelect, onHover, onHoverEnd }: Props
 
   const showVolumeInput = selected.has("volume_surge");
   const showDaysInput = selected.has("frgn_buy") || selected.has("orgn_buy");
+  const showSurgeInput = selected.has("price_surge");
 
   return (
     <section className="bg-surface-card-dark rounded-xl shadow-card overflow-hidden">
@@ -162,6 +172,17 @@ export default function ScreenerSection({ onSelect, onHover, onHoverEnd }: Props
                 type="number" min={1} max={10} step={1}
                 value={consecutiveDays}
                 onChange={(e) => setConsecutiveDays(parseInt(e.target.value, 10))}
+                className="w-24 h-8 px-2.5 rounded-lg border border-hairline-on-dark bg-surface-elevated-dark text-sm text-on-dark font-mono focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/50"
+              />
+            </label>
+          )}
+          {showSurgeInput && (
+            <label className="flex flex-col gap-1">
+              <span className="text-[10px] uppercase tracking-widest text-muted">급등 기준 (%)</span>
+              <input
+                type="number" min={0.1} max={30} step={0.5}
+                value={priceSurgeThreshold}
+                onChange={(e) => setPriceSurgeThreshold(parseFloat(e.target.value))}
                 className="w-24 h-8 px-2.5 rounded-lg border border-hairline-on-dark bg-surface-elevated-dark text-sm text-on-dark font-mono focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/50"
               />
             </label>

@@ -368,6 +368,12 @@ export interface RankItem {
 export type RankSort = "volume" | "amount";
 export type RankInvestor = "foreign" | "institution";
 
+export async function fetchFluctuationRanking(limit = 30): Promise<RankItem[]> {
+  const response = await fetch(`${API_BASE}/ranking/fluctuation?limit=${limit}`, FETCH_OPTS);
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  return (await response.json()) as RankItem[];
+}
+
 export async function fetchVolumeRanking(sort: RankSort, limit = 20): Promise<RankItem[]> {
   const response = await fetch(`${API_BASE}/ranking/volume?sort=${sort}&limit=${limit}`, FETCH_OPTS);
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -438,7 +444,7 @@ export async function fetchTechnicalIndicators({
 
 // ── Screener ─────────────────────────────────────────────────────────────────
 
-export type ScreenerCondition = "volume_surge" | "golden_cross" | "frgn_buy" | "orgn_buy";
+export type ScreenerCondition = "volume_surge" | "golden_cross" | "frgn_buy" | "orgn_buy" | "price_surge";
 
 export interface ScreenerResultItem {
   stock_code: string;
@@ -452,15 +458,24 @@ export interface ScreenerStatus {
   last_collected: string | null;
 }
 
-export async function fetchScreener(
-  conditions: ScreenerCondition[],
+export interface ScreenerParams {
+  conditions: ScreenerCondition[];
+  volumeThreshold?: number;
+  consecutiveDays?: number;
+  priceSurgeThreshold?: number;
+}
+
+export async function fetchScreener({
+  conditions,
   volumeThreshold = 2.0,
   consecutiveDays = 3,
-): Promise<ScreenerResultItem[]> {
+  priceSurgeThreshold = 5.0,
+}: ScreenerParams): Promise<ScreenerResultItem[]> {
   const params = new URLSearchParams({
     conditions: conditions.join(","),
     volume_threshold: String(volumeThreshold),
     consecutive_days: String(consecutiveDays),
+    price_surge_threshold: String(priceSurgeThreshold),
   });
   const response = await fetch(`${API_BASE}/screener?${params.toString()}`, FETCH_OPTS);
   if (!response.ok) {

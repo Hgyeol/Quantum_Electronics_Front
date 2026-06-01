@@ -4,23 +4,25 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import {
   fetchVolumeRanking,
   fetchForeignRanking,
+  fetchFluctuationRanking,
   type RankItem,
   type RankSort,
   type RankInvestor,
 } from "@/lib/api";
 import StockLogo from "@/components/StockLogo";
 
-type TabId = "volume" | "amount" | "foreign" | "institution";
+type TabId = "volume" | "amount" | "foreign" | "institution" | "gainer";
 
 const TABS: { id: TabId; label: string }[] = [
   { id: "volume",      label: "거래량" },
   { id: "amount",      label: "거래대금" },
+  { id: "gainer",      label: "급등주" },
   { id: "foreign",     label: "외국인 순매수" },
   { id: "institution", label: "기관 순매수" },
 ];
 
 const POLL_INTERVAL_MS = 15_000;
-const REALTIME_TABS = new Set<TabId>(["volume", "amount"]);
+const REALTIME_TABS = new Set<TabId>(["volume", "amount", "gainer"]);
 
 function kstMinutes(): number {
   const now = new Date();
@@ -28,14 +30,16 @@ function kstMinutes(): number {
 }
 
 function isTabAvailable(tab: TabId): boolean {
-  if (tab === "foreign")     return kstMinutes() >= 9 * 60 + 30;   // 09:30 KST
-  if (tab === "institution") return kstMinutes() >= 10 * 60;        // 10:00 KST
+  if (tab === "foreign")     return kstMinutes() >= 9 * 60 + 30;
+  if (tab === "institution") return kstMinutes() >= 10 * 60;
+  if (tab === "gainer")      return kstMinutes() >= 9 * 60 && kstMinutes() < 15 * 60 + 30;
   return true;
 }
 
 const NOT_YET: Record<string, string> = {
   foreign:     "외국인 순매수는 오전 9:30부터 첫 집계가 시작됩니다.",
   institution: "기관 순매수는 오전 10:00부터 첫 집계가 시작됩니다.",
+  gainer:      "급등주 순위는 장중(오전 9:00 ~ 오후 3:30)에만 제공됩니다.",
 };
 
 function formatNumber(n: number): string {
@@ -93,6 +97,8 @@ export default function RankingSection({ onSelect, onHover, onHoverEnd }: Props)
       let data: RankItem[];
       if (tab === "volume" || tab === "amount") {
         data = await fetchVolumeRanking(tab as RankSort, 30);
+      } else if (tab === "gainer") {
+        data = await fetchFluctuationRanking(30);
       } else {
         data = await fetchForeignRanking(tab as RankInvestor, 30);
       }
@@ -119,12 +125,14 @@ export default function RankingSection({ onSelect, onHover, onHoverEnd }: Props)
     if (tab === "volume") return "거래량";
     if (tab === "amount") return "거래대금";
     if (tab === "foreign") return "외국인 순매수";
+    if (tab === "gainer") return "거래량";
     return "기관 순매수";
   }
 
   function extraValue(item: RankItem, tab: TabId): string {
     if (tab === "volume") return formatVolume(item.volume);
     if (tab === "amount") return formatNumber(item.trade_value);
+    if (tab === "gainer") return formatVolume(item.volume);
     return `${item.extra_value.toLocaleString("ko-KR")}주`;
   }
 
