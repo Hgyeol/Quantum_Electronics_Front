@@ -54,13 +54,37 @@ interface Props {
   onHoverEnd?: () => void;
 }
 
+const STORAGE_KEY = "screener:v1";
+
+interface PersistedState {
+  selected: ScreenerCondition[];
+  volumeThreshold: number;
+  consecutiveDays: number;
+  priceSurgeThreshold: number;
+  sortBy: SortType;
+  results: ScreenerResultItem[] | null;
+}
+
+function loadPersisted(): Partial<PersistedState> {
+  if (typeof window === "undefined") return {};
+  try {
+    const raw = sessionStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : {};
+  } catch {
+    return {};
+  }
+}
+
 export default function ScreenerSection({ onSelect, onHover, onHoverEnd }: Props) {
-  const [selected, setSelected] = useState<Set<ScreenerCondition>>(new Set(["volume_surge"]));
-  const [volumeThreshold, setVolumeThreshold] = useState(2.0);
-  const [consecutiveDays, setConsecutiveDays] = useState(3);
-  const [priceSurgeThreshold, setPriceSurgeThreshold] = useState(5.0);
-  const [results, setResults] = useState<ScreenerResultItem[] | null>(null);
-  const [sortBy, setSortBy] = useState<SortType>("volume");
+  const persisted = loadPersisted();
+  const [selected, setSelected] = useState<Set<ScreenerCondition>>(
+    new Set(persisted.selected ?? ["volume_surge"]),
+  );
+  const [volumeThreshold, setVolumeThreshold] = useState(persisted.volumeThreshold ?? 2.0);
+  const [consecutiveDays, setConsecutiveDays] = useState(persisted.consecutiveDays ?? 3);
+  const [priceSurgeThreshold, setPriceSurgeThreshold] = useState(persisted.priceSurgeThreshold ?? 5.0);
+  const [results, setResults] = useState<ScreenerResultItem[] | null>(persisted.results ?? null);
+  const [sortBy, setSortBy] = useState<SortType>(persisted.sortBy ?? "volume");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastCollected, setLastCollected] = useState<string | null>(null);
@@ -70,6 +94,16 @@ export default function ScreenerSection({ onSelect, onHover, onHoverEnd }: Props
       .then((s) => setLastCollected(s.last_collected))
       .catch(() => {});
   }, []);
+
+  // 폼/결과 변경 시 sessionStorage에 보존
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const data: PersistedState = {
+      selected: Array.from(selected),
+      volumeThreshold, consecutiveDays, priceSurgeThreshold, sortBy, results,
+    };
+    try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch { /* ignore */ }
+  }, [selected, volumeThreshold, consecutiveDays, priceSurgeThreshold, sortBy, results]);
 
   function toggleCondition(id: ScreenerCondition) {
     setSelected((prev) => {

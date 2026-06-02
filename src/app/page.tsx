@@ -16,7 +16,7 @@ import PositionContextCard from "@/components/PositionContextCard";
 import EvidenceList from "@/components/EvidenceList";
 import ErrorsBanner from "@/components/ErrorsBanner";
 import ChartAnalysisCard from "@/components/ChartAnalysisCard";
-import RankingSection from "@/components/RankingSection";
+import RankingSection, { type TabId as RankTabId } from "@/components/RankingSection";
 import ScreenerSection from "@/components/ScreenerSection";
 import StockLogo from "@/components/StockLogo";
 import StockSearchBox from "@/components/StockSearchBox";
@@ -113,12 +113,56 @@ export default function Home() {
   const [hoveredBar, setHoveredBar] = useState<OHLCVBar | null>(null);
   const [pinnedBar, setPinnedBar] = useState<OHLCVBar | null>(null);
   const [hoveredStock, setHoveredStock] = useState<HoveredStock | null>(null);
+  const [rankActiveTab, setRankActiveTab] = useState<RankTabId>("volume");
   const liveWsRef = useRef<WebSocket | null>(null);
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+  const pendingScrollRef = useRef<number | null>(null);
   const watchlist = useWatchlist();
 
   useEffect(() => {
     checkAuth().then((ok) => { if (!ok) router.replace("/login"); });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // URL ?code= ↔ selectedCode 동기화 + 뒤로가기 시 홈 state 복원
+  useEffect(() => {
+    const sync = () => {
+      const code = new URL(window.location.href).searchParams.get("code");
+      setSelectedCode(code);
+      if (!code) {
+        setSelectedName(null);
+        const st = window.history.state as
+          | { homeTab?: HomeTab; rankActiveTab?: RankTabId; scrollY?: number }
+          | null;
+        if (st?.homeTab !== undefined) setHomeTab(st.homeTab);
+        if (st?.rankActiveTab !== undefined) setRankActiveTab(st.rankActiveTab);
+        if (typeof st?.scrollY === "number") pendingScrollRef.current = st.scrollY;
+      }
+    };
+    sync(); // 초기 진입 시 URL 반영
+    window.addEventListener("popstate", sync);
+    return () => window.removeEventListener("popstate", sync);
+  }, []);
+
+  // 뒤로가기 후 스크롤 위치 복원: 콘텐츠가 충분히 렌더될 때까지 retry
+  useEffect(() => {
+    if (selectedCode || pendingScrollRef.current == null) return;
+    const target = pendingScrollRef.current;
+    pendingScrollRef.current = null;
+
+    let attempts = 0;
+    const tryScroll = () => {
+      const el = scrollContainerRef.current;
+      if (!el) return;
+      const maxScroll = el.scrollHeight - el.clientHeight;
+      if (maxScroll >= target || attempts > 60) {
+        el.scrollTo(0, Math.min(target, maxScroll));
+        return;
+      }
+      attempts++;
+      requestAnimationFrame(tryScroll);
+    };
+    requestAnimationFrame(tryScroll);
+  }, [selectedCode, homeTab, rankActiveTab]);
 
   useEffect(() => {
     liveWsRef.current?.close();
@@ -151,6 +195,16 @@ export default function Home() {
   }
 
   function handleSelectStock(code: string, name?: string | null) {
+    if (typeof window !== "undefined" && new URL(window.location.href).searchParams.get("code") !== code) {
+      // 1) 현재 홈 페이지의 상태를 history entry에 박아둠 (뒤로가기 복원용)
+      const onHome = !new URL(window.location.href).searchParams.has("code");
+      if (onHome) {
+        const scrollY = scrollContainerRef.current?.scrollTop ?? 0;
+        window.history.replaceState({ homeTab, rankActiveTab, scrollY }, "");
+      }
+      // 2) stock detail URL을 새 history entry로 push
+      window.history.pushState({}, "", `/?code=${encodeURIComponent(code)}`);
+    }
     setSelectedCode(code);
     setSelectedName(name ?? null);
     setReport(null);
@@ -169,6 +223,9 @@ export default function Home() {
     setOutlookError(null);
     setHoveredBar(null);
     setPinnedBar(null);
+    if (typeof window !== "undefined" && new URL(window.location.href).searchParams.has("code")) {
+      window.history.pushState({}, "", "/");
+    }
   }
 
   async function handleLoadOutlook(input?: OutlookQueryInput) {
@@ -442,7 +499,7 @@ export default function Home() {
           <div className="flex-1 flex overflow-hidden">
 
             {/* 중앙 컬럼 */}
-            <div className="flex-1 overflow-y-auto">
+            <div ref={scrollContainerRef} className="flex-1 overflow-y-auto">
               {homeTab === 0 && (
                 <>
                   <div className="flex items-center gap-3 px-5 py-3 flex-wrap"
@@ -480,6 +537,8 @@ export default function Home() {
                   onSelect={handleSelectStock}
                   onHover={setHoveredStock}
                   onHoverEnd={() => setHoveredStock(null)}
+                  activeTab={rankActiveTab}
+                  onTabChange={setRankActiveTab}
                 />
               )}
               {homeTab === 2 && (

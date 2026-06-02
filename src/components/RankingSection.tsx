@@ -11,7 +11,7 @@ import {
 } from "@/lib/api";
 import StockLogo from "@/components/StockLogo";
 
-type TabId = "volume" | "amount" | "foreign" | "institution" | "gainer";
+export type TabId = "volume" | "amount" | "foreign" | "institution" | "gainer";
 
 const TABS: { id: TabId; label: string }[] = [
   { id: "volume",      label: "거래량" },
@@ -64,10 +64,14 @@ interface Props {
   onSelect: (code: string, name: string) => void;
   onHover?: (stock: HoverPayload) => void;
   onHoverEnd?: () => void;
+  activeTab?: TabId;
+  onTabChange?: (tab: TabId) => void;
 }
 
-export default function RankingSection({ onSelect, onHover, onHoverEnd }: Props) {
-  const [activeTab, setActiveTab] = useState<TabId>("volume");
+export default function RankingSection({ onSelect, onHover, onHoverEnd, activeTab: activeTabProp, onTabChange }: Props) {
+  const [activeTabInner, setActiveTabInner] = useState<TabId>("volume");
+  const activeTab = activeTabProp ?? activeTabInner;
+  const setActiveTab = (tab: TabId) => { onTabChange ? onTabChange(tab) : setActiveTabInner(tab); };
   const [items, setItems] = useState<RankItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
