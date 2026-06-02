@@ -40,6 +40,7 @@ export default function StockLogo({ code, name, size = 40, rounded = "xl", class
           height={size}
           className="object-contain w-full h-full"
           onError={() => setImgError(true)}
+          unoptimized
         />
       </span>
     );
