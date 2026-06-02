@@ -174,13 +174,13 @@ export function NameCell({
       <StockLogo code={code} name={name ?? null} size={size} />
       <span className="min-w-0 flex-1">
         <span
-          className={`block text-[14px] font-semibold truncate leading-tight ${
+          className={`block text-[15px] font-semibold truncate leading-tight ${
             active ? "text-primary" : "text-ink"
           }`}
         >
           {name || code}
         </span>
-        <span className="block text-[11px] text-muted font-mono">{code}</span>
+        <span className="block text-[12px] text-muted font-mono mt-0.5">{code}</span>
       </span>
     </span>
   );
@@ -189,9 +189,9 @@ export function NameCell({
 export function PriceCell({ price }: { price: number | null | undefined }) {
   if (price == null) return <span className="font-mono text-sm text-muted">—</span>;
   return (
-    <span className="font-mono tabular text-[13px] font-semibold text-ink whitespace-nowrap">
+    <span className="font-mono tabular text-[15px] font-semibold text-ink whitespace-nowrap">
       {price.toLocaleString("ko-KR")}
-      <span className="text-[10px] text-muted font-normal ml-0.5">원</span>
+      <span className="text-[11px] text-muted font-normal ml-0.5">원</span>
     </span>
   );
 }
@@ -208,7 +208,7 @@ export function ChangeRateBadge({ rate }: { rate: number | null | undefined }) {
   const bg = flat ? { background: "var(--c-bg-muted)" } : {};
   return (
     <span
-      className={`font-mono tabular text-[12px] font-bold px-2 py-1 rounded-full inline-block ${tone}`}
+      className={`font-mono tabular text-[15px] font-bold px-2.5 py-1 rounded-full inline-block ${tone}`}
       style={bg}
     >
       {flat ? "0.00%" : `${up ? "+" : ""}${rate.toFixed(2)}%`}
@@ -219,7 +219,7 @@ export function ChangeRateBadge({ rate }: { rate: number | null | undefined }) {
 export function RankCell({ rank }: { rank: number }) {
   return (
     <span
-      className={`text-[13px] font-bold text-center select-none tabular font-mono ${
+      className={`text-[15px] font-bold text-center select-none tabular font-mono ${
         rank <= 3 ? "text-primary" : "text-muted"
       }`}
     >
@@ -230,7 +230,7 @@ export function RankCell({ rank }: { rank: number }) {
 
 export function MutedNumber({ children }: { children: ReactNode }) {
   return (
-    <span className="font-mono text-[12px] text-muted-strong tabular whitespace-nowrap">
+    <span className="font-mono text-[15px] text-muted-strong tabular whitespace-nowrap">
       {children}
     </span>
   );
