@@ -16,6 +16,7 @@ import PositionContextCard from "@/components/PositionContextCard";
 import EvidenceList from "@/components/EvidenceList";
 import ErrorsBanner from "@/components/ErrorsBanner";
 import ChartAnalysisCard from "@/components/ChartAnalysisCard";
+import StockPreviewStats from "@/components/StockPreviewStats";
 import RankingSection, { type TabId as RankTabId } from "@/components/RankingSection";
 import ScreenerSection from "@/components/ScreenerSection";
 import StockLogo from "@/components/StockLogo";
@@ -565,7 +566,7 @@ export default function Home() {
                 const previewBadgeStyle = flat ? { background: "var(--c-bg-muted)" } : {};
                 return (
                   <div className="flex-1 flex flex-col overflow-y-auto">
-                    <div className="px-5 pt-5 pb-4" style={{ borderBottom: "1px solid var(--c-border)" }}>
+                    <div className="px-5 pt-5 pb-4">
                       <div className="flex items-center gap-3 mb-4">
                         <StockLogo code={hoveredStock.code} name={hoveredStock.name} size={40} rounded="xl" />
                         <div className="min-w-0 flex-1">
@@ -583,10 +584,13 @@ export default function Home() {
                         {flat ? "0.00%" : `${up ? "+" : ""}${hoveredStock.changeRate.toFixed(2)}%`}
                       </span>
                     </div>
+                    <div className="ml-5 mr-[72px]" style={{ borderTop: "1px solid var(--c-border)" }} />
                     <ChartAnalysisCard
                       stockCode={hoveredStock.code}
                       chartOnly
                     />
+                    <div className="ml-5 mr-[72px]" style={{ borderTop: "1px solid var(--c-border)" }} />
+                    <StockPreviewStats stockCode={hoveredStock.code} />
                   </div>
                 );
               })()

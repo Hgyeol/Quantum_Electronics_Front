@@ -348,7 +348,7 @@ export default function StockPriceChart({ ohlcv, todayBar, supports, resistances
       )}
 
       {/* 차트 */}
-      <div ref={containerRef} className={minimal ? "mr-[72px]" : "w-full"} />
+      <div ref={containerRef} className={minimal ? "ml-5 mr-[72px]" : "w-full"} />
 
       {/* MA / 지지저항 토글 */}
       {!minimal && (
