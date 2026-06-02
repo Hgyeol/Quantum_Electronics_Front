@@ -202,7 +202,7 @@ export default function ScreenerSection({ onSelect, onHover, onHoverEnd }: Props
               <input
                 type="number" min={1} max={20} step={0.5}
                 value={volumeThreshold}
-                onChange={(e) => setVolumeThreshold(parseFloat(e.target.value))}
+                onChange={(e) => { const v = parseFloat(e.target.value); setVolumeThreshold(Number.isNaN(v) ? 0 : v); }}
                 className="w-24 h-8 px-2.5 rounded-lg border border-hairline-on-dark bg-surface-elevated-dark text-sm text-on-dark font-mono focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/50"
               />
             </label>
@@ -213,7 +213,7 @@ export default function ScreenerSection({ onSelect, onHover, onHoverEnd }: Props
               <input
                 type="number" min={1} max={10} step={1}
                 value={consecutiveDays}
-                onChange={(e) => setConsecutiveDays(parseInt(e.target.value, 10))}
+                onChange={(e) => { const v = parseInt(e.target.value, 10); setConsecutiveDays(Number.isNaN(v) ? 0 : v); }}
                 className="w-24 h-8 px-2.5 rounded-lg border border-hairline-on-dark bg-surface-elevated-dark text-sm text-on-dark font-mono focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/50"
               />
             </label>
@@ -224,7 +224,7 @@ export default function ScreenerSection({ onSelect, onHover, onHoverEnd }: Props
               <input
                 type="number" min={0.1} max={30} step={0.5}
                 value={priceSurgeThreshold}
-                onChange={(e) => setPriceSurgeThreshold(parseFloat(e.target.value))}
+                onChange={(e) => { const v = parseFloat(e.target.value); setPriceSurgeThreshold(Number.isNaN(v) ? 0 : v); }}
                 className="w-24 h-8 px-2.5 rounded-lg border border-hairline-on-dark bg-surface-elevated-dark text-sm text-on-dark font-mono focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/50"
               />
             </label>
