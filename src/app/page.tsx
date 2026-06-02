@@ -260,31 +260,12 @@ export default function Home() {
 
           {/* 상세 헤더 */}
           <header
-            className="h-[52px] shrink-0 flex items-center justify-between px-5 bg-white"
+            className="h-[52px] shrink-0 relative flex items-center px-5 bg-white"
             style={{ borderBottom: "1px solid var(--c-border)" }}
           >
-            <div className="flex items-center gap-3">
-              <StockLogo code={selectedCode} name={displayName} size={28} rounded="lg" />
-              <span className="text-[15px] font-bold text-ink">{displayName}</span>
-              <span className="text-[12px] text-muted font-mono">{selectedCode}</span>
-              {liveTick && (
-                <span className="flex items-center gap-1 text-[11px] text-trading-up font-semibold">
-                  <span className="w-1.5 h-1.5 rounded-full bg-trading-up animate-pulse" />
-                  LIVE
-                </span>
-              )}
+            <div className="search-center-wrapper absolute" style={{ left: "calc(50vw - 72px)", transform: "translateX(-50%)" }}>
+              <StockSearchBox onSelect={handleSelectStock} />
             </div>
-            {tick && (
-              <div className="flex items-baseline gap-2">
-                <span className="font-mono tabular text-[18px] font-bold text-ink">
-                  {tick.price.toLocaleString("ko-KR")}
-                </span>
-                <span className="text-[12px] text-muted">원</span>
-                <span className={`font-mono tabular text-[13px] font-bold px-2.5 py-1 rounded-full ${badgeBg}`} style={badgeStyle}>
-                  {tick.change_rate > 0 ? "+" : ""}{tick.change_rate.toFixed(2)}%
-                </span>
-              </div>
-            )}
           </header>
 
           {/* 상세 컨텐츠 */}
