@@ -9,7 +9,6 @@ import {
 import { useWatchlist } from "@/lib/watchlist";
 import WatchlistTable from "@/components/WatchlistTable";
 import FinalVerdictCard from "@/components/FinalVerdictCard";
-import MarketQuoteCard from "@/components/MarketQuoteCard";
 import SignalBreakdownPanel from "@/components/SignalBreakdownPanel";
 import TechnicalIndicatorsPanel from "@/components/TechnicalIndicatorsPanel";
 import QuantSignalsTable from "@/components/QuantSignalsTable";
@@ -385,18 +384,6 @@ export default function Home() {
                   </div>
                 )}
               </div>
-
-              {/* 시세 상세 */}
-              {(marketQuote ?? report?.market_quote) && (
-                <div className="px-8 py-6" style={{ borderBottom: "1px solid var(--c-border)" }}>
-                  <MarketQuoteCard
-                    quote={tick
-                      ? { ...(marketQuote ?? report!.market_quote!), price: tick.price, change: tick.change, change_rate: tick.change_rate }
-                      : (marketQuote ?? report!.market_quote!)}
-                    stockName={report?.stock_name ?? selectedName}
-                  />
-                </div>
-              )}
 
               {/* 에러 */}
               {outlookError && (
