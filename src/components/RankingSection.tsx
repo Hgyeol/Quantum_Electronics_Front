@@ -48,8 +48,6 @@ function formatNumber(n: number): string {
 }
 
 function formatVolume(n: number): string {
-  if (n >= 1e8) return `${(n / 1e8).toFixed(1)}억주`;
-  if (n >= 1e4) return `${Math.round(n / 1e4)}만주`;
   return `${n.toLocaleString("ko-KR")}주`;
 }
 

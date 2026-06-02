@@ -365,10 +365,10 @@ export default function WatchlistTable({
                       ) : item ? (
                         <span className="font-mono tabular text-[12px] text-muted-strong">
                           {sortBy === "volume"
-                            ? `${Math.round(item.volume / 1e4)}만주`
+                            ? `${item.volume.toLocaleString("ko-KR")}주`
                             : sortBy === "foreign" || sortBy === "institution"
                               ? extraMap.has(code)
-                                ? `${(extraMap.get(code)!).toLocaleString("ko-KR")}주`
+                                ? `${extraMap.get(code)!.toLocaleString("ko-KR")}주`
                                 : "—"
                               : formatTradeValue(item.trade_value)}
                         </span>

@@ -36,8 +36,6 @@ function formatTradeValue(n: number): string {
 }
 
 function formatVolume(n: number): string {
-  if (n >= 1e8) return `${(n / 1e8).toFixed(1)}억주`;
-  if (n >= 1e4) return `${Math.floor(n / 1e4)}만주`;
   return `${n.toLocaleString("ko-KR")}주`;
 }
 
@@ -279,7 +277,7 @@ export default function ScreenerSection({ onSelect, onHover, onHoverEnd }: Props
             ))}
           </div>
           {/* 컬럼 레이블 */}
-          <div className="grid grid-cols-[1fr_6rem_5rem_5rem_10rem] gap-3 px-6 py-2.5 bg-surface-elevated-dark/60 border-b border-hairline-on-dark">
+          <div className="grid grid-cols-[1fr_6rem_7rem_6rem_10rem] gap-3 px-6 py-2.5 bg-surface-elevated-dark/60 border-b border-hairline-on-dark">
             <span className="text-[10px] uppercase tracking-widest text-muted">종목명</span>
             <span className="text-[10px] uppercase tracking-widest text-muted text-right">현재가</span>
             <span className="text-[10px] uppercase tracking-widest text-muted text-right">거래량</span>
@@ -291,7 +289,7 @@ export default function ScreenerSection({ onSelect, onHover, onHoverEnd }: Props
               <li
                 key={item.stock_code}
                 onClick={() => onSelect(item.stock_code, item.stock_name)}
-                className="grid grid-cols-[1fr_6rem_5rem_5rem_10rem] gap-3 items-center px-6 py-3 border-t border-hairline-on-dark first:border-t-0 cursor-pointer transition-colors"
+                className="grid grid-cols-[1fr_6rem_7rem_6rem_10rem] gap-3 items-center px-6 py-3 border-t border-hairline-on-dark first:border-t-0 cursor-pointer transition-colors"
                 onMouseEnter={(e) => {
                   e.currentTarget.style.background = "var(--c-hover)";
                   onHover?.({ code: item.stock_code, name: item.stock_name, price: item.close, changeRate: 0 });
@@ -314,10 +312,10 @@ export default function ScreenerSection({ onSelect, onHover, onHoverEnd }: Props
                   {item.close.toLocaleString("ko-KR")}
                   <span className="text-[10px] text-muted font-normal ml-0.5">원</span>
                 </span>
-                <span className="text-right font-mono text-xs text-muted-strong tabular">
+                <span className="text-right font-mono text-xs text-muted-strong tabular whitespace-nowrap">
                   {formatVolume(item.volume)}
                 </span>
-                <span className="text-right font-mono text-xs text-muted-strong tabular">
+                <span className="text-right font-mono text-xs text-muted-strong tabular whitespace-nowrap">
                   {formatTradeValue(item.close * item.volume)}
                 </span>
                 <span className="flex flex-nowrap justify-end gap-1 overflow-hidden">
