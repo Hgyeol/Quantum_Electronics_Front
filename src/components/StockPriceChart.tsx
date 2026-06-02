@@ -13,7 +13,8 @@ import {
   type ISeriesApi,
   type IPriceLine,
   type Logical,
-  type LogicalRangeChangeEventHandler,
+  type CandlestickData,
+  type HistogramData,
 } from "lightweight-charts";
 import type { OHLCVBar, SupportResistanceLevel } from "@/lib/api";
 
@@ -32,6 +33,7 @@ const COLORS = {
 
 interface Props {
   ohlcv: OHLCVBar[];
+  todayBar?: OHLCVBar | null;
   supports: SupportResistanceLevel[];
   resistances: SupportResistanceLevel[];
   currentPrice: number;
@@ -72,9 +74,12 @@ const LEGEND: { key: VisibilityKey; label: string; color: string }[] = [
   { key: "resistance",  label: "저항선", color: COLORS.resistance },
 ];
 
-export default function StockPriceChart({ ohlcv, supports, resistances, currentPrice, onBarHover, onBarClick, defaultPeriod = "3M", minimal = false }: Props) {
+export default function StockPriceChart({ ohlcv, todayBar, supports, resistances, currentPrice, onBarHover, onBarClick, defaultPeriod = "3M", minimal = false }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
+  const candleSeriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
+  const volumeSeriesRef = useRef<ISeriesApi<"Histogram"> | null>(null);
+  const currentPriceLineRef = useRef<IPriceLine | null>(null);
   const seriesRefs = useRef<{
     ma5?: ISeriesApi<"Line">;
     ma20?: ISeriesApi<"Line">;
@@ -133,9 +138,13 @@ export default function StockPriceChart({ ohlcv, supports, resistances, currentP
         borderColor: theme.border,
         timeVisible: true,
         secondsVisible: false,
+        fixLeftEdge: true,
+        fixRightEdge: true,
       },
     });
     chartRef.current = chart;
+    candleSeriesRef.current = null;
+    volumeSeriesRef.current = null;
 
     const candleSeries = chart.addSeries(CandlestickSeries, {
       upColor: COLORS.up,
@@ -151,26 +160,27 @@ export default function StockPriceChart({ ohlcv, supports, resistances, currentP
         open: b.open, high: b.high, low: b.low, close: b.close,
       }))
     );
+    candleSeriesRef.current = candleSeries;
 
     if (!minimal) {
       const maOptions = { priceLineVisible: false, lastValueVisible: false, autoscaleInfoProvider: () => null };
 
-      const ma5Series = chart.addSeries(LineSeries, { color: COLORS.ma5, lineWidth: 1, title: "MA5", ...maOptions });
+      const ma5Series = chart.addSeries(LineSeries, { color: COLORS.ma5, lineWidth: 1, title: "", ...maOptions });
       ma5Series.setData(calcMA(ohlcv, 5));
       seriesRefs.current.ma5 = ma5Series;
 
-      const ma20Series = chart.addSeries(LineSeries, { color: COLORS.ma20, lineWidth: 1, title: "MA20", ...maOptions });
+      const ma20Series = chart.addSeries(LineSeries, { color: COLORS.ma20, lineWidth: 1, title: "", ...maOptions });
       ma20Series.setData(calcMA(ohlcv, 20));
       seriesRefs.current.ma20 = ma20Series;
 
       if (ohlcv.length >= 60) {
-        const ma60Series = chart.addSeries(LineSeries, { color: COLORS.ma60, lineWidth: 1, title: "MA60", ...maOptions });
+        const ma60Series = chart.addSeries(LineSeries, { color: COLORS.ma60, lineWidth: 1, title: "", ...maOptions });
         ma60Series.setData(calcMA(ohlcv, 60));
         seriesRefs.current.ma60 = ma60Series;
       }
 
       if (ohlcv.length >= 120) {
-        const ma120Series = chart.addSeries(LineSeries, { color: COLORS.ma120, lineWidth: 1, title: "MA120", ...maOptions });
+        const ma120Series = chart.addSeries(LineSeries, { color: COLORS.ma120, lineWidth: 1, title: "", ...maOptions });
         ma120Series.setData(calcMA(ohlcv, 120));
         seriesRefs.current.ma120 = ma120Series;
       }
@@ -192,6 +202,7 @@ export default function StockPriceChart({ ohlcv, supports, resistances, currentP
         color: b.close >= b.open ? `${COLORS.up}66` : `${COLORS.down}66`,
       }))
     );
+    volumeSeriesRef.current = volumeSeries;
 
     const ohlcvByDate = new Map(ohlcv.map((b) => [b.date, b]));
 
@@ -205,11 +216,20 @@ export default function StockPriceChart({ ohlcv, supports, resistances, currentP
       onBarClick?.(ohlcvByDate.get(String(param.time)) ?? null);
     });
 
+    currentPriceLineRef.current = candleSeries.createPriceLine({
+      price: currentPrice,
+      color: "#F5A623",
+      lineWidth: 1,
+      lineStyle: 0,
+      axisLabelVisible: true,
+      title: "",
+    });
+
     const supportLines: IPriceLine[] = supports.map((s) =>
       candleSeries.createPriceLine({
         price: s.price, color: COLORS.support,
-        lineWidth: 1, lineStyle: 2, axisLabelVisible: true,
-        title: `지지 ${(s.price / 1000).toFixed(0)}K`,
+        lineWidth: 1, lineStyle: 2, axisLabelVisible: false,
+        title: "",
       })
     );
     seriesRefs.current.supportLines = supportLines;
@@ -217,8 +237,8 @@ export default function StockPriceChart({ ohlcv, supports, resistances, currentP
     const resistanceLines: IPriceLine[] = resistances.map((r) =>
       candleSeries.createPriceLine({
         price: r.price, color: COLORS.resistance,
-        lineWidth: 1, lineStyle: 2, axisLabelVisible: true,
-        title: `저항 ${(r.price / 1000).toFixed(0)}K`,
+        lineWidth: 1, lineStyle: 2, axisLabelVisible: false,
+        title: "",
       })
     );
     seriesRefs.current.resistanceLines = resistanceLines;
@@ -228,35 +248,21 @@ export default function StockPriceChart({ ohlcv, supports, resistances, currentP
     const from = Math.max(0, barCount - defaultBars);
     chart.timeScale().setVisibleLogicalRange({ from: from as Logical, to: (barCount - 1) as Logical });
 
-    let clamping = false;
-    const onRangeChange: LogicalRangeChangeEventHandler = (range) => {
-      if (!range || clamping) return;
-      const width = range.to - range.from;
-      let f = range.from as number;
-      let t = range.to as number;
-      if (f < 0) { f = 0; t = width; }
-      if (t > barCount - 1) { t = barCount - 1; f = Math.max(0, t - width); }
-      if (f !== (range.from as number) || t !== (range.to as number)) {
-        clamping = true;
-        chart.timeScale().setVisibleLogicalRange({ from: f as Logical, to: t as Logical });
-        clamping = false;
-      }
-    };
-    chart.timeScale().subscribeVisibleLogicalRangeChange(onRangeChange);
-
     const ro = new ResizeObserver(() => {
       chart.applyOptions({ width: container.clientWidth });
     });
     ro.observe(container);
 
     return () => {
-      chart.timeScale().unsubscribeVisibleLogicalRangeChange(onRangeChange);
       ro.disconnect();
       chart.remove();
       chartRef.current = null;
+      candleSeriesRef.current = null;
+      volumeSeriesRef.current = null;
+      currentPriceLineRef.current = null;
       seriesRefs.current = {};
     };
-  }, [ohlcv, supports, resistances, currentPrice, isDark]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [ohlcv, supports, resistances, isDark]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // 기간 탭 변경 시 차트 범위 조정
   useEffect(() => {
@@ -278,16 +284,34 @@ export default function StockPriceChart({ ohlcv, supports, resistances, currentP
     refs.supportLines?.forEach((line) =>
       line.applyOptions({
         color: visible.support ? COLORS.support : "transparent",
-        axisLabelVisible: visible.support,
+        axisLabelVisible: false,
       })
     );
     refs.resistanceLines?.forEach((line) =>
       line.applyOptions({
         color: visible.resistance ? COLORS.resistance : "transparent",
-        axisLabelVisible: visible.resistance,
+        axisLabelVisible: false,
       })
     );
   }, [visible]);
+
+  // 현재가 선 실시간 업데이트
+  useEffect(() => {
+    currentPriceLineRef.current?.applyOptions({ price: currentPrice });
+  }, [currentPrice]);
+
+  // 오늘 캔들 실시간 업데이트 (차트 재생성 없이 series.update()만 호출)
+  useEffect(() => {
+    if (!todayBar || !candleSeriesRef.current || !volumeSeriesRef.current) return;
+    const t = todayBar.date as `${number}-${number}-${number}`;
+    (candleSeriesRef.current as ISeriesApi<"Candlestick">).update({
+      time: t, open: todayBar.open, high: todayBar.high, low: todayBar.low, close: todayBar.close,
+    } as CandlestickData);
+    (volumeSeriesRef.current as ISeriesApi<"Histogram">).update({
+      time: t, value: todayBar.volume,
+      color: todayBar.close >= todayBar.open ? `${COLORS.up}66` : `${COLORS.down}66`,
+    } as HistogramData);
+  }, [todayBar]);
 
   if (ohlcv.length === 0) return null;
 

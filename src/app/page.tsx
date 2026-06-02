@@ -33,6 +33,11 @@ interface LiveTick {
   price: number;
   change: number;
   change_rate: number;
+  open?: number;
+  high?: number;
+  low?: number;
+  volume?: number;
+  bsop_date?: string;
 }
 
 interface HoveredStock {
@@ -129,7 +134,7 @@ export default function Home() {
         try {
           const tick = JSON.parse(e.data) as LiveTick & { stock_code: string };
           if (tick.stock_code === selectedCode)
-            setLiveTick({ price: tick.price, change: tick.change, change_rate: tick.change_rate });
+            setLiveTick({ price: tick.price, change: tick.change, change_rate: tick.change_rate, open: tick.open, high: tick.high, low: tick.low, volume: tick.volume, bsop_date: tick.bsop_date });
         } catch { /* ignore */ }
       };
     } catch { /* ignore */ }
@@ -349,6 +354,7 @@ export default function Home() {
                   onNameResolved={(name) => setSelectedName((prev) => prev ?? name)}
                   onBarHover={setHoveredBar}
                   onBarClick={(bar) => { if (bar) setPinnedBar(bar); }}
+                  liveTick={liveTick}
                 />
                 {(pinnedBar ?? hoveredBar) && (
                   <div className="absolute top-3 right-3 z-10 w-36 rounded-xl bg-white px-3.5 py-3 text-xs font-mono space-y-1.5 pointer-events-auto"

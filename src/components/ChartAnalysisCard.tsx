@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
-import { fetchChartAnalysis } from "@/lib/api";
-import type { ChartAnalysis, OHLCVBar } from "@/lib/api";
+import { fetchChartAnalysis, fetchMarketQuote } from "@/lib/api";
+import type { ChartAnalysis, MarketQuote, OHLCVBar } from "@/lib/api";
 import { formatKRW } from "@/lib/format";
 
 // lightweight-charts uses window — load client-side only
@@ -45,10 +45,10 @@ function sourceLabel(source?: string) {
 
 // ── Signal Summary ─────────────────────────────────────────────────────────────
 
-function SignalSummary({ data }: { data: ChartAnalysis }) {
+function SignalSummary({ data, livePrice }: { data: ChartAnalysis; livePrice?: number | null }) {
   const { signal } = data;
   const colors = actionColors(signal.action);
-  const cur = data.current_price;
+  const cur = livePrice ?? data.current_price;
 
   return (
     <div className={`rounded-lg border ${colors.border} bg-surface-elevated-dark p-5 space-y-4`}>
@@ -130,8 +130,8 @@ function SignalSummary({ data }: { data: ChartAnalysis }) {
 
 // ── Support / Resistance Table ─────────────────────────────────────────────────
 
-function LevelsTable({ data }: { data: ChartAnalysis }) {
-  const cur = data.current_price;
+function LevelsTable({ data, livePrice }: { data: ChartAnalysis; livePrice?: number | null }) {
+  const cur = livePrice ?? data.current_price;
   const supports = data.support_levels;
   const resistances = data.resistance_levels;
 
@@ -169,6 +169,15 @@ function LevelsTable({ data }: { data: ChartAnalysis }) {
 
 // ── Main ──────────────────────────────────────────────────────────────────────
 
+interface LiveTick {
+  price: number;
+  open?: number;
+  high?: number;
+  low?: number;
+  volume?: number;
+  bsop_date?: string;
+}
+
 interface Props {
   stockCode: string;
   stockName?: string | null;
@@ -176,17 +185,54 @@ interface Props {
   onBarHover?: (bar: OHLCVBar | null) => void;
   onBarClick?: (bar: OHLCVBar | null) => void;
   chartOnly?: boolean;
+  liveTick?: LiveTick | null;
 }
 
-export default function ChartAnalysisCard({ stockCode, stockName, onNameResolved, onBarHover, onBarClick, chartOnly }: Props) {
+function todayKST(): string {
+  // KST = UTC+9
+  const d = new Date(Date.now() + 9 * 60 * 60 * 1000);
+  return d.toISOString().slice(0, 10);
+}
+
+function buildTodayBarFromTick(tick: LiveTick): OHLCVBar | null {
+  const open = tick.open && tick.open > 0 ? tick.open : null;
+  const high = tick.high && tick.high > 0 ? tick.high : null;
+  const low = tick.low && tick.low > 0 ? tick.low : null;
+  if (!open || !high || !low) return null;
+  const date = tick.bsop_date
+    ? `${tick.bsop_date.slice(0, 4)}-${tick.bsop_date.slice(4, 6)}-${tick.bsop_date.slice(6, 8)}`
+    : todayKST();
+  return { date, open, high, low, close: tick.price, volume: tick.volume ?? 0 };
+}
+
+function buildTodayBarFromQuote(q: MarketQuote): OHLCVBar | null {
+  if (!q.high || !q.low) return null;
+  const open = q.price - q.change;
+  if (open <= 0) return null;
+  return { date: todayKST(), open, high: q.high, low: q.low, close: q.price, volume: q.volume ?? 0 };
+}
+
+export default function ChartAnalysisCard({ stockCode, stockName, onNameResolved, onBarHover, onBarClick, chartOnly, liveTick }: Props) {
   const [data, setData] = useState<ChartAnalysis | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [liveQuote, setLiveQuote] = useState<MarketQuote | null>(null);
+
+  const livePrice = liveTick?.price ?? liveQuote?.price ?? null;
+
+  function todayBar(base: OHLCVBar[]): OHLCVBar | undefined {
+    const bar = (liveTick && buildTodayBarFromTick(liveTick))
+      ?? (liveQuote && buildTodayBarFromQuote(liveQuote));
+    if (!bar) return undefined;
+    if (base.length > 0 && base[base.length - 1].date >= bar.date) return undefined;
+    return bar;
+  }
 
   useEffect(() => {
     setLoading(true);
     setError(null);
     setData(null);
+    setLiveQuote(null);
     onBarClick?.(null);
     fetchChartAnalysis(stockCode)
       .then((d) => {
@@ -195,6 +241,9 @@ export default function ChartAnalysisCard({ stockCode, stockName, onNameResolved
       })
       .catch((e: unknown) => setError(e instanceof Error ? e.message : String(e)))
       .finally(() => setLoading(false));
+    fetchMarketQuote(stockCode)
+      .then(setLiveQuote)
+      .catch(() => {});
   }, [stockCode]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (chartOnly) {
@@ -212,9 +261,10 @@ export default function ChartAnalysisCard({ stockCode, stockName, onNameResolved
         {data && !loading && (
           <StockPriceChart
             ohlcv={data.ohlcv}
+            todayBar={todayBar(data.ohlcv)}
             supports={[]}
             resistances={[]}
-            currentPrice={data.current_price}
+            currentPrice={livePrice ?? data.current_price}
             onBarHover={onBarHover}
             onBarClick={onBarClick}
             defaultPeriod="3M"
@@ -247,19 +297,20 @@ export default function ChartAnalysisCard({ stockCode, stockName, onNameResolved
         <div className="space-y-0">
           <StockPriceChart
             ohlcv={data.ohlcv}
+            todayBar={todayBar(data.ohlcv)}
             supports={data.support_levels}
             resistances={data.resistance_levels}
-            currentPrice={data.current_price}
+            currentPrice={livePrice ?? data.current_price}
             onBarHover={onBarHover}
             onBarClick={onBarClick}
           />
 
           <div className="px-5 pt-4 pb-1">
-            <SignalSummary data={data} />
+            <SignalSummary data={data} livePrice={livePrice} />
           </div>
 
           <div className="px-5 pb-4">
-            <LevelsTable data={data} />
+            <LevelsTable data={data} livePrice={livePrice} />
           </div>
 
           <p className="text-[11px] text-muted px-5 pb-5 pt-3" style={{ borderTop: "1px solid var(--c-border)" }}>
