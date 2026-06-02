@@ -8,7 +8,7 @@ import {
   type ScreenerResultItem,
   type ScreenerParams,
 } from "@/lib/api";
-import StockLogo from "@/components/StockLogo";
+import { StockList, COLS, NameCell, PriceCell, MutedNumber } from "@/components/StockList";
 
 const CONDITIONS: { id: ScreenerCondition; label: string; desc: string; live?: boolean }[] = [
   { id: "volume_surge",  label: "거래량 급등",          desc: "오늘 거래량 > N배 × 20일 평균" },
@@ -259,67 +259,44 @@ export default function ScreenerSection({ onSelect, onHover, onHoverEnd }: Props
         });
         return (
         <>
-          {/* 정렬 탭 */}
-          <div className="flex gap-0 px-6 border-b border-hairline-on-dark bg-surface-elevated-dark/40">
+          {/* 정렬 탭 (TDS underline) */}
+          <div className="flex gap-0 px-5" style={{ borderBottom: "1px solid var(--c-border)" }}>
             {SORT_TABS.map((tab) => (
               <button
                 key={tab.id}
                 type="button"
                 onClick={() => setSortBy(tab.id)}
-                className={`px-3 py-2 text-xs font-semibold border-b-2 transition-colors cursor-pointer ${
+                className={`px-4 py-2 text-[13px] transition-colors cursor-pointer border-b-2 ${
                   sortBy === tab.id
-                    ? "border-primary text-primary"
-                    : "border-transparent text-muted hover:text-muted-strong"
+                    ? "border-ink text-ink font-bold"
+                    : "border-transparent text-muted-strong hover:text-body font-medium"
                 }`}
               >
                 {tab.label}
               </button>
             ))}
           </div>
-          {/* 컬럼 레이블 */}
-          <div className="grid grid-cols-[1fr_6rem_7rem_6rem_10rem] gap-3 px-6 py-2.5 bg-surface-elevated-dark/60 border-b border-hairline-on-dark">
-            <span className="text-[10px] uppercase tracking-widest text-muted">종목명</span>
-            <span className="text-[10px] uppercase tracking-widest text-muted text-right">현재가</span>
-            <span className="text-[10px] uppercase tracking-widest text-muted text-right">거래량</span>
-            <span className="text-[10px] uppercase tracking-widest text-muted text-right">거래대금</span>
-            <span className="text-[10px] uppercase tracking-widest text-muted text-right">매칭 조건</span>
-          </div>
-          <ul>
-            {sorted.map((item) => (
-              <li
-                key={item.stock_code}
-                onClick={() => onSelect(item.stock_code, item.stock_name)}
-                className="grid grid-cols-[1fr_6rem_7rem_6rem_10rem] gap-3 items-center px-6 py-3 border-t border-hairline-on-dark first:border-t-0 cursor-pointer transition-colors"
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "var(--c-hover)";
-                  onHover?.({ code: item.stock_code, name: item.stock_name, price: item.close, changeRate: 0 });
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "";
-                  onHoverEnd?.();
-                }}
-              >
-                <span className="flex items-center gap-2.5 min-w-0">
-                  <StockLogo code={item.stock_code} name={item.stock_name} size={32} />
-                  <span className="min-w-0">
-                    <span className="block text-sm font-semibold text-on-dark truncate leading-tight">
-                      {item.stock_name || item.stock_code}
-                    </span>
-                    <span className="block text-[11px] text-muted font-mono">{item.stock_code}</span>
-                  </span>
-                </span>
-                <span className="text-right font-mono text-sm font-semibold text-on-dark tabular">
-                  {item.close.toLocaleString("ko-KR")}
-                  <span className="text-[10px] text-muted font-normal ml-0.5">원</span>
-                </span>
-                <span className="text-right font-mono text-xs text-muted-strong tabular whitespace-nowrap">
-                  {formatVolume(item.volume)}
-                </span>
-                <span className="text-right font-mono text-xs text-muted-strong tabular whitespace-nowrap">
-                  {formatTradeValue(item.close * item.volume)}
-                </span>
+          <StockList
+            items={sorted}
+            getKey={(i) => i.stock_code}
+            onSelect={(i) => onSelect(i.stock_code, i.stock_name)}
+            onRowHover={(i) =>
+              onHover?.({
+                code: i.stock_code,
+                name: i.stock_name,
+                price: i.close,
+                changeRate: 0,
+              })
+            }
+            onRowHoverEnd={onHoverEnd}
+            columns={[
+              { ...COLS.name,    render: (i) => <NameCell code={i.stock_code} name={i.stock_name} /> },
+              { ...COLS.price,   render: (i) => <PriceCell price={i.close} /> },
+              { ...COLS.volume,  render: (i) => <MutedNumber>{formatVolume(i.volume)}</MutedNumber> },
+              { ...COLS.amount,  render: (i) => <MutedNumber>{formatTradeValue(i.close * i.volume)}</MutedNumber> },
+              { ...COLS.matched, render: (i) => (
                 <span className="flex flex-nowrap justify-end gap-1 overflow-hidden">
-                  {item.matched_conditions.map((label) => (
+                  {i.matched_conditions.map((label) => (
                     <span
                       key={label}
                       className="text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary font-medium whitespace-nowrap truncate min-w-0"
@@ -328,15 +305,15 @@ export default function ScreenerSection({ onSelect, onHover, onHoverEnd }: Props
                     </span>
                   ))}
                 </span>
-              </li>
-            ))}
-          </ul>
+              ) },
+            ]}
+          />
         </>
         );
       })()}
 
       {results !== null && results.length === 0 && !loading && (
-        <div className="px-6 py-10 text-center text-sm text-muted">
+        <div className="px-5 py-10 text-center text-sm text-muted">
           조건에 맞는 종목이 없습니다.
         </div>
       )}

@@ -9,7 +9,7 @@ import {
   type RankSort,
   type RankInvestor,
 } from "@/lib/api";
-import StockLogo from "@/components/StockLogo";
+import { StockList, COLS, NameCell, PriceCell, ChangeRateBadge, RankCell, MutedNumber } from "@/components/StockList";
 
 export type TabId = "volume" | "amount" | "foreign" | "institution" | "gainer";
 
@@ -184,123 +184,51 @@ export default function RankingSection({ onSelect, onHover, onHoverEnd, activeTa
         </div>
       </header>
 
-      {/* 컬럼 헤더 */}
-      <div
-        className="grid grid-cols-[2rem_1fr_5rem_5rem_5.5rem] gap-2 px-5 py-2 text-[10px] text-muted"
-        style={{ background: "var(--c-bg-subtle)" }}
-      >
-        <span className="text-center">#</span>
-        <span>종목명</span>
-        <span className="text-right">현재가</span>
-        <span className="text-right">등락률</span>
-        <span className="text-right">{extraLabel(activeTab)}</span>
-      </div>
+      {/* 비집계 시간대 안내 */}
+      {!loading && !isTabAvailable(activeTab) && (
+        <div className="px-5 py-10 text-center">
+          <p className="text-[13px] font-semibold text-ink mb-1">아직 집계 전이에요</p>
+          <p className="text-xs text-muted">{NOT_YET[activeTab]}</p>
+        </div>
+      )}
 
-      {/* 목록 */}
-      <ul>
-        {loading && Array.from({ length: 10 }).map((_, i) => (
-          <li
-            key={i}
-            className="grid grid-cols-[2rem_1fr_5rem_5rem_5.5rem] gap-2 px-5 py-3.5 animate-pulse"
-            style={{ borderTop: i > 0 ? "1px solid var(--c-border)" : undefined }}
-          >
-            <span className="w-4 h-3 rounded mx-auto mt-1" style={{ background: "var(--c-border)" }} />
-            <span className="flex items-center gap-2.5">
-              <span className="w-8 h-8 rounded-xl shrink-0" style={{ background: "var(--c-border)" }} />
-              <span className="flex-1 space-y-1.5">
-                <span className="block w-20 h-3 rounded" style={{ background: "var(--c-border)" }} />
-                <span className="block w-12 h-2 rounded" style={{ background: "var(--c-hover)" }} />
-              </span>
-            </span>
-            <span className="w-14 h-3 rounded ml-auto mt-2" style={{ background: "var(--c-border)" }} />
-            <span className="w-12 h-5 rounded-full ml-auto mt-1" style={{ background: "var(--c-border)" }} />
-            <span className="w-12 h-3 rounded ml-auto mt-2" style={{ background: "var(--c-border)" }} />
-          </li>
-        ))}
+      {error && !loading && (
+        <div className="px-5 py-8 text-center text-sm text-muted">{error}</div>
+      )}
 
-        {!loading && !isTabAvailable(activeTab) && (
-          <li className="px-5 py-10 text-center">
-            <p className="text-[13px] font-semibold text-ink mb-1">아직 집계 전이에요</p>
-            <p className="text-xs text-muted">{NOT_YET[activeTab]}</p>
-          </li>
-        )}
-
-        {error && !loading && (
-          <li className="px-5 py-8 text-center text-sm text-muted">{error}</li>
-        )}
-
-        {!loading && !error && isTabAvailable(activeTab) && items.length === 0 && (
-          <li className="px-5 py-10 text-center">
-            <p className="text-[13px] font-semibold text-ink mb-1">데이터가 없습니다</p>
-            <p className="text-xs text-muted">장 마감 후에는 데이터가 제공되지 않을 수 있습니다.</p>
-          </li>
-        )}
-
-        {!loading && !error && items.map((item, idx) => {
-          const up = item.change_rate > 0;
-          const flat = item.change_rate === 0;
-          const badgeBg = flat
-            ? "text-muted"
-            : up
-              ? "bg-trading-up/10 text-trading-up"
-              : "bg-trading-down/10 text-trading-down";
-          const badgeStyle = flat ? { background: "var(--c-bg-muted)" } : {};
-
-          return (
-            <li
-              key={item.stock_code}
-              onClick={() => onSelect(item.stock_code, item.stock_name)}
-              className="grid grid-cols-[2rem_1fr_5rem_5rem_5.5rem] gap-2 items-center px-5 py-3 cursor-pointer transition-colors"
-              style={{ borderTop: idx > 0 ? "1px solid var(--c-border)" : undefined }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = "var(--c-hover)";
-                onHover?.({ code: item.stock_code, name: item.stock_name, price: item.price, changeRate: item.change_rate });
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = "";
-                onHoverEnd?.();
-              }}
-            >
-              {/* 순위 */}
-              <span className={`text-[13px] font-bold text-center select-none tabular font-mono ${
-                item.rank <= 3 ? "text-primary" : "text-muted"
-              }`}>
-                {item.rank}
-              </span>
-
-              {/* 종목명 */}
-              <span className="flex items-center gap-2 min-w-0">
-                <StockLogo code={item.stock_code} name={item.stock_name} size={34} />
-                <span className="min-w-0 flex-1">
-                  <span className="block text-[14px] font-semibold text-ink truncate leading-tight">
-                    {item.stock_name || item.stock_code}
-                  </span>
-                  <span className="block text-[11px] text-muted font-mono">{item.stock_code}</span>
-                </span>
-              </span>
-
-              {/* 현재가 */}
-              <span className="text-right whitespace-nowrap">
-                <span className="font-mono text-[13px] font-semibold text-ink tabular">
-                  {item.price.toLocaleString("ko-KR")}<span className="text-[10px] text-muted font-normal ml-0.5">원</span>
-                </span>
-              </span>
-
-              {/* 등락률 */}
-              <span className="flex justify-end">
-                <span className={`font-mono tabular text-[12px] font-bold px-2 py-1 rounded-full ${badgeBg}`} style={badgeStyle}>
-                  {flat ? "0.00%" : `${up ? "+" : ""}${item.change_rate.toFixed(2)}%`}
-                </span>
-              </span>
-
-              {/* 거래량/거래대금/순매수 */}
-              <span className="text-right font-mono text-[12px] text-muted tabular">
-                {extraValue(item, activeTab)}
-              </span>
-            </li>
-          );
-        })}
-      </ul>
+      {/* 종목 목록 */}
+      {isTabAvailable(activeTab) && !error && (
+        <StockList
+          items={items}
+          getKey={(i) => i.stock_code}
+          onSelect={(i) => onSelect(i.stock_code, i.stock_name)}
+          onRowHover={(i) =>
+            onHover?.({
+              code: i.stock_code,
+              name: i.stock_name,
+              price: i.price,
+              changeRate: i.change_rate,
+            })
+          }
+          onRowHoverEnd={onHoverEnd}
+          loading={loading}
+          loadingRows={10}
+          emptyMessage={
+            <div>
+              <p className="text-[13px] font-semibold text-ink mb-1">데이터가 없습니다</p>
+              <p className="text-xs text-muted">장 마감 후에는 데이터가 제공되지 않을 수 있습니다.</p>
+            </div>
+          }
+          columns={[
+            { ...COLS.rank,   render: (i) => <RankCell rank={i.rank} /> },
+            { ...COLS.name,   render: (i) => <NameCell code={i.stock_code} name={i.stock_name} /> },
+            { ...COLS.price,  render: (i) => <PriceCell price={i.price} /> },
+            { ...COLS.change, render: (i) => <ChangeRateBadge rate={i.change_rate} /> },
+            { ...COLS.volume, key: "extra", label: extraLabel(activeTab),
+              render: (i) => <MutedNumber>{extraValue(i, activeTab)}</MutedNumber> },
+          ]}
+        />
+      )}
     </section>
   );
 }
