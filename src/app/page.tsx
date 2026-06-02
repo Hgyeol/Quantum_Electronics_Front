@@ -245,7 +245,7 @@ export default function Home() {
   );
 
   return (
-    <div className="flex h-screen overflow-hidden bg-canvas-dark">
+    <div className="app-root flex h-screen overflow-hidden bg-canvas-dark">
 
       {leftNav}
 
@@ -459,7 +459,7 @@ export default function Home() {
             style={{ borderBottom: "1px solid var(--c-border)" }}
           >
             <span className="text-[15px] font-bold text-ink">{HOME_TABS[homeTab]}</span>
-            <div className="absolute" style={{ left: "calc(50vw - 72px)", transform: "translateX(-50%)" }}>
+            <div className="search-center-wrapper absolute" style={{ left: "calc(50vw - 72px)", transform: "translateX(-50%)" }}>
               <StockSearchBox onSelect={handleSelectStock} />
             </div>
           </header>
@@ -519,7 +519,7 @@ export default function Home() {
 
             {/* 우측 프리뷰 패널 */}
             <aside
-              className="w-[420px] shrink-0 bg-white flex flex-col overflow-hidden"
+              className="w-[420px] shrink-0 bg-white flex flex-col overflow-hidden h-full"
               style={{ borderLeft: "1px solid var(--c-border)" }}
             >
             {hoveredStock ? (

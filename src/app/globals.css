@@ -162,6 +162,16 @@ html.century-old body {
   zoom: 1.3;
 }
 
+/* zoom으로 인해 h-screen이 시각적으로 뷰포트를 넘어서므로 높이 보정 */
+html.century-old .app-root {
+  height: calc(100vh / 1.3) !important;
+}
+
+/* zoom으로 인한 좌표 보정: 검색창을 실제 화면 기준 중앙으로 */
+html.century-old .search-center-wrapper {
+  left: calc(50vw / 1.3 - 72px) !important;
+}
+
 /* 폰트 굵기: 가독성 강화 */
 html.century-old .font-bold     { font-weight: 800 !important; }
 html.century-old .font-semibold { font-weight: 700 !important; }
