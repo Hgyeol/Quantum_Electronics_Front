@@ -24,21 +24,22 @@ function confidenceKo(c: "low" | "medium" | "high") {
   return { low: "신호 약함", medium: "신호 보통", high: "신호 강함" }[c];
 }
 
-function actionColors(action: "buy" | "hold" | "sell") {
-  if (action === "buy")
-    return { badge: "bg-trading-up text-canvas-dark", border: "border-trading-up/30" };
-  if (action === "sell")
-    return { badge: "bg-trading-down text-canvas-dark", border: "border-trading-down/30" };
-  return { badge: "bg-primary text-canvas-dark", border: "border-primary/30" };
+function actionBadge(action: "buy" | "hold" | "sell") {
+  if (action === "buy")  return { bg: "bg-trading-up/10", text: "text-trading-up" };
+  if (action === "sell") return { bg: "bg-trading-down/10", text: "text-trading-down" };
+  return { bg: "bg-primary/10", text: "text-primary" };
 }
 
 function sourceLabel(source?: string) {
   const map: Record<string, string> = {
-    swing: "스윙포인트",
+    poc:  "POC",
+    hvn:  "HVN",
+    vwap: "VWAP",
+    swing: "스윙",
     ma20: "MA20",
     ma60: "MA60",
-    bb_lower: "BB 하단",
-    bb_upper: "BB 상단",
+    bb_lower: "BB하단",
+    bb_upper: "BB상단",
   };
   return map[source ?? ""] ?? "";
 }
@@ -47,83 +48,95 @@ function sourceLabel(source?: string) {
 
 function SignalSummary({ data, livePrice }: { data: ChartAnalysis; livePrice?: number | null }) {
   const { signal } = data;
-  const colors = actionColors(signal.action);
+  const badge = actionBadge(signal.action);
   const cur = livePrice ?? data.current_price;
 
   return (
-    <div className={`rounded-lg border ${colors.border} bg-surface-elevated-dark p-5 space-y-4`}>
-      {/* Header row */}
-      <div className="flex items-center gap-3 flex-wrap">
-        <span className={`text-xs font-bold px-3 py-1 rounded-full ${colors.badge}`}>
+    <div
+      className="bg-white"
+      style={{ border: "1px solid var(--c-border)", borderRadius: 12 }}
+    >
+      {/* Header */}
+      <div className="flex items-center gap-2.5 px-5 py-3.5" style={{ borderBottom: "1px solid var(--c-border)" }}>
+        <h3 className="text-[11px] uppercase tracking-widest text-muted font-semibold">매매 시그널</h3>
+        <span className="text-muted">·</span>
+        <span className={`text-[12px] font-bold px-2 py-0.5 rounded-[6px] ${badge.bg} ${badge.text}`}>
           {actionKo(signal.action)}
         </span>
-        <span className="text-xs text-muted-strong">{confidenceKo(signal.confidence)}</span>
-        <span className="ml-auto text-xs text-muted font-mono">{data.analysis_period_days}일 분석</span>
+        <span className="text-[12px] text-muted-strong">{confidenceKo(signal.confidence)}</span>
+        <span className="ml-auto text-[11px] text-muted font-mono tabular">{data.analysis_period_days}일 분석</span>
       </div>
 
       {/* Price grid */}
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-3">
         {/* 매수 구간 */}
-        <div className="rounded-md bg-trading-up/10 border border-trading-up/20 p-3">
-          <div className="text-[11px] text-trading-up font-semibold mb-2">매수 구간</div>
+        <div className="px-5 py-4" style={{ borderRight: "1px solid var(--c-border)" }}>
+          <div className="text-[11px] text-trading-up font-semibold mb-1.5">매수 구간</div>
           {signal.entry_zone_low && signal.entry_zone_high ? (
-            <div className="space-y-0.5">
-              <div className="font-mono text-xs text-trading-up font-bold">{formatKRW(signal.entry_zone_low)}</div>
-              <div className="font-mono text-xs text-trading-up font-bold">~ {formatKRW(signal.entry_zone_high)}</div>
+            <>
+              <div className="font-mono tabular text-[14px] text-ink font-bold leading-tight">{formatKRW(signal.entry_zone_low)}</div>
+              <div className="font-mono tabular text-[13px] text-body-secondary leading-tight mt-0.5">~ {formatKRW(signal.entry_zone_high)}</div>
               {signal.stop_loss && (
-                <div className="text-[11px] text-muted-strong mt-1">
-                  손절 <span className="font-mono">{formatKRW(signal.stop_loss)}</span>
+                <div className="text-[11px] text-muted-strong mt-2">
+                  손절 <span className="font-mono tabular text-body">{formatKRW(signal.stop_loss)}</span>
                 </div>
               )}
-            </div>
+            </>
           ) : (
-            <div className="text-xs text-muted-strong">현재 매수 구간 없음</div>
+            <div className="text-[12px] text-muted">현재 매수 구간 없음</div>
           )}
         </div>
 
         {/* 현재가 */}
-        <div className="rounded-md bg-primary/10 border border-primary/20 p-3 flex flex-col justify-center items-center text-center">
-          <div className="text-[11px] text-primary font-semibold mb-2">현재가</div>
-          <div className="font-mono text-sm font-bold text-primary">{formatKRW(cur)}</div>
+        <div className="px-5 py-4 flex flex-col justify-center items-center text-center" style={{ borderRight: "1px solid var(--c-border)" }}>
+          <div className="text-[11px] text-muted font-semibold mb-1.5">현재가</div>
+          <div className="font-mono tabular text-[18px] text-ink font-bold leading-none">{formatKRW(cur)}</div>
         </div>
 
         {/* 매도 목표 */}
-        <div className="rounded-md bg-trading-down/10 border border-trading-down/20 p-3">
-          <div className="text-[11px] text-trading-down font-semibold mb-2">매도 목표</div>
+        <div className="px-5 py-4">
+          <div className="text-[11px] text-trading-down font-semibold mb-1.5">매도 목표</div>
           {signal.primary_target ? (
-            <div className="space-y-0.5">
-              <div className="font-mono text-xs text-trading-down font-bold">
-                1차 {formatKRW(signal.primary_target)}
+            <>
+              <div className="font-mono tabular text-[14px] text-ink font-bold leading-tight">
+                {formatKRW(signal.primary_target)}
               </div>
-              <div className="text-[11px] text-muted-strong">{pct(signal.primary_target, cur)}</div>
+              <div className="text-[11px] text-muted-strong leading-tight mt-0.5">
+                1차 <span className="font-mono tabular">{pct(signal.primary_target, cur)}</span>
+              </div>
               {signal.secondary_target && (
-                <div className="font-mono text-xs text-trading-down/70">
-                  2차 {formatKRW(signal.secondary_target)}
+                <div className="text-[11px] text-muted mt-2">
+                  2차 <span className="font-mono tabular text-body">{formatKRW(signal.secondary_target)}</span>
                 </div>
               )}
-            </div>
+            </>
           ) : (
-            <div className="text-xs text-muted-strong">저항선 없음</div>
+            <div className="text-[12px] text-muted">저항선 없음</div>
           )}
         </div>
       </div>
 
-      {/* R/R */}
-      {signal.risk_reward_ratio && (
-        <div className="text-xs text-muted-strong">
-          리스크 대비 수익 <span className="text-on-dark font-mono font-semibold">1 : {signal.risk_reward_ratio}</span>
+      {/* R/R + Reasoning footer */}
+      {(signal.risk_reward_ratio || signal.reasoning.length > 0) && (
+        <div className="px-5 py-3" style={{ borderTop: "1px solid var(--c-border)", background: "var(--c-bg-subtle)" }}>
+          {signal.risk_reward_ratio && (
+            <div className="flex items-center gap-1.5 text-[12px] mb-2">
+              <span className="text-muted-strong">리스크 대비 수익</span>
+              <span className="font-mono tabular text-ink font-bold">1 : {signal.risk_reward_ratio}</span>
+            </div>
+          )}
+          {signal.reasoning.length > 0 && (
+            <ul className="space-y-1">
+              {signal.reasoning.map((r, i) => (
+                <li key={i} className="flex gap-2 text-[12px] text-body-secondary leading-snug">
+                  <span className="text-muted mt-[1px] flex-shrink-0">·</span>
+                  <span>{r}</span>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       )}
-
-      {/* Reasoning */}
-      <div className="space-y-1 pt-1 border-t border-hairline-on-dark">
-        {signal.reasoning.map((r, i) => (
-          <div key={i} className="flex gap-2 text-xs text-muted-strong">
-            <span className="text-muted mt-0.5 flex-shrink-0">•</span>
-            <span>{r}</span>
-          </div>
-        ))}
-      </div>
     </div>
   );
 }
@@ -138,30 +151,75 @@ function LevelsTable({ data, livePrice }: { data: ChartAnalysis; livePrice?: num
   if (supports.length === 0 && resistances.length === 0) return null;
 
   return (
-    <div className="grid grid-cols-2 gap-4">
-      <div>
-        <div className="text-xs text-trading-up font-semibold mb-2">지지선 (저점 · 매수 구간)</div>
-        {supports.map((l, i) => (
-          <div key={i} className="flex items-center justify-between py-2 border-b border-hairline-on-dark last:border-0 gap-3">
-            <span className="font-mono text-sm text-trading-up font-semibold">{formatKRW(l.price)}</span>
-            <div className="text-right">
-              <div className="text-xs text-muted-strong">{pct(l.price, cur)}</div>
-              {l.source && <div className="text-[10px] text-muted">{sourceLabel(l.source)}</div>}
+    <div
+      className="bg-white grid grid-cols-2"
+      style={{ border: "1px solid var(--c-border)", borderRadius: 12 }}
+    >
+      <div style={{ borderRight: "1px solid var(--c-border)" }}>
+        <div
+          className="px-4 py-2.5 text-[11px] uppercase tracking-widest text-muted font-semibold flex items-center gap-1.5"
+          style={{ borderBottom: "1px solid var(--c-border)" }}
+        >
+          <span className="w-1.5 h-1.5 rounded-full bg-trading-up" />
+          지지선
+        </div>
+        {supports.length === 0 ? (
+          <div className="px-4 py-6 text-center text-[12px] text-muted">감지된 지지선 없음</div>
+        ) : (
+          supports.map((l, i) => (
+            <div
+              key={i}
+              className="flex items-center justify-between px-4 py-2.5 gap-3"
+              style={{ borderTop: i > 0 ? "1px solid var(--c-border)" : undefined }}
+            >
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="font-mono tabular text-[13px] text-ink font-bold">{formatKRW(l.price)}</span>
+                {l.source && (
+                  <span
+                    className="text-[10px] text-muted-strong font-semibold px-1.5 py-[1px] rounded-[4px]"
+                    style={{ background: "var(--c-bg-muted)" }}
+                  >
+                    {sourceLabel(l.source)}
+                  </span>
+                )}
+              </div>
+              <span className="font-mono tabular text-[11px] text-trading-down">{pct(l.price, cur)}</span>
             </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
       <div>
-        <div className="text-xs text-trading-down font-semibold mb-2">저항선 (고점 · 매도 목표)</div>
-        {resistances.map((l, i) => (
-          <div key={i} className="flex items-center justify-between py-2 border-b border-hairline-on-dark last:border-0 gap-3">
-            <span className="font-mono text-sm text-trading-down font-semibold">{formatKRW(l.price)}</span>
-            <div className="text-right">
-              <div className="text-xs text-muted-strong">{pct(l.price, cur)}</div>
-              {l.source && <div className="text-[10px] text-muted">{sourceLabel(l.source)}</div>}
+        <div
+          className="px-4 py-2.5 text-[11px] uppercase tracking-widest text-muted font-semibold flex items-center gap-1.5"
+          style={{ borderBottom: "1px solid var(--c-border)" }}
+        >
+          <span className="w-1.5 h-1.5 rounded-full bg-trading-down" />
+          저항선
+        </div>
+        {resistances.length === 0 ? (
+          <div className="px-4 py-6 text-center text-[12px] text-muted">감지된 저항선 없음</div>
+        ) : (
+          resistances.map((l, i) => (
+            <div
+              key={i}
+              className="flex items-center justify-between px-4 py-2.5 gap-3"
+              style={{ borderTop: i > 0 ? "1px solid var(--c-border)" : undefined }}
+            >
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="font-mono tabular text-[13px] text-ink font-bold">{formatKRW(l.price)}</span>
+                {l.source && (
+                  <span
+                    className="text-[10px] text-muted-strong font-semibold px-1.5 py-[1px] rounded-[4px]"
+                    style={{ background: "var(--c-bg-muted)" }}
+                  >
+                    {sourceLabel(l.source)}
+                  </span>
+                )}
+              </div>
+              <span className="font-mono tabular text-[11px] text-trading-up">{pct(l.price, cur)}</span>
             </div>
-          </div>
-        ))}
+          ))
+        )}
       </div>
     </div>
   );
@@ -305,7 +363,7 @@ export default function ChartAnalysisCard({ stockCode, stockName, onNameResolved
             onBarClick={onBarClick}
           />
 
-          <div className="px-5 pt-4 pb-1">
+          <div className="px-5 pt-4 pb-3">
             <SignalSummary data={data} livePrice={livePrice} />
           </div>
 
@@ -313,7 +371,10 @@ export default function ChartAnalysisCard({ stockCode, stockName, onNameResolved
             <LevelsTable data={data} livePrice={livePrice} />
           </div>
 
-          <p className="text-[11px] text-muted px-5 pb-5 pt-3" style={{ borderTop: "1px solid var(--c-border)" }}>
+          <p
+            className="text-[11px] text-muted px-5 py-3 leading-relaxed"
+            style={{ borderTop: "1px solid var(--c-border)", background: "var(--c-bg-subtle)" }}
+          >
             {data.disclaimer}
           </p>
         </div>
