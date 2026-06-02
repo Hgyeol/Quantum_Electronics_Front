@@ -76,15 +76,6 @@ function IconFilter({ active }: { active: boolean }) {
   );
 }
 
-function IconLogout() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="text-muted">
-      <path d="M13 3H16.5C17.3 3 18 3.7 18 4.5V15.5C18 16.3 17.3 17 16.5 17H13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      <path d="M8 13L4 10L8 7M4 10H14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
 function IconBack() {
   return (
     <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="text-ink">
@@ -296,13 +287,6 @@ export default function Home() {
         </>
       )}
 
-      <div className="flex-1" />
-      <button type="button" onClick={handleLogout} title="로그아웃"
-        className="w-12 h-12 flex items-center justify-center rounded-xl transition-colors cursor-pointer"
-        onMouseEnter={(e) => (e.currentTarget.style.background = "var(--c-hover)")}
-        onMouseLeave={(e) => (e.currentTarget.style.background = "")}>
-        <IconLogout />
-      </button>
     </aside>
   );
 
@@ -324,6 +308,15 @@ export default function Home() {
             <div className="search-center-wrapper absolute" style={{ left: "calc(50vw - 72px)", transform: "translateX(-50%)" }}>
               <StockSearchBox onSelect={handleSelectStock} />
             </div>
+            <button
+              type="button" onClick={handleLogout}
+              className="ml-auto px-3 py-1.5 rounded-full text-[13px] font-medium text-muted-strong hover:text-ink transition-colors cursor-pointer"
+              style={{ background: "var(--c-hover)" }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = "var(--c-hover-lg)")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "var(--c-hover)")}
+            >
+              로그아웃
+            </button>
           </header>
 
           {/* 상세 컨텐츠 */}
@@ -494,6 +487,15 @@ export default function Home() {
             <div className="search-center-wrapper absolute" style={{ left: "calc(50vw - 72px)", transform: "translateX(-50%)" }}>
               <StockSearchBox onSelect={handleSelectStock} />
             </div>
+            <button
+              type="button" onClick={handleLogout}
+              className="ml-auto px-3 py-1.5 rounded-full text-[13px] font-medium text-muted-strong hover:text-ink transition-colors cursor-pointer"
+              style={{ background: "var(--c-hover)" }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = "var(--c-hover-lg)")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "var(--c-hover)")}
+            >
+              로그아웃
+            </button>
           </header>
 
           {/* 헤더 아래 center + right 영역 */}
