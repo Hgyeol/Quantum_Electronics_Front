@@ -490,24 +490,19 @@ export interface ScreenerStatus {
 
 export interface ScreenerParams {
   conditions: ScreenerCondition[];
-  volumeThreshold?: number;
-  consecutiveDays?: number;
-  priceSurgeThreshold?: number;
+  /** 조건별 파라미터. 예: { volume_surge: { threshold: 2.0 }, momentum_up: { period: 10 } } */
+  params?: Partial<Record<ScreenerCondition, Record<string, number>>>;
 }
 
 export async function fetchScreener({
   conditions,
-  volumeThreshold = 2.0,
-  consecutiveDays = 3,
-  priceSurgeThreshold = 5.0,
+  params,
 }: ScreenerParams): Promise<ScreenerResultItem[]> {
-  const params = new URLSearchParams({
-    conditions: conditions.join(","),
-    volume_threshold: String(volumeThreshold),
-    consecutive_days: String(consecutiveDays),
-    price_surge_threshold: String(priceSurgeThreshold),
-  });
-  const response = await fetch(`${API_BASE}/screener?${params.toString()}`, FETCH_OPTS);
+  const q = new URLSearchParams({ conditions: conditions.join(",") });
+  if (params && Object.keys(params).length > 0) {
+    q.set("params", JSON.stringify(params));
+  }
+  const response = await fetch(`${API_BASE}/screener?${q.toString()}`, FETCH_OPTS);
   if (!response.ok) {
     let detail = `HTTP ${response.status}`;
     try {

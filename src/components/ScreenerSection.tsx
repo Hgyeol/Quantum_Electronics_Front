@@ -10,11 +10,21 @@ import {
 } from "@/lib/api";
 import { StockList, COLS, NameCell, PriceCell, MutedNumber } from "@/components/StockList";
 
+interface ConditionParam {
+  key: string;
+  label: string;
+  default: number;
+  min: number;
+  max: number;
+  step: number;
+}
+
 interface ConditionItem {
   id: ScreenerCondition;
   label: string;
   desc: string;
   live?: boolean;
+  params?: ConditionParam[];
 }
 
 interface ConditionGroup {
@@ -22,16 +32,27 @@ interface ConditionGroup {
   items: ConditionItem[];
 }
 
+const P_DAYS = (def: number, min = 2, max = 10): ConditionParam => ({
+  key: "days", label: "일수", default: def, min, max, step: 1,
+});
+const P_PERIOD = (def: number, min = 2, max = 60): ConditionParam => ({
+  key: "period", label: "기간", default: def, min, max, step: 1,
+});
+
 const CONDITION_GROUPS: ConditionGroup[] = [
   {
     label: "가격 패턴",
     items: [
-      { id: "consecutive_bull",  label: "연속 양봉",          desc: "3일 연속 양봉 (close > open)" },
-      { id: "consecutive_up",    label: "연속 상승",          desc: "3일 연속 종가 상승" },
-      { id: "higher_high_low",   label: "고가/저가 동시 상승", desc: "3일 연속 고가·저가 모두 상승" },
+      { id: "consecutive_bull",  label: "연속 양봉",          desc: "N일 연속 양봉 (close > open)",
+        params: [P_DAYS(3)] },
+      { id: "consecutive_up",    label: "연속 상승",          desc: "N일 연속 종가 상승",
+        params: [P_DAYS(3)] },
+      { id: "higher_high_low",   label: "고가/저가 동시 상승", desc: "N일 연속 고가·저가 모두 상승",
+        params: [P_DAYS(3)] },
       { id: "break_prev_high",   label: "전일 고가 돌파",     desc: "오늘 종가가 전일 고가를 돌파" },
-      { id: "new_high_5d",       label: "5일 신고가 갱신",    desc: "오늘 고가가 직전 5일 최고" },
-      { id: "price_surge",       label: "급등주",            desc: "당일 등락률 > N% 이상" },
+      { id: "new_high_5d",       label: "5일 신고가 갱신",    desc: "오늘 고가가 직전 N일 최고" },
+      { id: "price_surge",       label: "급등주",            desc: "당일 등락률 > N% 이상",
+        params: [{ key: "threshold", label: "등락률 (%)", default: 5.0, min: 0.1, max: 30, step: 0.5 }] },
       { id: "near_high",         label: "신고가 근접",        desc: "52주 신고가 10% 이내 근접", live: true },
       { id: "upper_limit",       label: "상한가 포착",        desc: "당일 상한가(+30%) 도달 종목", live: true },
     ],
@@ -52,8 +73,10 @@ const CONDITION_GROUPS: ConditionGroup[] = [
       { id: "macd_signal_cross", label: "MACD Cross",      desc: "MACD 라인이 시그널 상향 돌파" },
       { id: "macd_osc_up",       label: "MACD Osc",        desc: "MACD 히스토그램 3일 연속 상승" },
       { id: "price_osc_up",      label: "Price Osc",       desc: "가격 오실레이터 시그널 상향 돌파" },
-      { id: "momentum_up",       label: "Momentum",        desc: "10일 모멘텀 3일 연속 상승" },
-      { id: "roc_up",            label: "ROC",             desc: "변화율 3일 연속 상승" },
+      { id: "momentum_up",       label: "Momentum",        desc: "N일 모멘텀 3일 연속 상승",
+        params: [P_PERIOD(10)] },
+      { id: "roc_up",            label: "ROC",             desc: "변화율 3일 연속 상승",
+        params: [P_PERIOD(10)] },
       { id: "lrs_signal_up",     label: "LRS",             desc: "선형회귀 기울기 시그널 돌파" },
       { id: "tsf_signal_up",     label: "TSF",             desc: "시계열 예측치 시그널 돌파" },
       { id: "sonar_signal_up",   label: "Sonar",           desc: "Sonar 시그널 돌파" },
@@ -63,15 +86,24 @@ const CONDITION_GROUPS: ConditionGroup[] = [
   {
     label: "거래량·수급",
     items: [
-      { id: "volume_surge",  label: "거래량 급등",        desc: "오늘 거래량 > N배 × 20일 평균" },
+      { id: "volume_surge",  label: "거래량 급등",        desc: "오늘 거래량 > N배 × 20일 평균",
+        params: [{ key: "threshold", label: "배수", default: 2.0, min: 1.0, max: 20, step: 0.5 }] },
       { id: "volume_power",  label: "체결강도 상위",      desc: "실시간 체결강도 상위 50종목", live: true },
-      { id: "obv_up",        label: "OBV 상승추세",       desc: "OBV 5일 연속 상승" },
+      { id: "obv_up",        label: "OBV 상승추세",       desc: "OBV N일 연속 상승",
+        params: [P_DAYS(5)] },
       { id: "obv_uturn",     label: "OBV U턴",           desc: "OBV 하락 후 반등" },
-      { id: "frgn_buy",      label: "외국인 연속 순매수", desc: "N일 연속 외국인 순매수" },
-      { id: "orgn_buy",      label: "기관 연속 순매수",   desc: "N일 연속 기관 순매수" },
+      { id: "frgn_buy",      label: "외국인 연속 순매수", desc: "N일 연속 외국인 순매수",
+        params: [P_DAYS(3)] },
+      { id: "orgn_buy",      label: "기관 연속 순매수",   desc: "N일 연속 기관 순매수",
+        params: [P_DAYS(3)] },
     ],
   },
 ];
+
+// 빠른 조회용 평탄화 맵
+const PARAM_DEFS: Record<string, ConditionParam[]> = Object.fromEntries(
+  CONDITION_GROUPS.flatMap((g) => g.items.filter((c) => c.params).map((c) => [c.id, c.params!])),
+);
 
 type SortType = "volume" | "amount";
 
@@ -104,22 +136,47 @@ interface Props {
   onHoverEnd?: () => void;
 }
 
-const STORAGE_KEY = "screener:v1";
+const STORAGE_KEY = "screener:v2";
+
+type ParamValues = Record<string, number>;
+type CondParams = Partial<Record<ScreenerCondition, ParamValues>>;
 
 interface PersistedState {
   selected: ScreenerCondition[];
-  volumeThreshold: number;
-  consecutiveDays: number;
-  priceSurgeThreshold: number;
+  conditionParams: CondParams;
   sortBy: SortType;
   results: ScreenerResultItem[] | null;
+}
+
+function defaultParams(): CondParams {
+  const out: CondParams = {};
+  for (const [cid, defs] of Object.entries(PARAM_DEFS)) {
+    out[cid as ScreenerCondition] = Object.fromEntries(defs.map((p) => [p.key, p.default]));
+  }
+  return out;
 }
 
 function loadPersisted(): Partial<PersistedState> {
   if (typeof window === "undefined") return {};
   try {
     const raw = sessionStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : {};
+    if (!raw) {
+      // v1 → v2 마이그레이션 시도
+      const old = sessionStorage.getItem("screener:v1");
+      if (old) {
+        const p = JSON.parse(old);
+        const cp: CondParams = defaultParams();
+        if (typeof p.volumeThreshold === "number") cp.volume_surge = { threshold: p.volumeThreshold };
+        if (typeof p.consecutiveDays === "number") {
+          cp.frgn_buy = { days: p.consecutiveDays };
+          cp.orgn_buy = { days: p.consecutiveDays };
+        }
+        if (typeof p.priceSurgeThreshold === "number") cp.price_surge = { threshold: p.priceSurgeThreshold };
+        return { selected: p.selected, conditionParams: cp, sortBy: p.sortBy, results: p.results };
+      }
+      return {};
+    }
+    return JSON.parse(raw);
   } catch {
     return {};
   }
@@ -130,9 +187,10 @@ export default function ScreenerSection({ onSelect, onHover, onHoverEnd }: Props
   const [selected, setSelected] = useState<Set<ScreenerCondition>>(
     new Set(persisted.selected ?? ["volume_surge"]),
   );
-  const [volumeThreshold, setVolumeThreshold] = useState(persisted.volumeThreshold ?? 2.0);
-  const [consecutiveDays, setConsecutiveDays] = useState(persisted.consecutiveDays ?? 3);
-  const [priceSurgeThreshold, setPriceSurgeThreshold] = useState(persisted.priceSurgeThreshold ?? 5.0);
+  const [conditionParams, setConditionParams] = useState<CondParams>(
+    persisted.conditionParams ?? defaultParams(),
+  );
+  const [openPopover, setOpenPopover] = useState<ScreenerCondition | null>(null);
   const [results, setResults] = useState<ScreenerResultItem[] | null>(persisted.results ?? null);
   const [sortBy, setSortBy] = useState<SortType>(persisted.sortBy ?? "volume");
   const [loading, setLoading] = useState(false);
@@ -150,10 +208,23 @@ export default function ScreenerSection({ onSelect, onHover, onHoverEnd }: Props
     if (typeof window === "undefined") return;
     const data: PersistedState = {
       selected: Array.from(selected),
-      volumeThreshold, consecutiveDays, priceSurgeThreshold, sortBy, results,
+      conditionParams, sortBy, results,
     };
     try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch { /* ignore */ }
-  }, [selected, volumeThreshold, consecutiveDays, priceSurgeThreshold, sortBy, results]);
+  }, [selected, conditionParams, sortBy, results]);
+
+  // 팝오버 외부 클릭 시 닫기
+  useEffect(() => {
+    if (!openPopover) return;
+    const handler = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (!target.closest("[data-screener-chip]") && !target.closest("[data-screener-popover]")) {
+        setOpenPopover(null);
+      }
+    };
+    window.addEventListener("mousedown", handler);
+    return () => window.removeEventListener("mousedown", handler);
+  }, [openPopover]);
 
   function toggleCondition(id: ScreenerCondition) {
     setSelected((prev) => {
@@ -164,6 +235,29 @@ export default function ScreenerSection({ onSelect, onHover, onHoverEnd }: Props
     });
   }
 
+  function updateParam(cid: ScreenerCondition, key: string, value: number) {
+    setConditionParams((prev) => ({
+      ...prev,
+      [cid]: { ...(prev[cid] ?? {}), [key]: value },
+    }));
+  }
+
+  function resetParams(cid: ScreenerCondition) {
+    const defs = PARAM_DEFS[cid];
+    if (!defs) return;
+    setConditionParams((prev) => ({
+      ...prev,
+      [cid]: Object.fromEntries(defs.map((p) => [p.key, p.default])),
+    }));
+  }
+
+  function isParamDefault(cid: ScreenerCondition): boolean {
+    const defs = PARAM_DEFS[cid];
+    if (!defs) return true;
+    const cur = conditionParams[cid] ?? {};
+    return defs.every((p) => (cur[p.key] ?? p.default) === p.default);
+  }
+
   async function handleSearch() {
     if (selected.size === 0) { setError("조건을 하나 이상 선택하세요."); return; }
     setLoading(true);
@@ -171,11 +265,16 @@ export default function ScreenerSection({ onSelect, onHover, onHoverEnd }: Props
     setResults(null);
     setSortBy("volume");
     try {
+      // 선택된 조건의 파라미터만 추려 전송
+      const paramsToSend: CondParams = {};
+      for (const cid of selected) {
+        if (PARAM_DEFS[cid] && conditionParams[cid]) {
+          paramsToSend[cid] = conditionParams[cid];
+        }
+      }
       const params: ScreenerParams = {
         conditions: Array.from(selected) as ScreenerCondition[],
-        volumeThreshold,
-        consecutiveDays,
-        priceSurgeThreshold,
+        params: paramsToSend,
       };
       const data = await fetchScreener(params);
       setResults(data);
@@ -186,12 +285,8 @@ export default function ScreenerSection({ onSelect, onHover, onHoverEnd }: Props
     }
   }
 
-  const showVolumeInput = selected.has("volume_surge");
-  const showDaysInput = selected.has("frgn_buy") || selected.has("orgn_buy");
-  const showSurgeInput = selected.has("price_surge");
-
   return (
-    <section className="bg-surface-card-dark rounded-xl shadow-card overflow-hidden">
+    <section className="bg-surface-card-dark rounded-xl shadow-card">
       {/* 헤더 */}
       <header className="px-6 pt-4 pb-4 border-b border-hairline-on-dark">
         <div className="flex items-center justify-between mb-4">
@@ -228,25 +323,62 @@ export default function ScreenerSection({ onSelect, onHover, onHoverEnd }: Props
                 <div className="flex flex-wrap gap-1.5">
                   {group.items.map((c) => {
                     const checked = selected.has(c.id);
+                    const hasParams = !!c.params && c.params.length > 0;
+                    const customized = hasParams && !isParamDefault(c.id);
                     return (
-                      <button
-                        key={c.id}
-                        type="button"
-                        title={c.desc}
-                        onClick={() => toggleCondition(c.id)}
-                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[12px] font-semibold border transition-colors cursor-pointer ${
-                          checked
-                            ? "border-primary text-primary bg-primary/10"
-                            : "border-hairline-on-dark text-muted-strong hover:border-primary/40 hover:text-body"
-                        }`}
-                      >
-                        {c.label}
-                        {c.live && (
-                          <span className="text-[9px] font-bold px-1 py-0.5 rounded bg-trading-up/15 text-trading-up leading-none">
-                            LIVE
-                          </span>
+                      <span key={c.id} className="relative inline-flex">
+                        <div
+                          data-screener-chip
+                          className={`inline-flex items-center rounded-full border transition-colors ${
+                            checked
+                              ? "border-primary bg-primary/10"
+                              : "border-hairline-on-dark hover:border-primary/40"
+                          }`}
+                        >
+                          <button
+                            type="button"
+                            title={c.desc}
+                            onClick={() => toggleCondition(c.id)}
+                            className={`inline-flex items-center gap-1 pl-2.5 ${hasParams ? "pr-1.5" : "pr-2.5"} py-1 text-[12px] font-semibold cursor-pointer ${
+                              checked ? "text-primary" : "text-muted-strong hover:text-body"
+                            }`}
+                          >
+                            {c.label}
+                            {c.live && (
+                              <span className="text-[9px] font-bold px-1 py-0.5 rounded bg-trading-up/15 text-trading-up leading-none">
+                                LIVE
+                              </span>
+                            )}
+                          </button>
+                          {hasParams && (
+                            <button
+                              type="button"
+                              onClick={() => setOpenPopover(openPopover === c.id ? null : c.id)}
+                              title="파라미터 설정"
+                              className={`flex items-center justify-center w-6 h-6 mr-0.5 rounded-full transition-colors cursor-pointer ${
+                                customized
+                                  ? "text-primary"
+                                  : checked ? "text-primary/60 hover:text-primary" : "text-muted hover:text-body"
+                              }`}
+                              aria-label="파라미터 설정"
+                            >
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                                <circle cx="12" cy="12" r="3" />
+                                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                              </svg>
+                            </button>
+                          )}
+                        </div>
+                        {openPopover === c.id && hasParams && (
+                          <ParamPopover
+                            item={c}
+                            values={conditionParams[c.id] ?? {}}
+                            onChange={(key, val) => updateParam(c.id, key, val)}
+                            onReset={() => resetParams(c.id)}
+                            onClose={() => setOpenPopover(null)}
+                          />
                         )}
-                      </button>
+                      </span>
                     );
                   })}
                 </div>
@@ -255,46 +387,13 @@ export default function ScreenerSection({ onSelect, onHover, onHoverEnd }: Props
           })}
         </div>
 
-        {/* 파라미터 & 검색 버튼 */}
-        <div className="flex flex-wrap items-end gap-3">
-          {showVolumeInput && (
-            <label className="flex flex-col gap-1">
-              <span className="text-[10px] uppercase tracking-widest text-muted">급등 배수</span>
-              <input
-                type="number" min={1} max={20} step={0.5}
-                value={volumeThreshold}
-                onChange={(e) => { const v = parseFloat(e.target.value); setVolumeThreshold(Number.isNaN(v) ? 0 : v); }}
-                className="w-24 h-8 px-2.5 rounded-lg border border-hairline-on-dark bg-surface-elevated-dark text-sm text-on-dark font-mono focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/50"
-              />
-            </label>
-          )}
-          {showDaysInput && (
-            <label className="flex flex-col gap-1">
-              <span className="text-[10px] uppercase tracking-widest text-muted">연속 순매수 일수</span>
-              <input
-                type="number" min={1} max={10} step={1}
-                value={consecutiveDays}
-                onChange={(e) => { const v = parseInt(e.target.value, 10); setConsecutiveDays(Number.isNaN(v) ? 0 : v); }}
-                className="w-24 h-8 px-2.5 rounded-lg border border-hairline-on-dark bg-surface-elevated-dark text-sm text-on-dark font-mono focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/50"
-              />
-            </label>
-          )}
-          {showSurgeInput && (
-            <label className="flex flex-col gap-1">
-              <span className="text-[10px] uppercase tracking-widest text-muted">급등 기준 (%)</span>
-              <input
-                type="number" min={0.1} max={30} step={0.5}
-                value={priceSurgeThreshold}
-                onChange={(e) => { const v = parseFloat(e.target.value); setPriceSurgeThreshold(Number.isNaN(v) ? 0 : v); }}
-                className="w-24 h-8 px-2.5 rounded-lg border border-hairline-on-dark bg-surface-elevated-dark text-sm text-on-dark font-mono focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/50"
-              />
-            </label>
-          )}
+        {/* 검색 버튼 */}
+        <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={handleSearch}
             disabled={loading || selected.size === 0}
-            className="h-8 px-5 rounded-lg bg-primary hover:bg-primary-active disabled:bg-primary-disabled disabled:text-muted-strong text-on-primary text-sm font-semibold transition-colors cursor-pointer flex items-center gap-2"
+            className="h-9 px-5 rounded-lg bg-primary hover:bg-primary-active disabled:bg-primary-disabled disabled:text-muted-strong text-on-primary text-sm font-semibold transition-colors cursor-pointer flex items-center gap-2"
           >
             {loading && (
               <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin inline-block" />
@@ -302,7 +401,7 @@ export default function ScreenerSection({ onSelect, onHover, onHoverEnd }: Props
             {loading ? "검색 중" : "검색"}
           </button>
           {results !== null && !loading && (
-            <span className="text-xs text-muted self-end pb-1">
+            <span className="text-xs text-muted">
               {results.length > 0 ? `${results.length}종목 매칭` : "매칭 종목 없음"}
             </span>
           )}
@@ -379,5 +478,75 @@ export default function ScreenerSection({ onSelect, onHover, onHoverEnd }: Props
         </div>
       )}
     </section>
+  );
+}
+
+// ── 파라미터 팝오버 ─────────────────────────────────────────────────────────
+
+interface PopoverProps {
+  item: ConditionItem;
+  values: ParamValues;
+  onChange: (key: string, val: number) => void;
+  onReset: () => void;
+  onClose: () => void;
+}
+
+function ParamPopover({ item, values, onChange, onReset, onClose }: PopoverProps) {
+  if (!item.params) return null;
+  return (
+    <div
+      data-screener-popover
+      className="absolute left-0 top-[calc(100%+6px)] z-20 min-w-[200px] rounded-xl bg-white p-3 shadow-lg"
+      style={{ border: "1px solid var(--c-border-md)", boxShadow: "0 8px 32px var(--c-shadow)" }}
+    >
+      <div className="flex items-center justify-between mb-2.5">
+        <span className="text-[12px] font-bold text-ink">{item.label}</span>
+        <button
+          type="button"
+          onClick={onClose}
+          className="text-muted hover:text-body text-base leading-none cursor-pointer"
+          aria-label="닫기"
+        >
+          ×
+        </button>
+      </div>
+      <div className="space-y-2">
+        {item.params.map((p) => {
+          const current = values[p.key] ?? p.default;
+          return (
+            <label key={p.key} className="flex items-center justify-between gap-3">
+              <span className="text-[11px] text-muted-strong">{p.label}</span>
+              <input
+                type="number"
+                min={p.min} max={p.max} step={p.step}
+                value={current}
+                onChange={(e) => {
+                  const v = p.step < 1 ? parseFloat(e.target.value) : parseInt(e.target.value, 10);
+                  onChange(p.key, Number.isNaN(v) ? p.default : v);
+                }}
+                className="w-20 h-7 px-2 rounded-md text-[12px] font-mono tabular text-right focus:outline-none focus:ring-2 focus:ring-primary/30"
+                style={{ border: "1px solid var(--c-border-strong)", background: "var(--c-bg-subtle)" }}
+              />
+            </label>
+          );
+        })}
+      </div>
+      <div className="flex items-center justify-between mt-3 pt-2.5" style={{ borderTop: "1px solid var(--c-border)" }}>
+        <button
+          type="button"
+          onClick={onReset}
+          className="text-[11px] text-muted-strong hover:text-body cursor-pointer"
+        >
+          기본값으로
+        </button>
+        <button
+          type="button"
+          onClick={onClose}
+          className="text-[11px] font-bold text-primary cursor-pointer"
+        >
+          적용
+        </button>
+      </div>
+    </div>
   );
 }
