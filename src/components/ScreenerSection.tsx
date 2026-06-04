@@ -10,37 +10,67 @@ import {
 } from "@/lib/api";
 import { StockList, COLS, NameCell, PriceCell, MutedNumber } from "@/components/StockList";
 
-const CONDITIONS: { id: ScreenerCondition; label: string; desc: string; live?: boolean }[] = [
-  { id: "volume_surge",        label: "거래량 급등",          desc: "오늘 거래량 > N배 × 20일 평균" },
-  { id: "golden_cross",        label: "골든크로스 (5/20일)",   desc: "MA5가 MA20을 상향 돌파" },
-  { id: "frgn_buy",            label: "외국인 연속 순매수",    desc: "최근 N일 연속 외국인 순매수" },
-  { id: "orgn_buy",            label: "기관 연속 순매수",      desc: "최근 N일 연속 기관 순매수" },
-  { id: "price_surge",         label: "급등주",               desc: "당일 등락률 > N% 이상" },
-  { id: "volume_power",        label: "체결강도 상위",         desc: "실시간 체결강도 상위 50종목", live: true },
-  { id: "near_high",           label: "신고가 근접",           desc: "52주 신고가 10% 이내 근접", live: true },
-  { id: "upper_limit",         label: "상한가 포착",           desc: "당일 상한가(+30%) 도달 종목", live: true },
-  // 강한매수
-  { id: "consecutive_bull",    label: "연속 양봉",            desc: "3일 연속 양봉 (close > open)" },
-  { id: "consecutive_up",      label: "연속 상승",            desc: "3일 연속 종가 상승" },
-  { id: "higher_high_low",     label: "고가/저가 동시 상승",    desc: "3일 연속 고가·저가 모두 상승" },
-  // 매수
-  { id: "ma_alignment",        label: "이동평균 정배열",        desc: "MA5 > MA20 > MA60" },
-  { id: "break_prev_high",     label: "전일 고가 돌파",        desc: "오늘 종가가 전일 고가를 돌파" },
-  { id: "new_high_5d",         label: "5일 신고가 갱신",       desc: "오늘 고가가 직전 5일 최고" },
-  { id: "volume_golden_cross", label: "거래량 골든크로스",      desc: "거래량 MA5가 MA20 상향 돌파" },
-  { id: "macd_signal_cross",   label: "MACD 시그널 크로스",    desc: "MACD 라인이 시그널 상향 돌파" },
-  { id: "macd_osc_up",         label: "MACD Osc 상승기류",     desc: "MACD 히스토그램 3일 연속 상승" },
-  { id: "lrs_signal_up",       label: "LRS 시그널 돌파",       desc: "선형회귀 기울기 시그널 상향 돌파" },
-  { id: "tsf_signal_up",       label: "TSF 시그널 돌파",       desc: "시계열 예측치 시그널 상향 돌파" },
-  { id: "volume_osc_up",       label: "Volume Osc 상승돌파",   desc: "거래량 오실레이터 0선 상향 돌파" },
-  { id: "price_osc_up",        label: "Price Osc 상승돌파",    desc: "가격 오실레이터 시그널 상향 돌파" },
-  { id: "mao_up",              label: "MAO 상승돌파",          desc: "MA 오실레이터(MA5-MA20) 0선 상향 돌파" },
-  { id: "mao_signal_up",       label: "MAO Signal 돌파",       desc: "MAO 시그널선 상향 돌파" },
-  { id: "momentum_up",         label: "Momentum 상승추세",     desc: "10일 모멘텀 3일 연속 상승" },
-  { id: "roc_up",              label: "ROC 상승추세",          desc: "변화율(ROC) 3일 연속 상승" },
-  { id: "sonar_signal_up",     label: "Sonar 시그널 돌파",     desc: "Sonar 시그널선 상향 돌파" },
-  { id: "obv_up",              label: "OBV 상승추세",          desc: "OBV 5일 연속 상승" },
-  { id: "obv_uturn",           label: "OBV U턴",              desc: "OBV 하락 후 반등" },
+interface ConditionItem {
+  id: ScreenerCondition;
+  label: string;
+  desc: string;
+  live?: boolean;
+}
+
+interface ConditionGroup {
+  label: string;
+  items: ConditionItem[];
+}
+
+const CONDITION_GROUPS: ConditionGroup[] = [
+  {
+    label: "가격 패턴",
+    items: [
+      { id: "consecutive_bull",  label: "연속 양봉",          desc: "3일 연속 양봉 (close > open)" },
+      { id: "consecutive_up",    label: "연속 상승",          desc: "3일 연속 종가 상승" },
+      { id: "higher_high_low",   label: "고가/저가 동시 상승", desc: "3일 연속 고가·저가 모두 상승" },
+      { id: "break_prev_high",   label: "전일 고가 돌파",     desc: "오늘 종가가 전일 고가를 돌파" },
+      { id: "new_high_5d",       label: "5일 신고가 갱신",    desc: "오늘 고가가 직전 5일 최고" },
+      { id: "price_surge",       label: "급등주",            desc: "당일 등락률 > N% 이상" },
+      { id: "near_high",         label: "신고가 근접",        desc: "52주 신고가 10% 이내 근접", live: true },
+      { id: "upper_limit",       label: "상한가 포착",        desc: "당일 상한가(+30%) 도달 종목", live: true },
+    ],
+  },
+  {
+    label: "이동평균·추세",
+    items: [
+      { id: "golden_cross",        label: "골든크로스 (5/20)",  desc: "MA5가 MA20을 상향 돌파" },
+      { id: "ma_alignment",        label: "이동평균 정배열",     desc: "MA5 > MA20 > MA60" },
+      { id: "mao_up",              label: "MAO 상승돌파",       desc: "MA5-MA20이 0선 상향 돌파" },
+      { id: "mao_signal_up",       label: "MAO Signal 돌파",    desc: "MAO 시그널선 상향 돌파" },
+      { id: "volume_golden_cross", label: "거래량 골든크로스",   desc: "거래량 MA5가 MA20 상향 돌파" },
+    ],
+  },
+  {
+    label: "모멘텀·오실레이터",
+    items: [
+      { id: "macd_signal_cross", label: "MACD Cross",      desc: "MACD 라인이 시그널 상향 돌파" },
+      { id: "macd_osc_up",       label: "MACD Osc",        desc: "MACD 히스토그램 3일 연속 상승" },
+      { id: "price_osc_up",      label: "Price Osc",       desc: "가격 오실레이터 시그널 상향 돌파" },
+      { id: "momentum_up",       label: "Momentum",        desc: "10일 모멘텀 3일 연속 상승" },
+      { id: "roc_up",            label: "ROC",             desc: "변화율 3일 연속 상승" },
+      { id: "lrs_signal_up",     label: "LRS",             desc: "선형회귀 기울기 시그널 돌파" },
+      { id: "tsf_signal_up",     label: "TSF",             desc: "시계열 예측치 시그널 돌파" },
+      { id: "sonar_signal_up",   label: "Sonar",           desc: "Sonar 시그널 돌파" },
+      { id: "volume_osc_up",     label: "Volume Osc",      desc: "거래량 오실레이터 0선 돌파" },
+    ],
+  },
+  {
+    label: "거래량·수급",
+    items: [
+      { id: "volume_surge",  label: "거래량 급등",        desc: "오늘 거래량 > N배 × 20일 평균" },
+      { id: "volume_power",  label: "체결강도 상위",      desc: "실시간 체결강도 상위 50종목", live: true },
+      { id: "obv_up",        label: "OBV 상승추세",       desc: "OBV 5일 연속 상승" },
+      { id: "obv_uturn",     label: "OBV U턴",           desc: "OBV 하락 후 반등" },
+      { id: "frgn_buy",      label: "외국인 연속 순매수", desc: "N일 연속 외국인 순매수" },
+      { id: "orgn_buy",      label: "기관 연속 순매수",   desc: "N일 연속 기관 순매수" },
+    ],
+  },
 ];
 
 type SortType = "volume" | "amount";
@@ -179,39 +209,48 @@ export default function ScreenerSection({ onSelect, onHover, onHoverEnd }: Props
           )}
         </div>
 
-        {/* 조건 체크박스 */}
-        <div className="grid grid-cols-2 gap-2 mb-4">
-          {CONDITIONS.map((c) => {
-            const checked = selected.has(c.id);
+        {/* 조건 칩 (카테고리 그룹 + 플렉스 랩) */}
+        <div className="space-y-2.5 mb-4">
+          {CONDITION_GROUPS.map((group) => {
+            const selectedCount = group.items.filter((c) => selected.has(c.id)).length;
             return (
-              <label
-                key={c.id}
-                className={`flex items-start gap-2.5 px-3 py-2.5 rounded-lg border cursor-pointer transition-colors select-none ${
-                  checked
-                    ? "border-primary/40 bg-primary/5"
-                    : "border-hairline-on-dark hover:border-hairline-on-dark/80 hover:bg-surface-elevated-dark/40"
-                }`}
-              >
-                <input
-                  type="checkbox"
-                  checked={checked}
-                  onChange={() => toggleCondition(c.id)}
-                  className="mt-0.5 accent-primary shrink-0"
-                />
-                <span className="min-w-0">
-                  <span className="flex items-center gap-1.5">
-                    <span className={`text-xs font-semibold ${checked ? "text-primary" : "text-muted-strong"}`}>
-                      {c.label}
-                    </span>
-                    {c.live && (
-                      <span className="text-[9px] font-bold px-1 py-0.5 rounded bg-trading-up/15 text-trading-up leading-none">
-                        실시간
-                      </span>
-                    )}
+              <div key={group.label}>
+                <div className="flex items-center gap-1.5 mb-1.5">
+                  <span className="text-[10px] uppercase tracking-widest text-muted font-semibold">
+                    {group.label}
                   </span>
-                  <span className="block text-[11px] text-muted mt-0.5">{c.desc}</span>
-                </span>
-              </label>
+                  {selectedCount > 0 && (
+                    <span className="text-[10px] font-mono tabular text-primary font-bold">
+                      {selectedCount}
+                    </span>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {group.items.map((c) => {
+                    const checked = selected.has(c.id);
+                    return (
+                      <button
+                        key={c.id}
+                        type="button"
+                        title={c.desc}
+                        onClick={() => toggleCondition(c.id)}
+                        className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[12px] font-semibold border transition-colors cursor-pointer ${
+                          checked
+                            ? "border-primary text-primary bg-primary/10"
+                            : "border-hairline-on-dark text-muted-strong hover:border-primary/40 hover:text-body"
+                        }`}
+                      >
+                        {c.label}
+                        {c.live && (
+                          <span className="text-[9px] font-bold px-1 py-0.5 rounded bg-trading-up/15 text-trading-up leading-none">
+                            LIVE
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             );
           })}
         </div>
