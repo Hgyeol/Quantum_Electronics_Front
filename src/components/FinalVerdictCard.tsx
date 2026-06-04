@@ -38,7 +38,7 @@ function verdictMeta(direction: Direction) {
   };
 }
 
-function ScoreBar({ label, score, max = 4 }: { label: string; score: number; max?: number }) {
+function ScoreBar({ label, score, max }: { label: string; score: number; max: number }) {
   const pct = Math.min(Math.abs(score) / max, 1) * 100;
   const color = score > 0 ? "bg-trading-up" : score < 0 ? "bg-trading-down" : "bg-muted";
   const textColor = score > 0 ? "text-trading-up" : score < 0 ? "text-trading-down" : "text-muted";
@@ -78,9 +78,9 @@ export default function FinalVerdictCard({ score, ai, autoSummary }: Props) {
 
       {/* 점수 바 */}
       <div className="px-6 py-5 space-y-4 border-t border-hairline-on-dark">
-        <ScoreBar label="Quant · 가격·수급 신호" score={score.quant_score} max={4} />
-        <ScoreBar label="LLM · 공시·뉴스 해석" score={score.ai_score} max={4} />
-        <ScoreBar label="Financial · 재무지표" score={score.financial_score} max={4} />
+        <ScoreBar label="Quant · 가격·수급 신호" score={score.quant_score} max={8} />
+        <ScoreBar label="LLM · 공시·뉴스 해석" score={score.ai_score} max={8} />
+        <ScoreBar label="Financial · 재무지표" score={score.financial_score} max={7} />
       </div>
 
       {/* AI 요약 */}

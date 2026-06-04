@@ -44,8 +44,11 @@ export default function LLMSummaryCard({ signal }: Props) {
         <span className={`text-2xl font-bold tracking-tight ${style.color}`}>
           {style.label}
         </span>
-        <span className={`font-mono tabular text-sm ${style.color}`}>
-          {signal.score >= 0 ? `+${signal.score}` : signal.score}
+        <span className={`text-xs ${style.color}`}>
+          원점수{" "}
+          <span className="font-mono tabular">
+            {signal.score >= 0 ? `+${signal.score}` : signal.score}
+          </span>
         </span>
       </div>
 

@@ -44,7 +44,7 @@ export default function ScoreBreakdown({ score, summary }: Props) {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
         <StatCell label="Total" value={score.total_score} emphasis />
         <StatCell label="Quant" value={score.quant_score} />
-        <StatCell label="AI (LLM)" value={score.ai_score} />
+        <StatCell label="LLM" value={score.ai_score} />
         <StatCell label="Financial" value={score.financial_score} />
       </div>
 
