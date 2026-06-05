@@ -463,11 +463,15 @@ export default function Home() {
                     <EvidenceList evidence={report.evidence} />
                   </div>
                   <ErrorsBanner errors={report.errors} />
-                  <p className="text-[11px] text-muted text-center py-6 px-8">
-                    정보 제공용이며 투자 권유가 아닙니다. © Quantum Electronics
-                  </p>
                 </>
               )}
+
+              <p
+                className="text-[11px] text-muted px-5 py-3 leading-relaxed"
+                style={{ borderTop: "1px solid var(--c-border)", background: "var(--c-bg-subtle)" }}
+              >
+                정보 제공용이며 투자 권유가 아닙니다. © Quantum Electronics
+              </p>
 
             </div>
           </div>

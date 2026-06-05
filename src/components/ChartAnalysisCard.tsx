@@ -371,12 +371,6 @@ export default function ChartAnalysisCard({ stockCode, stockName, onNameResolved
             <LevelsTable data={data} livePrice={livePrice} />
           </div>
 
-          <p
-            className="text-[11px] text-muted px-5 py-3 leading-relaxed"
-            style={{ borderTop: "1px solid var(--c-border)", background: "var(--c-bg-subtle)" }}
-          >
-            {data.disclaimer}
-          </p>
         </div>
       )}
     </section>
