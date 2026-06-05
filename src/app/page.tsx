@@ -324,7 +324,7 @@ export default function Home() {
             <div className="max-w-[900px] mx-auto">
 
               {/* 종목 헤더 + 가격 */}
-              <div className="px-8 pt-8 pb-6" style={{ borderBottom: "1px solid var(--c-border)" }}>
+              <div className="px-5 pt-8 pb-6" style={{ borderBottom: "1px solid var(--c-border)" }}>
                 <div className="flex items-center gap-4 mb-5">
                   <StockLogo code={selectedCode} name={displayName} size={52} rounded="xl" />
                   <div className="min-w-0 flex-1">
@@ -419,7 +419,7 @@ export default function Home() {
 
               {/* 에러 */}
               {outlookError && (
-                <div className="px-8 py-4 text-[14px] text-trading-down border-l-4 border-trading-down"
+                <div className="px-5 py-4 text-[14px] text-trading-down border-l-4 border-trading-down"
                   style={{ borderBottom: "1px solid var(--c-border)" }}>
                   {outlookError}
                 </div>
@@ -427,7 +427,7 @@ export default function Home() {
 
               {/* 로딩 스켈레톤 */}
               {outlookLoading && !report && (
-                <div className="px-8 py-6 space-y-3 animate-pulse">
+                <div className="px-5 py-6 space-y-3 animate-pulse">
                   <div className="h-4 w-20 rounded-lg" style={{ background: "var(--c-bg-muted)" }} />
                   <div className="h-8 w-36 rounded-lg" style={{ background: "var(--c-bg-muted)" }} />
                   <div className="h-3 w-52 rounded-lg" style={{ background: "var(--c-bg-muted)" }} />
@@ -437,21 +437,21 @@ export default function Home() {
               {/* 전망 결과 */}
               {report && (
                 <>
-                  <div className="px-8 py-6" style={{ borderBottom: "1px solid var(--c-border)" }}>
+                  <div className="px-5 py-6" style={{ borderBottom: "1px solid var(--c-border)" }}>
                     <FinalVerdictCard score={report.score} ai={report.ai_signals[0]} autoSummary={report.summary} />
                   </div>
-                  <div className="px-8 py-6" style={{ borderBottom: "1px solid var(--c-border)" }}>
+                  <div className="px-5 py-6" style={{ borderBottom: "1px solid var(--c-border)" }}>
                     <SignalBreakdownPanel quant={report.quant_signals} ai={report.ai_signals} />
                   </div>
-                  <div className="px-8 py-6" style={{ borderBottom: "1px solid var(--c-border)" }}>
+                  <div className="px-5 py-6" style={{ borderBottom: "1px solid var(--c-border)" }}>
                     <TechnicalIndicatorsPanel stockCode={report.stock_code} />
                   </div>
                   {report.position_context && (
-                    <div className="px-8 py-6" style={{ borderBottom: "1px solid var(--c-border)" }}>
+                    <div className="px-5 py-6" style={{ borderBottom: "1px solid var(--c-border)" }}>
                       <PositionContextCard ctx={report.position_context} />
                     </div>
                   )}
-                  <div className="px-8 py-6" style={{ borderBottom: "1px solid var(--c-border)" }}>
+                  <div className="px-5 py-6" style={{ borderBottom: "1px solid var(--c-border)" }}>
                     <QuantSignalsTable
                       quant={report.quant_signals}
                       financial={report.financial_signals}
@@ -459,7 +459,7 @@ export default function Home() {
                       evidence={report.evidence}
                     />
                   </div>
-                  <div className="px-8 py-6" style={{ borderBottom: "1px solid var(--c-border)" }}>
+                  <div className="px-5 py-6" style={{ borderBottom: "1px solid var(--c-border)" }}>
                     <EvidenceList evidence={report.evidence} />
                   </div>
                   <ErrorsBanner errors={report.errors} />
