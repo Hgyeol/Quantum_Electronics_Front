@@ -76,14 +76,6 @@ function IconFilter({ active }: { active: boolean }) {
   );
 }
 
-function IconBack() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" className="text-ink">
-      <path d="M12.5 4L6 10L12.5 16" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
 const QUICK_PICKS = [
   { code: "005930", name: "삼성전자" },
   { code: "000660", name: "SK하이닉스" },
@@ -220,6 +212,13 @@ export default function Home() {
     }
   }
 
+  function handleSelectHomeTab(tab: HomeTab) {
+    setHomeTab(tab);
+    if (selectedCode) {
+      handleBack();
+    }
+  }
+
   async function handleLoadOutlook(input?: OutlookQueryInput) {
     if (!selectedCode) return;
     setOutlookLoading(true);
@@ -260,32 +259,24 @@ export default function Home() {
         <span className="text-white font-extrabold text-[15px] tracking-tight">Q</span>
       </div>
 
-      {selectedCode ? (
-        <button type="button" onClick={handleBack} title="뒤로"
-          className="w-12 h-12 flex items-center justify-center rounded-xl transition-colors cursor-pointer"
-          onMouseEnter={(e) => (e.currentTarget.style.background = "var(--c-hover-md)")}
-          onMouseLeave={(e) => (e.currentTarget.style.background = "")}>
-          <IconBack />
-        </button>
-      ) : (
-        <>
-          <button type="button" onClick={() => setHomeTab(0)} title="관심종목"
-            className="w-12 h-12 flex items-center justify-center rounded-xl transition-colors cursor-pointer"
-            style={{ background: homeTab === 0 ? "var(--c-hover-md)" : undefined }}>
-            <IconStar active={homeTab === 0} />
-          </button>
-          <button type="button" onClick={() => setHomeTab(1)} title="시장현황"
-            className="w-12 h-12 flex items-center justify-center rounded-xl transition-colors cursor-pointer"
-            style={{ background: homeTab === 1 ? "var(--c-hover-md)" : undefined }}>
-            <IconBarChart active={homeTab === 1} />
-          </button>
-          <button type="button" onClick={() => setHomeTab(2)} title="스크리너"
-            className="w-12 h-12 flex items-center justify-center rounded-xl transition-colors cursor-pointer"
-            style={{ background: homeTab === 2 ? "var(--c-hover-md)" : undefined }}>
-            <IconFilter active={homeTab === 2} />
-          </button>
-        </>
-      )}
+      <button type="button" onClick={() => handleSelectHomeTab(0)} title="관심종목"
+        className="w-14 h-14 flex flex-col items-center justify-center gap-1 rounded-xl transition-colors cursor-pointer"
+        style={{ background: homeTab === 0 ? "var(--c-hover-md)" : undefined }}>
+        <IconStar active={homeTab === 0} />
+        <span className={`text-[10px] leading-none font-semibold ${homeTab === 0 ? "text-ink" : "text-muted"}`}>관심종목</span>
+      </button>
+      <button type="button" onClick={() => handleSelectHomeTab(1)} title="시장현황"
+        className="w-14 h-14 flex flex-col items-center justify-center gap-1 rounded-xl transition-colors cursor-pointer"
+        style={{ background: homeTab === 1 ? "var(--c-hover-md)" : undefined }}>
+        <IconBarChart active={homeTab === 1} />
+        <span className={`text-[10px] leading-none font-semibold ${homeTab === 1 ? "text-ink" : "text-muted"}`}>시장현황</span>
+      </button>
+      <button type="button" onClick={() => handleSelectHomeTab(2)} title="스크리너"
+        className="w-14 h-14 flex flex-col items-center justify-center gap-1 rounded-xl transition-colors cursor-pointer"
+        style={{ background: homeTab === 2 ? "var(--c-hover-md)" : undefined }}>
+        <IconFilter active={homeTab === 2} />
+        <span className={`text-[10px] leading-none font-semibold ${homeTab === 2 ? "text-ink" : "text-muted"}`}>스크리너</span>
+      </button>
 
     </aside>
   );
