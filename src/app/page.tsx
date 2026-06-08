@@ -108,6 +108,7 @@ export default function Home() {
   const [hoveredStock, setHoveredStock] = useState<HoveredStock | null>(null);
   const [hoveredQuote, setHoveredQuote] = useState<MarketQuote | null>(null);
   const [rankActiveTab, setRankActiveTab] = useState<RankTabId>("volume");
+  const [authReady, setAuthReady] = useState(false);
   const liveWsRef = useRef<WebSocket | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const pendingScrollRef = useRef<number | null>(null);
@@ -120,7 +121,18 @@ export default function Home() {
   }
 
   useEffect(() => {
-    checkAuth().then((ok) => { if (!ok) router.replace("/login"); });
+    let cancelled = false;
+    checkAuth().then((ok) => {
+      if (cancelled) return;
+      if (!ok) {
+        router.replace("/login");
+        return;
+      }
+      setAuthReady(true);
+    });
+    return () => {
+      cancelled = true;
+    };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // URL ?code= ↔ selectedCode 동기화 + 뒤로가기 시 홈 state 복원
@@ -324,6 +336,17 @@ export default function Home() {
       ? "bg-trading-up/10 text-trading-up"
       : "bg-trading-down/10 text-trading-down";
   const badgeStyle = priceFlat ? { background: "var(--c-bg-muted)" } : {};
+
+  if (!authReady) {
+    return (
+      <div className="min-h-screen bg-canvas-dark flex items-center justify-center">
+        <div className="flex items-center gap-2 text-sm text-muted-strong">
+          <span className="w-4 h-4 rounded-full border-2 border-muted border-t-primary animate-spin inline-block" />
+          인증 확인 중
+        </div>
+      </div>
+    );
+  }
 
   // ── 좌측 내비 (공통) ────────────────────────────────────────────
   const leftNav = (
