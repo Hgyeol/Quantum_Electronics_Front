@@ -4,9 +4,11 @@ import { useState, useEffect } from "react";
 import {
   fetchScreener,
   fetchScreenerStatus,
+  fetchWatchlist,
   type ScreenerCondition,
   type ScreenerResultItem,
   type ScreenerParams,
+  type WatchlistItem,
 } from "@/lib/api";
 import { StockList, COLS, NameCell, PriceCell, ChangeRateBadge, MutedNumber } from "@/components/StockList";
 import { useAutoStockHover } from "@/lib/useAutoStockHover";
@@ -149,6 +151,8 @@ interface PersistedState {
   results: ScreenerResultItem[] | null;
 }
 
+type QuoteMap = Record<string, WatchlistItem>;
+
 function defaultParams(): CondParams {
   const out: CondParams = {};
   for (const [cid, defs] of Object.entries(PARAM_DEFS)) {
@@ -198,12 +202,36 @@ export default function ScreenerSection({ onSelect, onHover, onHoverEnd }: Props
   const [error, setError] = useState<string | null>(null);
   const [lastCollected, setLastCollected] = useState<string | null>(null);
   const [searchVersion, setSearchVersion] = useState(0);
+  const [quoteMap, setQuoteMap] = useState<QuoteMap>({});
 
   useEffect(() => {
     fetchScreenerStatus()
       .then((s) => setLastCollected(s.last_collected))
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (!results || results.length === 0) {
+      setQuoteMap({});
+      return;
+    }
+
+    let cancelled = false;
+    setQuoteMap({});
+
+    fetchWatchlist(results.map((item) => item.stock_code))
+      .then((items) => {
+        if (cancelled) return;
+        setQuoteMap(Object.fromEntries(items.map((item) => [item.stock_code, item])));
+      })
+      .catch(() => {
+        if (!cancelled) setQuoteMap({});
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [results]);
 
   // 폼/결과 변경 시 sessionStorage에 보존
   useEffect(() => {
@@ -299,15 +327,18 @@ export default function ScreenerSection({ onSelect, onHover, onHoverEnd }: Props
   const autoHover = useAutoStockHover({
     items: sortedResults,
     getKey: (item) => item.stock_code,
-    toHoverPayload: (item) => ({
-      code: item.stock_code,
-      name: item.stock_name,
-      price: item.close,
-      changeRate: 0,
-    }),
+    toHoverPayload: (item) => {
+      const quote = quoteMap[item.stock_code];
+      return {
+        code: item.stock_code,
+        name: item.stock_name,
+        price: quote?.price ?? item.close,
+        changeRate: quote?.change_rate ?? 0,
+      };
+    },
     onHover,
     onHoverEnd,
-    resetKey: `${searchVersion}:${sortBy}:${sortedResults.map((item) => item.stock_code).join(",")}`,
+    resetKey: `${searchVersion}:${sortBy}:${sortedResults.map((item) => `${item.stock_code}:${quoteMap[item.stock_code]?.change_rate ?? "na"}`).join(",")}`,
     enabled: sortedResults.length > 0 && !loading,
   });
 
@@ -465,8 +496,8 @@ export default function ScreenerSection({ onSelect, onHover, onHoverEnd }: Props
             onRowHover={autoHover.handleRowHover}
             columns={[
               { ...COLS.name,    render: (i) => <NameCell code={i.stock_code} name={i.stock_name} /> },
-              { ...COLS.price,   render: (i) => <PriceCell price={i.close} /> },
-              { ...COLS.change,  mobileOnly: true, render: () => <ChangeRateBadge rate={null} /> },
+              { ...COLS.price,   render: (i) => <PriceCell price={quoteMap[i.stock_code]?.price ?? i.close} /> },
+              { ...COLS.change,  render: (i) => <ChangeRateBadge rate={quoteMap[i.stock_code]?.change_rate ?? null} /> },
               { ...COLS.volume,  mobileHidden: true, render: (i) => <MutedNumber>{formatVolume(i.volume)}</MutedNumber> },
               { ...COLS.amount,  mobileHidden: true, render: (i) => <MutedNumber>{formatTradeValue(i.close * i.volume)}</MutedNumber> },
               { ...COLS.matched, mobileHidden: true, render: (i) => (
