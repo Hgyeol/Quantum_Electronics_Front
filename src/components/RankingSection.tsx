@@ -229,11 +229,11 @@ export default function RankingSection({ onSelect, onHover, onHoverEnd, activeTa
             </div>
           }
           columns={[
-            { ...COLS.rank,   render: (i) => <RankCell rank={i.rank} /> },
+            { ...COLS.rank, mobileHidden: true, render: (i) => <RankCell rank={i.rank} /> },
             { ...COLS.name,   render: (i) => <NameCell code={i.stock_code} name={i.stock_name} /> },
             { ...COLS.price,  render: (i) => <PriceCell price={i.price} /> },
             { ...COLS.change, render: (i) => <ChangeRateBadge rate={i.change_rate} /> },
-            { ...COLS.volume, key: "extra", label: extraLabel(activeTab),
+            { ...COLS.volume, key: "extra", label: extraLabel(activeTab), mobileHidden: true,
               render: (i) => <MutedNumber>{extraValue(i, activeTab)}</MutedNumber> },
           ]}
         />

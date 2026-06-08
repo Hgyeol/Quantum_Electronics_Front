@@ -8,7 +8,7 @@ import {
   type ScreenerResultItem,
   type ScreenerParams,
 } from "@/lib/api";
-import { StockList, COLS, NameCell, PriceCell, MutedNumber } from "@/components/StockList";
+import { StockList, COLS, NameCell, PriceCell, ChangeRateBadge, MutedNumber } from "@/components/StockList";
 import { useAutoStockHover } from "@/lib/useAutoStockHover";
 
 interface ConditionParam {
@@ -466,9 +466,10 @@ export default function ScreenerSection({ onSelect, onHover, onHoverEnd }: Props
             columns={[
               { ...COLS.name,    render: (i) => <NameCell code={i.stock_code} name={i.stock_name} /> },
               { ...COLS.price,   render: (i) => <PriceCell price={i.close} /> },
-              { ...COLS.volume,  render: (i) => <MutedNumber>{formatVolume(i.volume)}</MutedNumber> },
-              { ...COLS.amount,  render: (i) => <MutedNumber>{formatTradeValue(i.close * i.volume)}</MutedNumber> },
-              { ...COLS.matched, render: (i) => (
+              { ...COLS.change,  mobileOnly: true, render: () => <ChangeRateBadge rate={null} /> },
+              { ...COLS.volume,  mobileHidden: true, render: (i) => <MutedNumber>{formatVolume(i.volume)}</MutedNumber> },
+              { ...COLS.amount,  mobileHidden: true, render: (i) => <MutedNumber>{formatTradeValue(i.close * i.volume)}</MutedNumber> },
+              { ...COLS.matched, mobileHidden: true, render: (i) => (
                 <span className="flex flex-nowrap justify-end gap-1 overflow-hidden">
                   {i.matched_conditions.map((label) => (
                     <span

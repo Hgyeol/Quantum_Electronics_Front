@@ -319,7 +319,7 @@ export default function WatchlistTable({
             loading={loading && items.length === 0}
             loadingRows={codes.length}
             columns={[
-              { ...COLS.rank, label: "순위", render: (_r, idx) => <RankCell rank={idx + 1} /> },
+              { ...COLS.rank, label: "순위", mobileHidden: true, render: (_r, idx) => <RankCell rank={idx + 1} /> },
               { ...COLS.name, render: (r) => (
                 <NameCell code={r.stock_code} name={r.stock_name} size={40} active={activeCode === r.stock_code} />
               ) },
@@ -333,8 +333,8 @@ export default function WatchlistTable({
                   ? <span className="inline-block w-14 h-6 rounded-full animate-pulse" style={{ background: "var(--c-border)" }} />
                   : <ChangeRateBadge rate={r.change_rate} />
               },
-              { ...COLS.volume, key: "extra", label: extraLabelText, render: extraRender },
-              { ...COLS.remove, render: (r) => (
+              { ...COLS.volume, key: "extra", label: extraLabelText, mobileHidden: true, render: extraRender },
+              { ...COLS.remove, mobileHidden: true, render: (r) => (
                 <button
                   type="button"
                   onClick={(e) => { e.stopPropagation(); onRemove(r.stock_code); }}

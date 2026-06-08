@@ -26,8 +26,8 @@ import CenturyToggle from "@/components/CenturyToggle";
 
 const WS_BASE = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000").replace(/^http/, "ws");
 
-type HomeTab = 0 | 1 | 2;
-const HOME_TABS = ["관심종목", "시장현황", "스크리너"] as const;
+type HomeTab = 0 | 1 | 2 | 3;
+const HOME_TABS = ["관심종목", "시장현황", "스크리너", "마이페이지"] as const;
 
 interface LiveTick {
   price: number;
@@ -72,6 +72,15 @@ function IconFilter({ active }: { active: boolean }) {
   return (
     <svg width="22" height="22" viewBox="0 0 22 22" fill="none" className={active ? "text-ink" : "text-muted"}>
       <path d="M3 6H19M6 11H16M10 16H12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function IconUser({ active }: { active: boolean }) {
+  return (
+    <svg width="22" height="22" viewBox="0 0 22 22" fill="none" className={active ? "text-ink" : "text-muted"}>
+      <path d="M11 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" stroke="currentColor" strokeWidth="1.6" />
+      <path d="M4.5 18.2a6.8 6.8 0 0 1 13 0" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
     </svg>
   );
 }
@@ -193,6 +202,18 @@ export default function Home() {
     };
   }, [hoveredStock?.code]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  useEffect(() => {
+    const media = window.matchMedia("(min-width: 768px)");
+    const sync = () => {
+      if (media.matches && homeTab === 3) {
+        setHomeTab(0);
+      }
+    };
+    sync();
+    media.addEventListener("change", sync);
+    return () => media.removeEventListener("change", sync);
+  }, [homeTab]);
+
   async function handleLogout() {
     await logout();
     router.replace("/login");
@@ -272,37 +293,45 @@ export default function Home() {
   // ── 좌측 내비 (공통) ────────────────────────────────────────────
   const leftNav = (
     <aside
-      className="w-[72px] shrink-0 bg-white flex flex-col items-center py-5 gap-1 z-10"
-      style={{ borderRight: "1px solid var(--c-border)" }}
+      className="fixed inset-x-0 bottom-0 w-full shrink-0 bg-white flex items-center px-3 py-2.5 gap-2 z-20 border-t md:static md:w-[72px] md:flex-col md:items-center md:justify-start md:px-0 md:py-5 md:gap-1 md:border-t-0 md:border-r"
+      style={{ borderColor: "var(--c-border)" }}
     >
-      <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center mb-5 shrink-0">
+      <div className="hidden w-10 h-10 rounded-xl bg-primary items-center justify-center shrink-0 md:flex md:mb-5">
         <span className="text-white font-extrabold text-[15px] tracking-tight">Q</span>
       </div>
 
-      <button type="button" onClick={() => handleSelectHomeTab(0)} title="관심종목"
-        className="w-14 h-14 flex flex-col items-center justify-center gap-1 rounded-xl transition-colors cursor-pointer"
-        style={{ background: homeTab === 0 ? "var(--c-hover-md)" : undefined }}>
-        <IconStar active={homeTab === 0} />
-        <span className={`text-[10px] leading-none font-semibold ${homeTab === 0 ? "text-ink" : "text-muted"}`}>관심종목</span>
-      </button>
-      <button type="button" onClick={() => handleSelectHomeTab(1)} title="시장현황"
-        className="w-14 h-14 flex flex-col items-center justify-center gap-1 rounded-xl transition-colors cursor-pointer"
-        style={{ background: homeTab === 1 ? "var(--c-hover-md)" : undefined }}>
-        <IconBarChart active={homeTab === 1} />
-        <span className={`text-[10px] leading-none font-semibold ${homeTab === 1 ? "text-ink" : "text-muted"}`}>시장현황</span>
-      </button>
-      <button type="button" onClick={() => handleSelectHomeTab(2)} title="스크리너"
-        className="w-14 h-14 flex flex-col items-center justify-center gap-1 rounded-xl transition-colors cursor-pointer"
-        style={{ background: homeTab === 2 ? "var(--c-hover-md)" : undefined }}>
-        <IconFilter active={homeTab === 2} />
-        <span className={`text-[10px] leading-none font-semibold ${homeTab === 2 ? "text-ink" : "text-muted"}`}>스크리너</span>
-      </button>
+      <div className="flex min-w-0 w-full items-center gap-1 md:w-auto md:flex-none md:flex-col md:justify-start">
+        <button type="button" onClick={() => handleSelectHomeTab(0)} title="관심종목"
+          className="min-w-0 flex-1 h-12 px-2 flex flex-col items-center justify-center gap-1 rounded-xl transition-colors cursor-pointer md:w-14 md:h-14 md:flex-none"
+          style={{ background: homeTab === 0 ? "var(--c-hover-md)" : undefined }}>
+          <IconStar active={homeTab === 0} />
+          <span className={`text-[10px] leading-none font-semibold ${homeTab === 0 ? "text-ink" : "text-muted"}`}>관심종목</span>
+        </button>
+        <button type="button" onClick={() => handleSelectHomeTab(1)} title="시장현황"
+          className="min-w-0 flex-1 h-12 px-2 flex flex-col items-center justify-center gap-1 rounded-xl transition-colors cursor-pointer md:w-14 md:h-14 md:flex-none"
+          style={{ background: homeTab === 1 ? "var(--c-hover-md)" : undefined }}>
+          <IconBarChart active={homeTab === 1} />
+          <span className={`text-[10px] leading-none font-semibold ${homeTab === 1 ? "text-ink" : "text-muted"}`}>시장현황</span>
+        </button>
+        <button type="button" onClick={() => handleSelectHomeTab(2)} title="스크리너"
+          className="min-w-0 flex-1 h-12 px-2 flex flex-col items-center justify-center gap-1 rounded-xl transition-colors cursor-pointer md:w-14 md:h-14 md:flex-none"
+          style={{ background: homeTab === 2 ? "var(--c-hover-md)" : undefined }}>
+          <IconFilter active={homeTab === 2} />
+          <span className={`text-[10px] leading-none font-semibold ${homeTab === 2 ? "text-ink" : "text-muted"}`}>스크리너</span>
+        </button>
+        <button type="button" onClick={() => handleSelectHomeTab(3)} title="마이페이지"
+          className="min-w-0 flex-1 h-12 px-2 flex flex-col items-center justify-center gap-1 rounded-xl transition-colors cursor-pointer md:hidden"
+          style={{ background: homeTab === 3 ? "var(--c-hover-md)" : undefined }}>
+          <IconUser active={homeTab === 3} />
+          <span className={`text-[10px] leading-none font-semibold ${homeTab === 3 ? "text-ink" : "text-muted"}`}>마이</span>
+        </button>
+      </div>
 
     </aside>
   );
 
   return (
-    <div className="app-root flex h-screen overflow-hidden bg-canvas-dark">
+    <div className="app-root flex min-h-screen flex-col overflow-x-hidden bg-canvas-dark pb-[86px] md:h-screen md:flex-row md:overflow-hidden md:pb-0">
 
       {leftNav}
 
@@ -313,15 +342,15 @@ export default function Home() {
 
           {/* 상세 헤더 */}
           <header
-            className="h-[52px] shrink-0 relative flex items-center px-5 bg-white"
+            className="shrink-0 flex flex-wrap items-center gap-3 px-4 py-3 bg-white md:h-[52px] md:relative md:flex-nowrap md:gap-0 md:px-5 md:py-0"
             style={{ borderBottom: "1px solid var(--c-border)" }}
           >
-            <div className="search-center-wrapper absolute" style={{ left: "calc(50vw - 72px)", transform: "translateX(-50%)" }}>
+            <div className="w-full order-2 md:w-auto md:order-none md:absolute search-center-wrapper md:left-[calc(50vw-72px)] md:-translate-x-1/2">
               <StockSearchBox onSelect={handleSelectStock} />
             </div>
             <button
               type="button" onClick={handleLogout}
-              className="ml-auto px-3 py-1.5 rounded-full text-[13px] font-medium text-muted-strong hover:text-ink transition-colors cursor-pointer"
+              className="hidden md:inline-flex md:ml-auto shrink-0 px-3 py-1.5 rounded-full text-[13px] font-medium text-muted-strong hover:text-ink transition-colors cursor-pointer"
               style={{ background: "var(--c-hover)" }}
               onMouseEnter={(e) => (e.currentTarget.style.background = "var(--c-hover-lg)")}
               onMouseLeave={(e) => (e.currentTarget.style.background = "var(--c-hover)")}
@@ -332,20 +361,20 @@ export default function Home() {
 
           {/* 상세 컨텐츠 */}
           <div className="flex-1 overflow-y-auto">
-            <div className="max-w-[900px] mx-auto">
+            <div className="mx-auto w-full max-w-[900px]">
 
               {/* 종목 헤더 + 가격 */}
               <div className="px-5 pt-8 pb-6" style={{ borderBottom: "1px solid var(--c-border)" }}>
-                <div className="flex items-center gap-4 mb-5">
+                <div className="mb-5 flex flex-wrap items-start gap-4 sm:flex-nowrap sm:items-center">
                   <StockLogo code={selectedCode} name={displayName} size={52} rounded="xl" />
                   <div className="min-w-0 flex-1">
-                    <h1 className="text-[28px] font-bold text-ink leading-tight">{displayName}</h1>
+                    <h1 className="text-[24px] font-bold text-ink leading-tight sm:text-[28px]">{displayName}</h1>
                     <span className="text-[13px] text-muted font-mono">{selectedCode}</span>
                   </div>
                   {/* CTA 버튼 */}
-                  <div className="flex gap-2 shrink-0">
+                  <div className="flex w-full flex-wrap gap-2 shrink-0 sm:w-auto">
                     <button type="button" onClick={() => watchlist.toggle(selectedCode)}
-                      className={`h-[44px] px-5 rounded-xl text-[14px] font-bold transition-colors cursor-pointer border ${
+                      className={`h-[44px] flex-1 sm:flex-none px-5 rounded-xl text-[14px] font-bold transition-colors cursor-pointer border ${
                         inWatchlist
                           ? "border-primary/30 text-primary bg-primary/5 hover:bg-primary/10"
                           : "text-body hover:text-ink"
@@ -355,7 +384,7 @@ export default function Home() {
                     </button>
                     {!report && (
                       <button type="button" onClick={() => handleLoadOutlook()} disabled={outlookLoading}
-                        className="h-[44px] px-5 rounded-xl bg-primary hover:bg-primary-active disabled:bg-primary-disabled text-white text-[14px] font-bold transition-colors cursor-pointer flex items-center gap-2">
+                        className="h-[44px] flex-1 sm:flex-none px-5 rounded-xl bg-primary hover:bg-primary-active disabled:bg-primary-disabled text-white text-[14px] font-bold transition-colors cursor-pointer flex items-center justify-center gap-2">
                         {outlookLoading ? (
                           <>
                             <span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
@@ -368,8 +397,8 @@ export default function Home() {
                 </div>
 
                 {tick ? (
-                  <div className="flex items-baseline gap-3">
-                    <span className="font-mono tabular text-[48px] font-bold text-ink leading-none tracking-tight">
+                  <div className="flex flex-wrap items-baseline gap-2 sm:gap-3">
+                    <span className="font-mono tabular text-[36px] sm:text-[48px] font-bold text-ink leading-none tracking-tight">
                       {tick.price.toLocaleString("ko-KR")}
                     </span>
                     <span className="text-[16px] text-muted">원</span>
@@ -495,16 +524,16 @@ export default function Home() {
 
           {/* 공통 헤더 (center + right 패널 전체 너비) */}
           <header
-            className="h-[52px] shrink-0 relative flex items-center px-5 bg-white"
+            className="shrink-0 flex flex-wrap items-center gap-3 px-4 py-3 bg-white md:h-[52px] md:relative md:flex-nowrap md:gap-0 md:px-5 md:py-0"
             style={{ borderBottom: "1px solid var(--c-border)" }}
           >
             <span className="text-[15px] font-bold text-ink">{HOME_TABS[homeTab]}</span>
-            <div className="search-center-wrapper absolute" style={{ left: "calc(50vw - 72px)", transform: "translateX(-50%)" }}>
+            <div className="w-full order-3 md:w-auto md:order-none md:absolute search-center-wrapper md:left-[calc(50vw-72px)] md:-translate-x-1/2">
               <StockSearchBox onSelect={handleSelectStock} />
             </div>
             <button
               type="button" onClick={handleLogout}
-              className="ml-auto px-3 py-1.5 rounded-full text-[13px] font-medium text-muted-strong hover:text-ink transition-colors cursor-pointer"
+              className="hidden md:inline-flex md:ml-auto shrink-0 px-3 py-1.5 rounded-full text-[13px] font-medium text-muted-strong hover:text-ink transition-colors cursor-pointer"
               style={{ background: "var(--c-hover)" }}
               onMouseEnter={(e) => (e.currentTarget.style.background = "var(--c-hover-lg)")}
               onMouseLeave={(e) => (e.currentTarget.style.background = "var(--c-hover)")}
@@ -514,7 +543,7 @@ export default function Home() {
           </header>
 
           {/* 헤더 아래 center + right 영역 */}
-          <div className="flex-1 flex overflow-hidden">
+          <div className="flex flex-1 flex-col overflow-hidden lg:flex-row">
 
             {/* 중앙 컬럼 */}
             <div ref={scrollContainerRef} className="flex-1 overflow-y-auto">
@@ -566,12 +595,30 @@ export default function Home() {
                   onHoverEnd={() => setHoveredStock(null)}
                 />
               )}
+              {homeTab === 3 && (
+                <section className="px-5 py-6">
+                  <div className="mx-auto w-full max-w-[560px] rounded-2xl bg-white p-6 shadow-card"
+                    style={{ border: "1px solid var(--c-border)" }}>
+                    <div className="mb-5">
+                      <h2 className="text-[20px] font-bold text-ink">마이페이지</h2>
+                      <p className="mt-1 text-[13px] text-muted-strong">계정 관련 작업을 여기서 관리합니다.</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      className="h-11 w-full rounded-xl bg-primary text-white text-[14px] font-bold transition-colors cursor-pointer hover:bg-primary-active"
+                    >
+                      로그아웃
+                    </button>
+                  </div>
+                </section>
+              )}
             </div>
 
             {/* 우측 프리뷰 패널 */}
             <aside
-              className="w-[420px] shrink-0 bg-white flex flex-col overflow-hidden h-full"
-              style={{ borderLeft: "1px solid var(--c-border)" }}
+              className={`${homeTab === 3 ? "hidden" : "hidden lg:flex"} shrink-0 bg-white lg:h-full lg:w-[420px] lg:flex-col lg:overflow-hidden lg:border-l`}
+              style={{ borderColor: "var(--c-border)" }}
             >
             {hoveredStock ? (
               (() => {

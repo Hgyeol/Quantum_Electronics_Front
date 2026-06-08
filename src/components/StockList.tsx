@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import StockLogo from "@/components/StockLogo";
 
 // ── 타입 ────────────────────────────────────────────────────────────────────
@@ -10,6 +10,8 @@ export interface StockListColumn<T> {
   label?: ReactNode;
   width: string;          // CSS grid track size (e.g. "1fr", "6rem")
   align?: "left" | "right" | "center";
+  mobileHidden?: boolean;
+  mobileOnly?: boolean;
   render: (item: T, idx: number) => ReactNode;
 }
 
@@ -57,22 +59,37 @@ export function StockList<T>({
   loadingRows = 8,
   emptyMessage,
 }: Props<T>) {
-  const gridCols = columns.map((c) => c.width).join(" ");
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const media = window.matchMedia("(max-width: 767px)");
+    const sync = () => setIsMobile(media.matches);
+    sync();
+    media.addEventListener("change", sync);
+    return () => media.removeEventListener("change", sync);
+  }, []);
+
+  const visibleColumns = columns.filter((column) => (
+    isMobile ? !column.mobileHidden : !column.mobileOnly
+  ));
+  const gridCols = visibleColumns.map((c) => c.width).join(" ");
   const gridStyle = { gridTemplateColumns: gridCols };
-  const hasLabels = columns.some((c) => c.label);
+  const hasLabels = visibleColumns.some((c) => c.label);
+  const minTableWidth = isMobile ? "0px" : "720px";
 
   if (loading && items.length === 0) {
     return (
       <>
-        {hasLabels && <ColumnLabels columns={columns} />}
-        <ul>
+        {hasLabels && <ColumnLabels columns={visibleColumns} minWidth={minTableWidth} />}
+        <div className="overflow-x-auto">
+        <ul style={{ minWidth: minTableWidth }}>
           {Array.from({ length: loadingRows }).map((_, i) => (
             <li
               key={i}
               className="grid gap-3 items-center px-5 py-3.5 animate-pulse"
               style={{ ...gridStyle, borderTop: i > 0 ? "1px solid var(--c-border)" : undefined }}
             >
-              {columns.map((c) => (
+              {visibleColumns.map((c) => (
                 <span key={c.key} className={alignClass(c.align)}>
                   <span
                     className="inline-block h-3 w-16 rounded"
@@ -83,6 +100,7 @@ export function StockList<T>({
             </li>
           ))}
         </ul>
+        </div>
       </>
     );
   }
@@ -91,7 +109,7 @@ export function StockList<T>({
     if (!emptyMessage) return null;
     return (
       <>
-        {hasLabels && <ColumnLabels columns={columns} />}
+        {hasLabels && <ColumnLabels columns={visibleColumns} minWidth={minTableWidth} />}
         <div className="px-5 py-10 text-center text-sm text-muted">{emptyMessage}</div>
       </>
     );
@@ -99,8 +117,9 @@ export function StockList<T>({
 
   return (
     <>
-      {hasLabels && <ColumnLabels columns={columns} />}
-      <ul>
+      {hasLabels && <ColumnLabels columns={visibleColumns} minWidth={minTableWidth} />}
+      <div className="overflow-x-auto">
+      <ul style={{ minWidth: minTableWidth }}>
         {items.map((item, idx) => {
           const key = getKey(item);
           const isActive = activeKey === key;
@@ -126,7 +145,7 @@ export function StockList<T>({
                   : isHovered ? "var(--c-hover)" : undefined,
               }}
             >
-              {columns.map((c) => (
+              {visibleColumns.map((c) => (
                 <span key={c.key} className={alignClass(c.align)}>
                   {c.render(item, idx)}
                 </span>
@@ -135,22 +154,25 @@ export function StockList<T>({
           );
         })}
       </ul>
+      </div>
     </>
   );
 }
 
-function ColumnLabels<T>({ columns }: { columns: StockListColumn<T>[] }) {
+function ColumnLabels<T>({ columns, minWidth }: { columns: StockListColumn<T>[]; minWidth: string }) {
   const gridCols = columns.map((c) => c.width).join(" ");
   return (
-    <div
-      className="grid gap-3 px-5 py-2 text-[10px] uppercase tracking-widest text-muted"
-      style={{ gridTemplateColumns: gridCols, background: "var(--c-bg-subtle)" }}
-    >
-      {columns.map((c) => (
-        <span key={c.key} className={alignClass(c.align)}>
-          {c.label ?? ""}
-        </span>
-      ))}
+    <div className="overflow-x-auto">
+      <div
+        className="grid gap-3 px-5 py-2 text-[10px] uppercase tracking-widest text-muted"
+        style={{ gridTemplateColumns: gridCols, background: "var(--c-bg-subtle)", minWidth }}
+      >
+        {columns.map((c) => (
+          <span key={c.key} className={alignClass(c.align)}>
+            {c.label ?? ""}
+          </span>
+        ))}
+      </div>
     </div>
   );
 }

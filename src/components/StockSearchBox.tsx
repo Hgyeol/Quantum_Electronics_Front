@@ -99,7 +99,7 @@ export default function StockSearchBox({ onSelect }: Props) {
 
   return (
     <div ref={containerRef} className="relative shrink-0">
-      <form onSubmit={handleSubmit} className="flex items-center gap-2">
+      <form onSubmit={handleSubmit} className="flex w-full items-center gap-2">
         <input
           type="text"
           value={query}
@@ -108,12 +108,12 @@ export default function StockSearchBox({ onSelect }: Props) {
           onFocus={() => { setOpen(true); }}
           placeholder="종목코드 · 종목명 검색"
           autoComplete="off"
-          className="w-80 h-9 px-3 rounded-lg text-sm text-ink placeholder:text-muted font-mono focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors"
+          className="h-9 min-w-0 flex-1 px-3 rounded-lg text-sm text-ink placeholder:text-muted font-mono focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors sm:w-80 sm:flex-none"
           style={{ border: "1px solid var(--c-border-strong)", background: "var(--c-bg-subtle)" }}
         />
         <button
           type="submit"
-          className="h-9 px-4 rounded-lg bg-primary hover:bg-primary-active text-white text-sm font-semibold transition-colors cursor-pointer"
+          className="h-9 shrink-0 px-3 sm:px-4 rounded-lg bg-primary hover:bg-primary-active text-white text-sm font-semibold transition-colors cursor-pointer"
         >
           조회
         </button>
