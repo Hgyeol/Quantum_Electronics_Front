@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { fetchWatchlist, fetchForeignRanking, type WatchlistItem } from "@/lib/api";
 import { StockList, COLS, NameCell, PriceCell, ChangeRateBadge, RankCell, MutedNumber } from "@/components/StockList";
+import { useAutoStockHover } from "@/lib/useAutoStockHover";
 
 type SortType = "default" | "volume" | "amount" | "foreign" | "institution";
 
@@ -194,6 +195,36 @@ export default function WatchlistTable({
     };
   }, [codesKey, wsRetryKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const rows: Row[] = sortedCodes.map((code) => {
+    const item = items.find((i) => i.stock_code === code);
+    return {
+      stock_code: code,
+      stock_name: item?.stock_name ?? null,
+      price: item?.price ?? null,
+      change_rate: item?.change_rate ?? null,
+      volume: item?.volume ?? null,
+      trade_value: item?.trade_value ?? null,
+    };
+  });
+
+  const autoHover = useAutoStockHover({
+    items: rows,
+    getKey: (row) => row.stock_code,
+    toHoverPayload: (row) => {
+      if (row.price == null || row.change_rate == null) return null;
+      return {
+        code: row.stock_code,
+        name: row.stock_name ?? row.stock_code,
+        price: row.price,
+        changeRate: row.change_rate,
+      };
+    },
+    onHover,
+    onHoverEnd,
+    resetKey: `${sortBy}:${codesKey}`,
+    enabled: rows.length > 0 && fetched,
+  });
+
   if (codes.length === 0) return null;
 
   return (
@@ -255,18 +286,6 @@ export default function WatchlistTable({
       )}
 
       {(() => {
-        const rows: Row[] = sortedCodes.map((code) => {
-          const item = items.find((i) => i.stock_code === code);
-          return {
-            stock_code: code,
-            stock_name: item?.stock_name ?? null,
-            price: item?.price ?? null,
-            change_rate: item?.change_rate ?? null,
-            volume: item?.volume ?? null,
-            trade_value: item?.trade_value ?? null,
-          };
-        });
-
         const extraLabelText =
           sortBy === "volume" ? "거래량"
             : sortBy === "foreign" ? "외국인순매수"
@@ -294,13 +313,9 @@ export default function WatchlistTable({
             items={rows}
             getKey={(r) => r.stock_code}
             activeKey={activeCode ?? null}
+            hoveredKey={autoHover.hoveredKey}
             onSelect={(r) => onSelect(r.stock_code, r.stock_name)}
-            onRowHover={(r) => {
-              if (r.price != null && r.change_rate != null) {
-                onHover?.({ code: r.stock_code, name: r.stock_name ?? r.stock_code, price: r.price, changeRate: r.change_rate });
-              }
-            }}
-            onRowHoverEnd={onHoverEnd}
+            onRowHover={autoHover.handleRowHover}
             loading={loading && items.length === 0}
             loadingRows={codes.length}
             columns={[

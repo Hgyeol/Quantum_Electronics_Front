@@ -36,6 +36,7 @@ interface Props<T> {
   onRowHover?: (item: T) => void;
   onRowHoverEnd?: () => void;
   activeKey?: string | null;
+  hoveredKey?: string | null;
   loading?: boolean;
   loadingRows?: number;
   emptyMessage?: ReactNode;
@@ -51,6 +52,7 @@ export function StockList<T>({
   onRowHover,
   onRowHoverEnd,
   activeKey,
+  hoveredKey,
   loading,
   loadingRows = 8,
   emptyMessage,
@@ -102,12 +104,13 @@ export function StockList<T>({
         {items.map((item, idx) => {
           const key = getKey(item);
           const isActive = activeKey === key;
+          const isHovered = hoveredKey === key;
           return (
             <li
               key={key}
               onClick={() => onSelect?.(item)}
               onMouseEnter={(e) => {
-                if (!isActive) e.currentTarget.style.background = "var(--c-hover)";
+                if (!isActive && !isHovered) e.currentTarget.style.background = "var(--c-hover)";
                 onRowHover?.(item);
               }}
               onMouseLeave={(e) => {
@@ -118,7 +121,9 @@ export function StockList<T>({
               style={{
                 ...gridStyle,
                 borderTop: idx > 0 ? "1px solid var(--c-border)" : undefined,
-                background: isActive ? "rgba(49,130,246,0.06)" : undefined,
+                background: isActive
+                  ? "rgba(49,130,246,0.06)"
+                  : isHovered ? "var(--c-hover)" : undefined,
               }}
             >
               {columns.map((c) => (

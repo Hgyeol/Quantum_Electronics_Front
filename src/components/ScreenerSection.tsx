@@ -9,6 +9,7 @@ import {
   type ScreenerParams,
 } from "@/lib/api";
 import { StockList, COLS, NameCell, PriceCell, MutedNumber } from "@/components/StockList";
+import { useAutoStockHover } from "@/lib/useAutoStockHover";
 
 interface ConditionParam {
   key: string;
@@ -196,6 +197,7 @@ export default function ScreenerSection({ onSelect, onHover, onHoverEnd }: Props
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastCollected, setLastCollected] = useState<string | null>(null);
+  const [searchVersion, setSearchVersion] = useState(0);
 
   useEffect(() => {
     fetchScreenerStatus()
@@ -260,6 +262,7 @@ export default function ScreenerSection({ onSelect, onHover, onHoverEnd }: Props
 
   async function handleSearch() {
     if (selected.size === 0) { setError("조건을 하나 이상 선택하세요."); return; }
+    setSearchVersion((v) => v + 1);
     setLoading(true);
     setError(null);
     setResults(null);
@@ -284,6 +287,29 @@ export default function ScreenerSection({ onSelect, onHover, onHoverEnd }: Props
       setLoading(false);
     }
   }
+
+  const sortedResults = results
+    ? [...results].sort((a, b) => {
+        if (sortBy === "volume") return b.volume - a.volume;
+        if (sortBy === "amount") return b.close * b.volume - a.close * a.volume;
+        return 0;
+      })
+    : [];
+
+  const autoHover = useAutoStockHover({
+    items: sortedResults,
+    getKey: (item) => item.stock_code,
+    toHoverPayload: (item) => ({
+      code: item.stock_code,
+      name: item.stock_name,
+      price: item.close,
+      changeRate: 0,
+    }),
+    onHover,
+    onHoverEnd,
+    resetKey: `${searchVersion}:${sortBy}:${sortedResults.map((item) => item.stock_code).join(",")}`,
+    enabled: sortedResults.length > 0 && !loading,
+  });
 
   return (
     <section className="bg-surface-card-dark rounded-xl shadow-card">
@@ -412,11 +438,6 @@ export default function ScreenerSection({ onSelect, onHover, onHoverEnd }: Props
 
       {/* 결과 */}
       {results !== null && results.length > 0 && (() => {
-        const sorted = [...results].sort((a, b) => {
-          if (sortBy === "volume") return b.volume - a.volume;
-          if (sortBy === "amount") return b.close * b.volume - a.close * a.volume;
-          return 0;
-        });
         return (
         <>
           {/* 정렬 탭 (TDS underline) */}
@@ -437,18 +458,11 @@ export default function ScreenerSection({ onSelect, onHover, onHoverEnd }: Props
             ))}
           </div>
           <StockList
-            items={sorted}
+            items={sortedResults}
             getKey={(i) => i.stock_code}
+            hoveredKey={autoHover.hoveredKey}
             onSelect={(i) => onSelect(i.stock_code, i.stock_name)}
-            onRowHover={(i) =>
-              onHover?.({
-                code: i.stock_code,
-                name: i.stock_name,
-                price: i.close,
-                changeRate: 0,
-              })
-            }
-            onRowHoverEnd={onHoverEnd}
+            onRowHover={autoHover.handleRowHover}
             columns={[
               { ...COLS.name,    render: (i) => <NameCell code={i.stock_code} name={i.stock_name} /> },
               { ...COLS.price,   render: (i) => <PriceCell price={i.close} /> },

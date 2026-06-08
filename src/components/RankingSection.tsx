@@ -10,6 +10,7 @@ import {
   type RankInvestor,
 } from "@/lib/api";
 import { StockList, COLS, NameCell, PriceCell, ChangeRateBadge, RankCell, MutedNumber } from "@/components/StockList";
+import { useAutoStockHover } from "@/lib/useAutoStockHover";
 
 export type TabId = "volume" | "amount" | "foreign" | "institution" | "gainer";
 
@@ -136,6 +137,21 @@ export default function RankingSection({ onSelect, onHover, onHoverEnd, activeTa
     return `${item.extra_value.toLocaleString("ko-KR")}주`;
   }
 
+  const autoHover = useAutoStockHover({
+    items,
+    getKey: (i) => i.stock_code,
+    toHoverPayload: (i) => ({
+      code: i.stock_code,
+      name: i.stock_name,
+      price: i.price,
+      changeRate: i.change_rate,
+    }),
+    onHover,
+    onHoverEnd,
+    resetKey: activeTab,
+    enabled: isTabAvailable(activeTab) && !loading && !error,
+  });
+
   return (
     <section>
 
@@ -201,16 +217,9 @@ export default function RankingSection({ onSelect, onHover, onHoverEnd, activeTa
         <StockList
           items={items}
           getKey={(i) => i.stock_code}
+          hoveredKey={autoHover.hoveredKey}
           onSelect={(i) => onSelect(i.stock_code, i.stock_name)}
-          onRowHover={(i) =>
-            onHover?.({
-              code: i.stock_code,
-              name: i.stock_name,
-              price: i.price,
-              changeRate: i.change_rate,
-            })
-          }
-          onRowHoverEnd={onHoverEnd}
+          onRowHover={autoHover.handleRowHover}
           loading={loading}
           loadingRows={10}
           emptyMessage={
