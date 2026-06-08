@@ -111,7 +111,13 @@ export default function Home() {
   const liveWsRef = useRef<WebSocket | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const pendingScrollRef = useRef<number | null>(null);
+  const canRestoreHomeRef = useRef(false);
+  const lastHomeStateRef = useRef<{ homeTab?: HomeTab; rankActiveTab?: RankTabId; scrollY?: number } | null>(null);
   const watchlist = useWatchlist();
+
+  function isDesktopViewport() {
+    return typeof window !== "undefined" && window.matchMedia("(min-width: 768px)").matches;
+  }
 
   useEffect(() => {
     checkAuth().then((ok) => { if (!ok) router.replace("/login"); });
@@ -127,6 +133,8 @@ export default function Home() {
         const st = window.history.state as
           | { homeTab?: HomeTab; rankActiveTab?: RankTabId; scrollY?: number }
           | null;
+        lastHomeStateRef.current = st;
+        canRestoreHomeRef.current = false;
         if (st?.homeTab !== undefined) setHomeTab(st.homeTab);
         if (st?.rankActiveTab !== undefined) setRankActiveTab(st.rankActiveTab);
         if (typeof st?.scrollY === "number") pendingScrollRef.current = st.scrollY;
@@ -145,11 +153,16 @@ export default function Home() {
 
     let attempts = 0;
     const tryScroll = () => {
-      const el = scrollContainerRef.current;
-      if (!el) return;
-      const maxScroll = el.scrollHeight - el.clientHeight;
+      const desktop = isDesktopViewport();
+      const maxScroll = desktop
+        ? Math.max((scrollContainerRef.current?.scrollHeight ?? 0) - (scrollContainerRef.current?.clientHeight ?? 0), 0)
+        : Math.max(document.documentElement.scrollHeight - window.innerHeight, 0);
       if (maxScroll >= target || attempts > 60) {
-        el.scrollTo(0, Math.min(target, maxScroll));
+        if (desktop) {
+          scrollContainerRef.current?.scrollTo(0, Math.min(target, maxScroll));
+        } else {
+          window.scrollTo(0, Math.min(target, maxScroll));
+        }
         return;
       }
       attempts++;
@@ -224,8 +237,13 @@ export default function Home() {
       // 1) 현재 홈 페이지의 상태를 history entry에 박아둠 (뒤로가기 복원용)
       const onHome = !new URL(window.location.href).searchParams.has("code");
       if (onHome) {
-        const scrollY = scrollContainerRef.current?.scrollTop ?? 0;
-        window.history.replaceState({ homeTab, rankActiveTab, scrollY }, "");
+        const scrollY = isDesktopViewport()
+          ? (scrollContainerRef.current?.scrollTop ?? 0)
+          : window.scrollY;
+        const homeState = { homeTab, rankActiveTab, scrollY };
+        lastHomeStateRef.current = homeState;
+        canRestoreHomeRef.current = true;
+        window.history.replaceState(homeState, "");
       }
       // 2) stock detail URL을 새 history entry로 push
       window.history.pushState({}, "", `/?code=${encodeURIComponent(code)}`);
@@ -251,6 +269,23 @@ export default function Home() {
     if (typeof window !== "undefined" && new URL(window.location.href).searchParams.has("code")) {
       window.history.pushState({}, "", "/");
     }
+  }
+
+  function handleMobileDetailBack() {
+    if (typeof window === "undefined") {
+      handleBack();
+      return;
+    }
+    if (canRestoreHomeRef.current && new URL(window.location.href).searchParams.has("code")) {
+      window.history.back();
+      return;
+    }
+
+    const homeState = lastHomeStateRef.current;
+    if (homeState?.homeTab !== undefined) setHomeTab(homeState.homeTab);
+    if (homeState?.rankActiveTab !== undefined) setRankActiveTab(homeState.rankActiveTab);
+    if (typeof homeState?.scrollY === "number") pendingScrollRef.current = homeState.scrollY;
+    handleBack();
   }
 
   function handleSelectHomeTab(tab: HomeTab) {
@@ -342,10 +377,18 @@ export default function Home() {
 
           {/* 상세 헤더 */}
           <header
-            className="shrink-0 flex flex-wrap items-center gap-3 px-4 py-3 bg-white md:h-[52px] md:relative md:flex-nowrap md:gap-0 md:px-5 md:py-0"
-            style={{ borderBottom: "1px solid var(--c-border)" }}
+            className="shrink-0 flex flex-wrap items-center gap-3 border-b border-transparent px-4 py-3 bg-white md:h-[52px] md:relative md:flex-nowrap md:gap-0 md:border-[var(--c-border)] md:px-5 md:py-0"
           >
-            <div className="w-full order-2 md:w-auto md:order-none md:absolute search-center-wrapper md:left-[calc(50vw-72px)] md:-translate-x-1/2">
+            <button
+              type="button"
+              onClick={handleMobileDetailBack}
+              className="inline-flex h-9 w-9 items-center justify-center rounded-full text-ink md:hidden"
+              aria-label="뒤로가기"
+              style={{ background: "var(--c-hover)" }}
+            >
+              <span className="text-[18px] leading-none">&lt;</span>
+            </button>
+            <div className="hidden w-full order-2 md:block md:w-auto md:order-none md:absolute search-center-wrapper md:left-[calc(50vw-72px)] md:-translate-x-1/2">
               <StockSearchBox onSelect={handleSelectStock} />
             </div>
             <button
@@ -364,7 +407,7 @@ export default function Home() {
             <div className="mx-auto w-full max-w-[900px]">
 
               {/* 종목 헤더 + 가격 */}
-              <div className="px-5 pt-8 pb-6" style={{ borderBottom: "1px solid var(--c-border)" }}>
+              <div className="px-5 pt-3 pb-6 md:pt-8" style={{ borderBottom: "1px solid var(--c-border)" }}>
                 <div className="mb-5 flex flex-wrap items-start gap-4 sm:flex-nowrap sm:items-center">
                   <StockLogo code={selectedCode} name={displayName} size={52} rounded="xl" />
                   <div className="min-w-0 flex-1">
@@ -678,7 +721,9 @@ export default function Home() {
 
       )}
 
-      <CenturyToggle />
+      <div className="hidden md:block">
+        <CenturyToggle />
+      </div>
       <ThemeToggle />
     </div>
   );

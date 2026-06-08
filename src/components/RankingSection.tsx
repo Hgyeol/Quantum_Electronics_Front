@@ -18,8 +18,8 @@ const TABS: { id: TabId; label: string }[] = [
   { id: "volume",      label: "거래량" },
   { id: "amount",      label: "거래대금" },
   { id: "gainer",      label: "급등주" },
-  { id: "foreign",     label: "외국인 순매수" },
-  { id: "institution", label: "기관 순매수" },
+  { id: "foreign",     label: "외국인" },
+  { id: "institution", label: "기관" },
 ];
 
 const POLL_INTERVAL_MS = 15_000;
