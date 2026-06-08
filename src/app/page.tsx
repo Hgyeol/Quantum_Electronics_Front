@@ -97,6 +97,7 @@ export default function Home() {
   const [hoveredBar, setHoveredBar] = useState<OHLCVBar | null>(null);
   const [pinnedBar, setPinnedBar] = useState<OHLCVBar | null>(null);
   const [hoveredStock, setHoveredStock] = useState<HoveredStock | null>(null);
+  const [hoveredQuote, setHoveredQuote] = useState<MarketQuote | null>(null);
   const [rankActiveTab, setRankActiveTab] = useState<RankTabId>("volume");
   const liveWsRef = useRef<WebSocket | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
@@ -172,6 +173,25 @@ export default function Home() {
     if (!selectedCode) { setMarketQuote(null); return; }
     fetchMarketQuote(selectedCode).then(setMarketQuote).catch(() => {});
   }, [selectedCode]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!hoveredStock) {
+      setHoveredQuote(null);
+      return;
+    }
+    let cancelled = false;
+    setHoveredQuote(null);
+    fetchMarketQuote(hoveredStock.code)
+      .then((quote) => {
+        if (!cancelled) setHoveredQuote(quote);
+      })
+      .catch(() => {
+        if (!cancelled) setHoveredQuote(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [hoveredStock?.code]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleLogout() {
     await logout();
@@ -555,8 +575,10 @@ export default function Home() {
             >
             {hoveredStock ? (
               (() => {
-                const up = hoveredStock.changeRate > 0;
-                const flat = hoveredStock.changeRate === 0;
+                const previewPrice = hoveredQuote?.price ?? hoveredStock.price;
+                const previewChangeRate = hoveredQuote?.change_rate ?? hoveredStock.changeRate;
+                const up = previewChangeRate > 0;
+                const flat = previewChangeRate === 0;
                 const previewBadge = flat
                   ? "text-muted"
                   : up ? "bg-trading-up/10 text-trading-up" : "bg-trading-down/10 text-trading-down";
@@ -573,12 +595,12 @@ export default function Home() {
                       </div>
                       <div className="flex items-baseline gap-2 mb-2">
                         <span className="font-mono tabular text-[36px] font-bold text-ink leading-none tracking-tight">
-                          {hoveredStock.price.toLocaleString("ko-KR")}
+                          {previewPrice.toLocaleString("ko-KR")}
                         </span>
                         <span className="text-[14px] text-muted">원</span>
                       </div>
                       <span className={`font-mono tabular text-[13px] font-bold px-2.5 py-1 rounded-full ${previewBadge}`} style={previewBadgeStyle}>
-                        {flat ? "0.00%" : `${up ? "+" : ""}${hoveredStock.changeRate.toFixed(2)}%`}
+                        {flat ? "0.00%" : `${up ? "+" : ""}${previewChangeRate.toFixed(2)}%`}
                       </span>
                     </div>
                     <div className="ml-5 mr-[72px]" style={{ borderTop: "1px solid var(--c-border)" }} />
