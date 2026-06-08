@@ -25,6 +25,8 @@ import ThemeToggle from "@/components/ThemeToggle";
 import CenturyToggle from "@/components/CenturyToggle";
 
 const WS_BASE = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000").replace(/^http/, "ws");
+const AUTH_RETRY_COUNT = 12;
+const AUTH_RETRY_DELAY_MS = 250;
 
 type HomeTab = 0 | 1 | 2 | 3;
 const HOME_TABS = ["관심종목", "시장현황", "스크리너", "마이페이지"] as const;
@@ -45,6 +47,10 @@ interface HoveredStock {
   name: string;
   price: number;
   changeRate: number;
+}
+
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 // ── 좌측 내비 아이콘 ────────────────────────────────────────────
@@ -122,14 +128,22 @@ export default function Home() {
 
   useEffect(() => {
     let cancelled = false;
-    checkAuth().then((ok) => {
-      if (cancelled) return;
-      if (!ok) {
-        router.replace("/login");
-        return;
+    async function verifyAuth() {
+      for (let attempt = 0; attempt < AUTH_RETRY_COUNT; attempt += 1) {
+        const ok = await checkAuth();
+        if (cancelled) return;
+        if (ok) {
+          setAuthReady(true);
+          return;
+        }
+        await sleep(AUTH_RETRY_DELAY_MS);
       }
-      setAuthReady(true);
-    });
+      if (!cancelled) {
+        router.replace("/login");
+      }
+    }
+
+    verifyAuth();
     return () => {
       cancelled = true;
     };

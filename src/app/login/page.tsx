@@ -2,14 +2,7 @@
 
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { checkAuth, login } from "@/lib/api";
-
-const AUTH_RETRY_COUNT = 6;
-const AUTH_RETRY_DELAY_MS = 200;
-
-function sleep(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
+import { login } from "@/lib/api";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -18,24 +11,12 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  async function waitForSession() {
-    for (let attempt = 0; attempt < AUTH_RETRY_COUNT; attempt += 1) {
-      if (await checkAuth()) return true;
-      await sleep(AUTH_RETRY_DELAY_MS);
-    }
-    return false;
-  }
-
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
     setLoading(true);
     try {
       await login(username, password);
-      const authenticated = await waitForSession();
-      if (!authenticated) {
-        throw new Error("로그인 세션 확인에 실패했습니다");
-      }
       router.replace("/");
     } catch (err) {
       setError(err instanceof Error ? err.message : "로그인에 실패했습니다");
