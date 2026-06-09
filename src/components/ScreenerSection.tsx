@@ -26,6 +26,7 @@ interface ConditionItem {
   id: ScreenerCondition;
   label: string;
   desc: string;
+  help: string;
   live?: boolean;
   params?: ConditionParam[];
 }
@@ -47,57 +48,85 @@ const CONDITION_GROUPS: ConditionGroup[] = [
     label: "가격 패턴",
     items: [
       { id: "consecutive_bull",  label: "연속 양봉",          desc: "N일 연속 양봉 (close > open)",
+        help: "정해진 일수 동안 매일 종가가 시가보다 높게 끝난 종목이에요. 매수세가 꾸준히 우위인 상태를 뜻해요.",
         params: [P_DAYS(3)] },
       { id: "consecutive_up",    label: "연속 상승",          desc: "N일 연속 종가 상승",
+        help: "정해진 일수 동안 종가가 매일 전날보다 오른 종목이에요. 단기 상승 흐름이 이어지는 신호예요.",
         params: [P_DAYS(3)] },
       { id: "higher_high_low",   label: "고가/저가 동시 상승", desc: "N일 연속 고가·저가 모두 상승",
+        help: "고가와 저가가 함께 계단처럼 올라가는 종목이에요. 전형적인 상승 추세 모양이에요.",
         params: [P_DAYS(3)] },
-      { id: "break_prev_high",   label: "전일 고가 돌파",     desc: "오늘 종가가 전일 고가를 돌파" },
-      { id: "new_high_5d",       label: "5일 신고가 갱신",    desc: "오늘 고가가 직전 N일 최고" },
+      { id: "break_prev_high",   label: "전일 고가 돌파",     desc: "오늘 종가가 전일 고가를 돌파",
+        help: "오늘 종가가 어제 고가보다 높게 마감한 종목이에요. 단기 저항을 뚫은 돌파 신호예요." },
+      { id: "new_high_5d",       label: "5일 신고가 갱신",    desc: "오늘 고가가 직전 N일 최고",
+        help: "오늘 고가가 최근 5일 중 가장 높은 종목이에요. 단기 신고가를 새로 쓴 강세 신호예요." },
       { id: "price_surge",       label: "급등주",            desc: "당일 등락률 > N% 이상",
+        help: "당일 등락률이 정해진 % 이상 오른 종목이에요. 강한 매수세가 몰린 상태예요.",
         params: [{ key: "threshold", label: "등락률 (%)", default: 5.0, min: 0.1, max: 30, step: 0.5 }] },
-      { id: "near_high",         label: "신고가 근접",        desc: "52주 신고가 10% 이내 근접", live: true },
-      { id: "upper_limit",       label: "상한가 포착",        desc: "당일 상한가(+30%) 도달 종목", live: true },
+      { id: "near_high",         label: "신고가 근접",        desc: "52주 신고가 10% 이내 근접",
+        help: "최근 1년 최고가에 10% 이내로 다가선 종목이에요. 신고가 돌파를 앞둔 강세 구간이에요.", live: true },
+      { id: "upper_limit",       label: "상한가 포착",        desc: "당일 상한가(+30%) 도달 종목",
+        help: "당일 상한가(+30%)에 도달한 종목이에요. 매수세가 폭발한 상태예요.", live: true },
     ],
   },
   {
     label: "이동평균·추세",
     items: [
-      { id: "golden_cross",        label: "골든크로스 (5/20)",  desc: "MA5가 MA20을 상향 돌파" },
-      { id: "ma_alignment",        label: "이동평균 정배열",     desc: "MA5 > MA20 > MA60" },
-      { id: "mao_up",              label: "MAO 상승돌파",       desc: "MA5-MA20이 0선 상향 돌파" },
-      { id: "mao_signal_up",       label: "MAO Signal 돌파",    desc: "MAO 시그널선 상향 돌파" },
-      { id: "volume_golden_cross", label: "거래량 골든크로스",   desc: "거래량 MA5가 MA20 상향 돌파" },
+      { id: "golden_cross",        label: "골든크로스 (5/20)",  desc: "MA5가 MA20을 상향 돌파",
+        help: "단기 이동평균(5일)이 장기(20일)를 아래에서 위로 뚫는 시점이에요. 상승 추세 전환의 대표 신호예요." },
+      { id: "ma_alignment",        label: "이동평균 정배열",     desc: "MA5 > MA20 > MA60",
+        help: "5일·20일·60일 이동평균이 위에서부터 순서대로 놓인 상태예요. 뚜렷한 상승 추세를 뜻해요." },
+      { id: "mao_up",              label: "MAO 상승돌파",       desc: "MA5-MA20이 0선 상향 돌파",
+        help: "단기·장기 이동평균의 차이가 0을 넘어서는 시점이에요. 추세가 상승으로 돌아서는 신호예요." },
+      { id: "mao_signal_up",       label: "MAO Signal 돌파",    desc: "MAO 시그널선 상향 돌파",
+        help: "이동평균 차이(MAO)가 자신의 평균선을 위로 뚫는 시점이에요. 상승 힘이 붙는 신호예요." },
+      { id: "volume_golden_cross", label: "거래량 골든크로스",   desc: "거래량 MA5가 MA20 상향 돌파",
+        help: "단기 거래량 평균이 장기 거래량 평균을 넘어서는 시점이에요. 거래가 활발해지는 신호예요." },
     ],
   },
   {
     label: "모멘텀·오실레이터",
     items: [
-      { id: "macd_signal_cross", label: "MACD Cross",      desc: "MACD 라인이 시그널 상향 돌파" },
-      { id: "macd_osc_up",       label: "MACD Osc",        desc: "MACD 히스토그램 3일 연속 상승" },
-      { id: "price_osc_up",      label: "Price Osc",       desc: "가격 오실레이터 시그널 상향 돌파" },
+      { id: "macd_signal_cross", label: "MACD Cross",      desc: "MACD 라인이 시그널 상향 돌파",
+        help: "MACD 선이 시그널 선을 아래에서 위로 교차하는 시점이에요. 가장 널리 쓰이는 매수 전환 신호예요." },
+      { id: "macd_osc_up",       label: "MACD Osc",        desc: "MACD 히스토그램 3일 연속 상승",
+        help: "MACD 막대(히스토그램)가 며칠째 커지는 종목이에요. 상승하는 힘이 강해지는 신호예요." },
+      { id: "price_osc_up",      label: "Price Osc",       desc: "가격 오실레이터 시그널 상향 돌파",
+        help: "단기·장기 이동평균의 차이를 %로 본 지표가 기준선을 넘는 시점이에요. 상승 전환 신호예요." },
       { id: "momentum_up",       label: "Momentum",        desc: "N일 모멘텀 3일 연속 상승",
+        help: "현재가와 며칠 전 가격의 차이가 점점 커지는 종목이에요. 상승 탄력이 붙는 상태예요.",
         params: [P_PERIOD(10)] },
       { id: "roc_up",            label: "ROC",             desc: "변화율 3일 연속 상승",
+        help: "며칠 전 대비 상승률이 점점 커지는 종목이에요. 상승에 가속이 붙는 신호예요.",
         params: [P_PERIOD(10)] },
-      { id: "lrs_signal_up",     label: "LRS",             desc: "선형회귀 기울기 시그널 돌파" },
-      { id: "tsf_signal_up",     label: "TSF",             desc: "시계열 예측치 시그널 돌파" },
-      { id: "sonar_signal_up",   label: "Sonar",           desc: "Sonar 시그널 돌파" },
-      { id: "volume_osc_up",     label: "Volume Osc",      desc: "거래량 오실레이터 0선 돌파" },
+      { id: "lrs_signal_up",     label: "LRS",             desc: "선형회귀 기울기 시그널 돌파",
+        help: "최근 가격 흐름의 기울기(추세 방향)가 위로 꺾이는 시점이에요. 상승 전환 신호예요." },
+      { id: "tsf_signal_up",     label: "TSF",             desc: "시계열 예측치 시그널 돌파",
+        help: "추세를 바탕으로 예측한 가격이 위로 꺾이는 시점이에요. 상승 전환 신호예요." },
+      { id: "sonar_signal_up",   label: "Sonar",           desc: "Sonar 시그널 돌파",
+        help: "이동평균이 변하는 속도가 빨라지는 시점이에요. 추세에 가속이 붙는 신호예요." },
+      { id: "volume_osc_up",     label: "Volume Osc",      desc: "거래량 오실레이터 0선 돌파",
+        help: "단기·장기 거래량의 차이가 0을 넘는 시점이에요. 거래가 살아나는 신호예요." },
     ],
   },
   {
     label: "거래량·수급",
     items: [
       { id: "volume_surge",  label: "거래량 급등",        desc: "오늘 거래량 > N배 × 20일 평균",
+        help: "오늘 거래량이 최근 20일 평균의 정해진 배수 이상인 종목이에요. 관심이 갑자기 쏠린 상태예요.",
         params: [{ key: "threshold", label: "배수", default: 2.0, min: 1.0, max: 20, step: 0.5 }] },
-      { id: "volume_power",  label: "체결강도 상위",      desc: "실시간 체결강도 상위 50종목", live: true },
+      { id: "volume_power",  label: "체결강도 상위",      desc: "실시간 체결강도 상위 50종목",
+        help: "사려는 체결이 팔려는 체결보다 강한 상위 종목이에요(실시간). 매수하는 힘이 우위인 상태예요.", live: true },
       { id: "obv_up",        label: "OBV 상승추세",       desc: "OBV N일 연속 상승",
+        help: "거래량 흐름 지표(OBV)가 며칠째 오르는 종목이에요. 꾸준히 사 모으는(매집) 신호예요.",
         params: [P_DAYS(5)] },
-      { id: "obv_uturn",     label: "OBV U턴",           desc: "OBV 하락 후 반등" },
+      { id: "obv_uturn",     label: "OBV U턴",           desc: "OBV 하락 후 반등",
+        help: "거래량 흐름 지표가 떨어지다가 반등하는 시점이에요. 매수세가 돌아서는 신호예요." },
       { id: "frgn_buy",      label: "외국인 연속 순매수", desc: "N일 연속 외국인 순매수",
+        help: "외국인이 정해진 일수 연속으로 더 많이 산 종목이에요. 외국인 자금이 꾸준히 들어오는 상태예요.",
         params: [P_DAYS(3)] },
       { id: "orgn_buy",      label: "기관 연속 순매수",   desc: "N일 연속 기관 순매수",
+        help: "기관이 정해진 일수 연속으로 더 많이 산 종목이에요. 기관 자금이 꾸준히 들어오는 상태예요.",
         params: [P_DAYS(3)] },
     ],
   },
@@ -196,6 +225,7 @@ export default function ScreenerSection({ onSelect, onHover, onHoverEnd }: Props
     persisted.conditionParams ?? defaultParams(),
   );
   const [openPopover, setOpenPopover] = useState<ScreenerCondition | null>(null);
+  const [openHelp, setOpenHelp] = useState<ScreenerCondition | null>(null);
   const [results, setResults] = useState<ScreenerResultItem[] | null>(persisted.results ?? null);
   const [sortBy, setSortBy] = useState<SortType>(persisted.sortBy ?? "volume");
   const [loading, setLoading] = useState(false);
@@ -245,16 +275,17 @@ export default function ScreenerSection({ onSelect, onHover, onHoverEnd }: Props
 
   // 팝오버 외부 클릭 시 닫기
   useEffect(() => {
-    if (!openPopover) return;
+    if (!openPopover && !openHelp) return;
     const handler = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
       if (!target.closest("[data-screener-chip]") && !target.closest("[data-screener-popover]")) {
         setOpenPopover(null);
+        setOpenHelp(null);
       }
     };
     window.addEventListener("mousedown", handler);
     return () => window.removeEventListener("mousedown", handler);
-  }, [openPopover]);
+  }, [openPopover, openHelp]);
 
   function toggleCondition(id: ScreenerCondition) {
     setSelected((prev) => {
@@ -394,9 +425,8 @@ export default function ScreenerSection({ onSelect, onHover, onHoverEnd }: Props
                         >
                           <button
                             type="button"
-                            title={c.desc}
                             onClick={() => toggleCondition(c.id)}
-                            className={`inline-flex items-center gap-1 pl-2.5 ${hasParams ? "pr-1.5" : "pr-2.5"} py-1 text-[12px] font-semibold cursor-pointer ${
+                            className={`inline-flex items-center gap-1 pl-2.5 pr-1 py-1 text-[12px] font-semibold cursor-pointer ${
                               checked ? "text-primary" : "text-muted-strong hover:text-body"
                             }`}
                           >
@@ -407,10 +437,28 @@ export default function ScreenerSection({ onSelect, onHover, onHoverEnd }: Props
                               </span>
                             )}
                           </button>
+                          {/* ⓘ 설명 */}
+                          <button
+                            type="button"
+                            onClick={() => { setOpenHelp(openHelp === c.id ? null : c.id); setOpenPopover(null); }}
+                            title="설명 보기"
+                            aria-label="설명 보기"
+                            className={`flex items-center justify-center w-5 h-5 rounded-full transition-colors cursor-pointer ${
+                              openHelp === c.id ? "text-primary"
+                                : checked ? "text-primary/50 hover:text-primary" : "text-muted hover:text-body"
+                            }`}
+                          >
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <circle cx="12" cy="12" r="10" />
+                              <line x1="12" y1="16" x2="12" y2="12" />
+                              <line x1="12" y1="8" x2="12.01" y2="8" />
+                            </svg>
+                          </button>
+                          {/* ⚙️ 파라미터 */}
                           {hasParams && (
                             <button
                               type="button"
-                              onClick={() => setOpenPopover(openPopover === c.id ? null : c.id)}
+                              onClick={() => { setOpenPopover(openPopover === c.id ? null : c.id); setOpenHelp(null); }}
                               title="파라미터 설정"
                               className={`flex items-center justify-center w-6 h-6 mr-0.5 rounded-full transition-colors cursor-pointer ${
                                 customized
@@ -426,6 +474,9 @@ export default function ScreenerSection({ onSelect, onHover, onHoverEnd }: Props
                             </button>
                           )}
                         </div>
+                        {openHelp === c.id && (
+                          <HelpPopover item={c} onClose={() => setOpenHelp(null)} />
+                        )}
                         {openPopover === c.id && hasParams && (
                           <ParamPopover
                             item={c}
@@ -524,6 +575,34 @@ export default function ScreenerSection({ onSelect, onHover, onHoverEnd }: Props
         </div>
       )}
     </section>
+  );
+}
+
+// ── 설명 팝오버 ─────────────────────────────────────────────────────────────
+
+function HelpPopover({ item, onClose }: { item: ConditionItem; onClose: () => void }) {
+  return (
+    <div
+      data-screener-popover
+      className="absolute left-0 top-[calc(100%+6px)] z-20 w-[260px] rounded-xl bg-white p-3.5 shadow-lg"
+      style={{ border: "1px solid var(--c-border-md)", boxShadow: "0 8px 32px var(--c-shadow)" }}
+    >
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-[13px] font-bold text-ink">{item.label}</span>
+        <button
+          type="button"
+          onClick={onClose}
+          className="text-muted hover:text-body text-base leading-none cursor-pointer"
+          aria-label="닫기"
+        >
+          ×
+        </button>
+      </div>
+      <p className="text-[12px] leading-relaxed text-body-secondary">{item.help}</p>
+      {item.live && (
+        <p className="mt-2 text-[11px] text-trading-up font-semibold">실시간 KIS 데이터 기준</p>
+      )}
+    </div>
   );
 }
 
