@@ -50,6 +50,26 @@ function fmtPct(v: number | null): string {
   return `${v > 0 ? "+" : ""}${v.toFixed(2)}%`;
 }
 
+interface Snapshot {
+  windowDays: number;
+  horizon: number;
+  metric: SimilarityMetric;
+  topK: string;
+  minSimilarity: string;
+  result: PatternMatchResult | null;
+  comparing: SimilarCase | null;
+}
+
+// 모듈 레벨 — 재마운트·StrictMode에 영향 안 받고 SPA 세션 동안 유지, 새로고침 시 초기화(옵션2).
+const SIM_SNAPSHOTS = new Map<string, Snapshot>();
+// 직전 내비게이션 의도: 클릭(앞으로) = fresh:true, 뒤로/앞으로가기 = fresh:false
+let simNavIntent: { code: string; fresh: boolean } | null = null;
+
+/** page에서 호출 — 종목 상세 진입 경로를 기록 (fresh=true: 클릭 진입, false: 뒤로/앞으로가기) */
+export function noteSimNav(code: string | null, fresh: boolean) {
+  if (code) simNavIntent = { code, fresh };
+}
+
 export default function SimilarPatternsCard({ stockCode, ohlcv, onSelect }: Props) {
   const [windowDays, setWindowDays] = useState(40);
   const [horizon, setHorizon] = useState(20);
@@ -60,6 +80,35 @@ export default function SimilarPatternsCard({ stockCode, ohlcv, onSelect }: Prop
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [comparing, setComparing] = useState<SimilarCase | null>(null);
+
+  // 종목 진입 시: 뒤로/앞으로가기로 들어왔고 스냅샷이 있으면 복원, 아니면 초기화.
+  // simNavIntent는 모듈 레벨이라 로딩으로 카드가 재마운트돼도 동일하게 판정됨(멱등).
+  useEffect(() => {
+    const intent = simNavIntent && simNavIntent.code === stockCode ? simNavIntent : null;
+    const fresh = intent ? intent.fresh : true;  // 의도 불명(직접 진입 등)이면 새 진입
+    const snap = SIM_SNAPSHOTS.get(stockCode);
+
+    if (!fresh && snap) {
+      setWindowDays(snap.windowDays); setHorizon(snap.horizon); setMetric(snap.metric);
+      setTopK(snap.topK); setMinSimilarity(snap.minSimilarity);
+      setResult(snap.result); setComparing(snap.comparing); setError(null);
+      return;
+    }
+    // 새 진입 — 초기화 + 이전 스냅샷 폐기
+    setWindowDays(40); setHorizon(20); setMetric("dtw");
+    setTopK("10"); setMinSimilarity("0");
+    setResult(null); setComparing(null); setError(null);
+    SIM_SNAPSHOTS.delete(stockCode);
+  }, [stockCode]);
+
+  // 검색 결과가 있으면 현재 상태를 종목별 스냅샷으로 보존 (뒤로가기 복원용)
+  useEffect(() => {
+    if (!result) return;
+    // 빠른 연속 내비게이션 시 result(이전 종목)가 stockCode(현재 종목)보다 늦게 갱신되어
+    // 엉뚱한 종목 키에 저장되는 것을 방지 — 결과의 종목과 현재 종목이 같을 때만 저장.
+    if (result.query_stock_code !== stockCode) return;
+    SIM_SNAPSHOTS.set(stockCode, { windowDays, horizon, metric, topK, minSimilarity, result, comparing });
+  }, [stockCode, windowDays, horizon, metric, topK, minSimilarity, result, comparing]);
 
   async function handleSearch() {
     if (ohlcv.length < windowDays + 1) {

@@ -16,6 +16,7 @@ import PositionContextCard from "@/components/PositionContextCard";
 import EvidenceList from "@/components/EvidenceList";
 import ErrorsBanner from "@/components/ErrorsBanner";
 import ChartAnalysisCard from "@/components/ChartAnalysisCard";
+import { noteSimNav } from "@/components/SimilarPatternsCard";
 import StockPreviewStats from "@/components/StockPreviewStats";
 import RankingSection, { type TabId as RankTabId } from "@/components/RankingSection";
 import ScreenerSection from "@/components/ScreenerSection";
@@ -117,7 +118,9 @@ export default function Home() {
   const [authReady, setAuthReady] = useState(false);
   const liveWsRef = useRef<WebSocket | null>(null);
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+  const detailScrollRef = useRef<HTMLDivElement | null>(null);
   const pendingScrollRef = useRef<number | null>(null);
+  const pendingDetailScrollRef = useRef<number | null>(null);
   const canRestoreHomeRef = useRef(false);
   const lastHomeStateRef = useRef<{ homeTab?: HomeTab; rankActiveTab?: RankTabId; scrollY?: number } | null>(null);
   const watchlist = useWatchlist();
@@ -151,8 +154,15 @@ export default function Home() {
 
   // URL ?code= ↔ selectedCode 동기화 + 뒤로가기 시 홈 state 복원
   useEffect(() => {
-    const sync = () => {
+    const sync = (viaPopstate: boolean) => {
       const code = new URL(window.location.href).searchParams.get("code");
+      // 뒤로가기/앞으로가기로 특정 종목에 진입한 경우 — 유사패턴 검색 상태 복원 대상
+      if (viaPopstate && code) noteSimNav(code, false);
+      // 상세 페이지로 돌아온 경우 저장해둔 스크롤 복원 예약
+      if (viaPopstate && code) {
+        const st = window.history.state as { detailScrollY?: number } | null;
+        if (typeof st?.detailScrollY === "number") pendingDetailScrollRef.current = st.detailScrollY;
+      }
       // URL의 종목이 현재 표시 중인 종목과 다르면 이름을 비워 stale 이름 표시 방지
       // (ChartAnalysisCard의 onNameResolved가 새 이름을 다시 채움)
       setSelectedCode((prev) => {
@@ -171,9 +181,10 @@ export default function Home() {
         if (typeof st?.scrollY === "number") pendingScrollRef.current = st.scrollY;
       }
     };
-    sync(); // 초기 진입 시 URL 반영
-    window.addEventListener("popstate", sync);
-    return () => window.removeEventListener("popstate", sync);
+    sync(false); // 초기 진입 시 URL 반영 (뒤로가기 아님)
+    const onPop = () => sync(true);
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
   }, []);
 
   // 뒤로가기 후 스크롤 위치 복원: 콘텐츠가 충분히 렌더될 때까지 retry
@@ -201,6 +212,33 @@ export default function Home() {
     };
     requestAnimationFrame(tryScroll);
   }, [selectedCode, homeTab, rankActiveTab]);
+
+  // 뒤로가기로 상세 페이지 복귀 시 스크롤 복원 (콘텐츠 렌더될 때까지 retry)
+  useEffect(() => {
+    if (!selectedCode || pendingDetailScrollRef.current == null) return;
+    const target = pendingDetailScrollRef.current;
+    pendingDetailScrollRef.current = null;
+
+    let attempts = 0;
+    let cancelled = false;  // 종목이 또 바뀌면(연속 뒤로가기) 이전 루프 취소
+    const tryScroll = () => {
+      if (cancelled) return;
+      const el = detailScrollRef.current;
+      const desktop = isDesktopViewport();
+      const maxScroll = desktop
+        ? Math.max((el?.scrollHeight ?? 0) - (el?.clientHeight ?? 0), 0)
+        : Math.max(document.documentElement.scrollHeight - window.innerHeight, 0);
+      if (maxScroll >= target || attempts > 80) {
+        if (desktop) el?.scrollTo(0, Math.min(target, maxScroll));
+        else window.scrollTo(0, Math.min(target, maxScroll));
+        return;
+      }
+      attempts++;
+      requestAnimationFrame(tryScroll);
+    };
+    requestAnimationFrame(tryScroll);
+    return () => { cancelled = true; };
+  }, [selectedCode]);
 
   useEffect(() => {
     liveWsRef.current?.close();
@@ -264,6 +302,8 @@ export default function Home() {
   }
 
   function handleSelectStock(code: string, name?: string | null) {
+    // 클릭으로 들어가는 건 '새 진입'
+    noteSimNav(code, true);
     if (typeof window !== "undefined" && new URL(window.location.href).searchParams.get("code") !== code) {
       // 1) 현재 홈 페이지의 상태를 history entry에 박아둠 (뒤로가기 복원용)
       const onHome = !new URL(window.location.href).searchParams.has("code");
@@ -275,6 +315,13 @@ export default function Home() {
         lastHomeStateRef.current = homeState;
         canRestoreHomeRef.current = true;
         window.history.replaceState(homeState, "");
+      } else {
+        // 현재 보고 있던 상세 페이지의 스크롤을 그 history entry에 저장 (뒤로가기 복원용)
+        const detailScrollY = isDesktopViewport()
+          ? (detailScrollRef.current?.scrollTop ?? 0)
+          : window.scrollY;
+        const cur = (window.history.state as Record<string, unknown> | null) ?? {};
+        window.history.replaceState({ ...cur, detailScrollY }, "");
       }
       // 2) stock detail URL을 새 history entry로 push
       window.history.pushState({}, "", `/?code=${encodeURIComponent(code)}`);
@@ -445,7 +492,7 @@ export default function Home() {
           </header>
 
           {/* 상세 컨텐츠 */}
-          <div className="flex-1 overflow-y-auto">
+          <div ref={detailScrollRef} className="flex-1 overflow-y-auto">
             <div className="mx-auto w-full max-w-[900px]">
 
               {/* 종목 헤더 + 가격 */}
