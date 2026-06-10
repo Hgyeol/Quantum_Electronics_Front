@@ -153,7 +153,12 @@ export default function Home() {
   useEffect(() => {
     const sync = () => {
       const code = new URL(window.location.href).searchParams.get("code");
-      setSelectedCode(code);
+      // URL의 종목이 현재 표시 중인 종목과 다르면 이름을 비워 stale 이름 표시 방지
+      // (ChartAnalysisCard의 onNameResolved가 새 이름을 다시 채움)
+      setSelectedCode((prev) => {
+        if (prev !== code) setSelectedName(null);
+        return code;
+      });
       if (!code) {
         setSelectedName(null);
         const st = window.history.state as

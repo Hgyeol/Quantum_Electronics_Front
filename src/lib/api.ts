@@ -372,12 +372,15 @@ export interface PatternMatchStats {
   positive_ratio: number | null;
 }
 
+export type SimilarityMetric = "dtw" | "pearson" | "spearman";
+
 export interface PatternMatchResult {
   query_stock_code: string;
   query_start: string;
   query_end: string;
   window_length: number;
   horizon: number;
+  metric: SimilarityMetric;
   query_closes: number[];
   cases: SimilarCase[];
   stats: PatternMatchStats;
@@ -387,11 +390,12 @@ export async function fetchSimilarPatterns(
   code: string,
   start: string,
   end: string,
-  horizon = 20,
-  topK = 10,
+  opts: { horizon?: number; topK?: number; metric?: SimilarityMetric; minSimilarity?: number } = {},
 ): Promise<PatternMatchResult> {
+  const { horizon = 20, topK = 10, metric = "dtw", minSimilarity = 0 } = opts;
   const params = new URLSearchParams({
     start, end, horizon: String(horizon), top_k: String(topK),
+    metric, min_similarity: String(minSimilarity),
   });
   const url = `${API_BASE}/chart/${encodeURIComponent(code)}/similar?${params.toString()}`;
   const response = await fetch(url, FETCH_OPTS);

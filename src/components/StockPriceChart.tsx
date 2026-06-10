@@ -41,6 +41,8 @@ interface Props {
   onBarClick?: (bar: OHLCVBar | null) => void;
   defaultPeriod?: Period;
   minimal?: boolean;
+  /** 이 날짜(YYYY-MM-DD) 위치에 "현재 시점" 세로선 표시 */
+  markerDate?: string;
 }
 
 function calcMA(ohlcv: OHLCVBar[], period: number) {
@@ -74,7 +76,7 @@ const LEGEND: { key: VisibilityKey; label: string; color: string }[] = [
   { key: "resistance",  label: "저항선", color: COLORS.resistance },
 ];
 
-export default function StockPriceChart({ ohlcv, todayBar, supports, resistances, currentPrice, onBarHover, onBarClick, defaultPeriod = "3M", minimal = false }: Props) {
+export default function StockPriceChart({ ohlcv, todayBar, supports, resistances, currentPrice, onBarHover, onBarClick, defaultPeriod = "3M", minimal = false, markerDate }: Props) {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const candleSeriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
@@ -94,6 +96,7 @@ export default function StockPriceChart({ ohlcv, todayBar, supports, resistances
     support: !minimal, resistance: !minimal,
   });
   const [period, setPeriod] = useState<Period>(defaultPeriod);
+  const [markerX, setMarkerX] = useState<number | null>(null);
   const [isDark, setIsDark] = useState(() =>
     typeof document !== "undefined" && document.documentElement.classList.contains("dark")
   );
@@ -248,12 +251,23 @@ export default function StockPriceChart({ ohlcv, todayBar, supports, resistances
     const from = Math.max(0, barCount - defaultBars);
     chart.timeScale().setVisibleLogicalRange({ from: from as Logical, to: (barCount - 1) as Logical });
 
+    // markerDate 세로선 x좌표 갱신 (범위·리사이즈 변경 시 재계산)
+    const updateMarkerX = () => {
+      if (!markerDate) { setMarkerX(null); return; }
+      const x = chart.timeScale().timeToCoordinate(markerDate as `${number}-${number}-${number}`);
+      setMarkerX(x == null ? null : Number(x));
+    };
+    updateMarkerX();
+    chart.timeScale().subscribeVisibleTimeRangeChange(updateMarkerX);
+
     const ro = new ResizeObserver(() => {
       chart.applyOptions({ width: container.clientWidth });
+      updateMarkerX();
     });
     ro.observe(container);
 
     return () => {
+      chart.timeScale().unsubscribeVisibleTimeRangeChange(updateMarkerX);
       ro.disconnect();
       chart.remove();
       chartRef.current = null;
@@ -262,7 +276,7 @@ export default function StockPriceChart({ ohlcv, todayBar, supports, resistances
       currentPriceLineRef.current = null;
       seriesRefs.current = {};
     };
-  }, [ohlcv, supports, resistances, isDark]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [ohlcv, supports, resistances, isDark, markerDate]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // 기간 탭 변경 시 차트 범위 조정
   useEffect(() => {
@@ -348,7 +362,19 @@ export default function StockPriceChart({ ohlcv, todayBar, supports, resistances
       )}
 
       {/* 차트 */}
-      <div ref={containerRef} className={minimal ? "ml-5 mr-[72px]" : "w-full"} />
+      <div className={`relative ${minimal ? "ml-5 mr-[72px]" : "w-full"}`}>
+        <div ref={containerRef} className="w-full" />
+        {markerX != null && (
+          <div
+            className="absolute top-0 bottom-0 pointer-events-none z-10"
+            style={{ left: `${markerX}px`, width: 0, borderLeft: "1.5px dashed #3182f6" }}
+          >
+            <span className="absolute top-1 -translate-x-1/2 whitespace-nowrap text-[10px] font-semibold text-primary bg-white/80 px-1 rounded">
+              유사 구간
+            </span>
+          </div>
+        )}
+      </div>
 
       {/* MA / 지지저항 토글 */}
       {!minimal && (

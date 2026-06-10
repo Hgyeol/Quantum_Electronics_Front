@@ -1,8 +1,13 @@
 "use client";
 
-import { useState } from "react";
-import { fetchSimilarPatterns, type PatternMatchResult, type SimilarCase, type OHLCVBar } from "@/lib/api";
+import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
+import { fetchSimilarPatterns, fetchChartAnalysis, type PatternMatchResult, type SimilarCase, type SimilarityMetric, type OHLCVBar } from "@/lib/api";
 import StockLogo from "@/components/StockLogo";
+
+const StockPriceChart = dynamic(() => import("./StockPriceChart"), { ssr: false });
+
+const normDate = (d: string) => d.replace(/-/g, "");
 
 interface Props {
   stockCode: string;
@@ -21,6 +26,12 @@ const HORIZONS = [
   { label: "5일", days: 5 },
   { label: "20일", days: 20 },
   { label: "60일", days: 60 },
+];
+
+const METRICS: { id: SimilarityMetric; label: string; help: string }[] = [
+  { id: "dtw",      label: "DTW",     help: "시간축을 늘려가며 비교 — 타이밍이 며칠 밀려도 비슷한 흐름을 찾습니다." },
+  { id: "pearson",  label: "피어슨",  help: "같은 시점끼리 비교 — 정직하게 같이 움직인 패턴을 찾습니다." },
+  { id: "spearman", label: "스피어만", help: "오르내림 순위로 비교 — 급등 같은 튀는 값에 덜 민감합니다." },
 ];
 
 function fmtDate(d: string): string {
@@ -42,6 +53,9 @@ function fmtPct(v: number | null): string {
 export default function SimilarPatternsCard({ stockCode, ohlcv, onSelect }: Props) {
   const [windowDays, setWindowDays] = useState(40);
   const [horizon, setHorizon] = useState(20);
+  const [metric, setMetric] = useState<SimilarityMetric>("dtw");
+  const [topK, setTopK] = useState("10");            // 빈 문자열 = 제한 없음
+  const [minSimilarity, setMinSimilarity] = useState("0");  // 빈 문자열 = 컷오프 없음
   const [result, setResult] = useState<PatternMatchResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -61,7 +75,12 @@ export default function SimilarPatternsCard({ stockCode, ohlcv, onSelect }: Prop
     setResult(null);
     setComparing(null);
     try {
-      const res = await fetchSimilarPatterns(stockCode, start, end, horizon, 10);
+      const res = await fetchSimilarPatterns(stockCode, start, end, {
+        horizon,
+        topK: topK.trim() === "" ? 1000 : Math.max(1, parseInt(topK, 10) || 1000),
+        metric,
+        minSimilarity: minSimilarity.trim() === "" ? 0 : Math.min(100, Math.max(0, parseFloat(minSimilarity) || 0)),
+      });
       setResult(res);
     } catch (e) {
       setError(e instanceof Error ? e.message : "검색에 실패했습니다.");
@@ -71,6 +90,11 @@ export default function SimilarPatternsCard({ stockCode, ohlcv, onSelect }: Prop
   }
 
   const stats = result?.stats;
+
+  // 현재 종목의 질의 구간 캔들 (비교 좌측용)
+  const queryWindowBars = result
+    ? ohlcv.filter((b) => normDate(b.date) >= normDate(result.query_start) && normDate(b.date) <= normDate(result.query_end))
+    : [];
 
   return (
     <div className="bg-white" style={{ border: "1px solid var(--c-border)", borderRadius: 12 }}>
@@ -124,17 +148,63 @@ export default function SimilarPatternsCard({ stockCode, ohlcv, onSelect }: Prop
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={handleSearch}
-          disabled={loading}
-          className="h-9 px-5 rounded-lg bg-primary hover:bg-primary-active disabled:bg-primary-disabled disabled:text-muted-strong text-white text-sm font-semibold transition-colors cursor-pointer flex items-center gap-2"
-        >
-          {loading && <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin inline-block" />}
-          {loading ? "검색 중" : "유사 차트 찾기"}
-        </button>
+        <div>
+          <span className="block text-[12px] font-semibold text-body-secondary mb-1.5">유사도 측정 방식</span>
+          <div className="flex flex-wrap gap-1.5">
+            {METRICS.map((m) => (
+              <button
+                key={m.id}
+                type="button"
+                title={m.help}
+                onClick={() => setMetric(m.id)}
+                className={`px-2.5 py-1 rounded-full text-[12px] font-semibold border transition-colors cursor-pointer ${
+                  metric === m.id
+                    ? "border-primary text-primary bg-primary/10"
+                    : "border-hairline-on-dark text-muted-strong hover:border-primary/40"
+                }`}
+              >
+                {m.label}
+              </button>
+            ))}
+          </div>
+          <p className="text-[11px] text-muted mt-1">{METRICS.find((m) => m.id === metric)?.help}</p>
+        </div>
 
-        {error && <p className="text-[13px] text-trading-down">{error}</p>}
+        <div className="flex gap-4">
+          <label className="flex flex-col gap-1">
+            <span className="text-[12px] font-semibold text-body-secondary">결과 개수</span>
+            <input
+              type="text" inputMode="numeric" placeholder="전체"
+              value={topK}
+              onChange={(e) => setTopK(e.target.value.replace(/[^0-9]/g, ""))}
+              className="w-24 h-8 px-2.5 rounded-lg text-[13px] font-mono tabular focus:outline-none focus:ring-2 focus:ring-primary/30"
+              style={{ border: "1px solid var(--c-border-strong)", background: "var(--c-bg-subtle)" }}
+            />
+          </label>
+          <label className="flex flex-col gap-1">
+            <span className="text-[12px] font-semibold text-body-secondary">최소 유사도 (%)</span>
+            <input
+              type="text" inputMode="decimal" placeholder="제한 없음"
+              value={minSimilarity}
+              onChange={(e) => setMinSimilarity(e.target.value.replace(/[^0-9.]/g, ""))}
+              className="w-24 h-8 px-2.5 rounded-lg text-[13px] font-mono tabular focus:outline-none focus:ring-2 focus:ring-primary/30"
+              style={{ border: "1px solid var(--c-border-strong)", background: "var(--c-bg-subtle)" }}
+            />
+          </label>
+        </div>
+
+        <div className="flex items-center justify-end gap-3">
+          {error && <p className="text-[13px] text-trading-down mr-auto">{error}</p>}
+          <button
+            type="button"
+            onClick={handleSearch}
+            disabled={loading}
+            className="h-9 px-5 rounded-lg bg-primary hover:bg-primary-active disabled:bg-primary-disabled disabled:text-muted-strong text-white text-sm font-semibold transition-colors cursor-pointer flex items-center gap-2"
+          >
+            {loading && <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin inline-block" />}
+            {loading ? "검색 중" : "유사 차트 찾기"}
+          </button>
+        </div>
       </div>
 
       {/* 통계 요약 */}
@@ -195,11 +265,11 @@ export default function SimilarPatternsCard({ stockCode, ohlcv, onSelect }: Prop
 
               {isOpen && (
                 <div className="px-5 pb-4 pt-1" style={{ background: "var(--c-bg-subtle)" }}>
-                  <CompareChart
-                    queryCloses={result.query_closes}
-                    caseWindow={c.window_closes}
-                    caseForward={c.forward_closes}
-                    caseName={c.stock_name || c.stock_code}
+                  <RealCompare
+                    queryName={`현재 종목`}
+                    queryBars={queryWindowBars}
+                    caseStock={c}
+                    windowBarCount={c.window_closes.length + c.forward_closes.length}
                   />
                   {onSelect && (
                     <button
@@ -227,72 +297,88 @@ export default function SimilarPatternsCard({ stockCode, ohlcv, onSelect }: Prop
   );
 }
 
-// ── 비교 차트 (시작점=100 지수화 오버레이) ─────────────────────────────────────
+// ── 실제 차트 비교 (현재 종목 구간 ↔ 사례 구간 캔들 나란히) ─────────────────────
 
-function CompareChart({
-  queryCloses,
-  caseWindow,
-  caseForward,
-  caseName,
+function MiniCandleChart({ bars, markerDate }: { bars: OHLCVBar[]; markerDate?: string }) {
+  if (bars.length === 0) {
+    return <div className="h-[180px] flex items-center justify-center text-[12px] text-muted">데이터 없음</div>;
+  }
+  const last = bars[bars.length - 1].close;
+  return (
+    <StockPriceChart
+      ohlcv={bars}
+      supports={[]}
+      resistances={[]}
+      currentPrice={last}
+      minimal
+      markerDate={markerDate}
+    />
+  );
+}
+
+function RealCompare({
+  queryName,
+  queryBars,
+  caseStock,
+  windowBarCount,
 }: {
-  queryCloses: number[];
-  caseWindow: number[];
-  caseForward: number[];
-  caseName: string;
+  queryName: string;
+  queryBars: OHLCVBar[];
+  caseStock: SimilarCase;
+  windowBarCount: number;
 }) {
-  const W = 320, H = 150, padX = 8, padY = 12;
+  const [caseBars, setCaseBars] = useState<OHLCVBar[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
-  // 시작점=100 지수화
-  const idx = (arr: number[]) => {
-    const base = arr[0] || 1;
-    return arr.map((v) => (v / base) * 100);
-  };
-  const q = idx(queryCloses);
-  const caseFull = idx([...caseWindow, ...caseForward]);
-  const winLen = caseWindow.length;
-
-  const maxX = Math.max(q.length, caseFull.length) - 1 || 1;
-  const allVals = [...q, ...caseFull];
-  const yMin = Math.min(...allVals);
-  const yMax = Math.max(...allVals);
-  const ySpan = (yMax - yMin) || 1;
-
-  const sx = (i: number) => padX + (i / maxX) * (W - padX * 2);
-  const sy = (v: number) => padY + (1 - (v - yMin) / ySpan) * (H - padY * 2);
-
-  // x 인덱스는 offset부터 시작 (forward는 윈도우 끝 인덱스에 이어서 그림)
-  const path = (vals: number[], offset = 0) =>
-    vals.map((v, i) => `${i === 0 ? "M" : "L"}${sx(offset + i).toFixed(1)},${sy(v).toFixed(1)}`).join(" ");
-
-  const dividerX = sx(winLen - 1);
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setError(false);
+    fetchChartAnalysis(caseStock.stock_code)
+      .then((data) => {
+        if (cancelled) return;
+        const startN = normDate(caseStock.start_date);
+        const from = data.ohlcv.filter((b) => normDate(b.date) >= startN);
+        setCaseBars(from.slice(0, windowBarCount));
+      })
+      .catch(() => { if (!cancelled) setError(true); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [caseStock.stock_code, caseStock.start_date, windowBarCount]);
 
   return (
-    <div>
-      <svg viewBox={`0 0 ${W} ${H}`} className="w-full" style={{ height: "auto" }}>
-        {/* 기준선 100 */}
-        <line x1={padX} y1={sy(100)} x2={W - padX} y2={sy(100)} stroke="var(--c-border)" strokeWidth="1" strokeDasharray="2 2" />
-        {/* 윈도우/이후 구분선 */}
-        {caseForward.length > 0 && (
-          <line x1={dividerX} y1={padY} x2={dividerX} y2={H - padY} stroke="var(--c-border-strong)" strokeWidth="1" strokeDasharray="3 3" />
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div className="bg-white rounded-lg overflow-hidden" style={{ border: "1px solid var(--c-border)" }}>
+        <div className="px-3 py-2 text-[12px] font-semibold text-primary" style={{ borderBottom: "1px solid var(--c-border)" }}>
+          {queryName} · 고른 구간
+        </div>
+        <MiniCandleChart bars={queryBars} />
+      </div>
+      <div className="bg-white rounded-lg overflow-hidden" style={{ border: "1px solid var(--c-border)" }}>
+        <div className="px-3 py-2 text-[12px] font-semibold text-body-secondary flex items-center justify-between" style={{ borderBottom: "1px solid var(--c-border)" }}>
+          <span>{caseStock.stock_name || caseStock.stock_code} · 유사 구간 + 이후</span>
+          {caseStock.forward_return != null && (
+            <span className={`font-mono tabular ${returnColor(caseStock.forward_return)}`}>{fmtPct(caseStock.forward_return)}</span>
+          )}
+        </div>
+        {loading ? (
+          <div className="h-[180px] flex items-center justify-center gap-2 text-[12px] text-muted">
+            <span className="w-3 h-3 border-2 border-muted border-t-primary rounded-full animate-spin inline-block" />
+            차트 불러오는 중…
+          </div>
+        ) : error ? (
+          <div className="h-[180px] flex items-center justify-center text-[12px] text-trading-down">차트를 불러오지 못했습니다.</div>
+        ) : (
+          <MiniCandleChart
+            bars={caseBars}
+            markerDate={caseBars.find((b) => normDate(b.date) === normDate(caseStock.end_date))?.date}
+          />
         )}
-        {/* 사례: 윈도우(실선) */}
-        <path d={path(caseFull.slice(0, winLen))} fill="none" stroke="#8b95a1" strokeWidth="1.5" />
-        {/* 사례: 이후(점선) — 윈도우 끝 점에서 이어짐 */}
-        {caseForward.length > 0 && (
-          <path d={path(caseFull.slice(winLen - 1), winLen - 1)} fill="none" stroke="#8b95a1" strokeWidth="1.5" strokeDasharray="4 3" opacity="0.7" />
-        )}
-        {/* 현재(질의): primary */}
-        <path d={path(q)} fill="none" stroke="#3182f6" strokeWidth="2" />
-      </svg>
-      <div className="flex items-center gap-4 mt-1.5 text-[11px]">
-        <span className="flex items-center gap-1.5">
-          <span className="inline-block w-3 h-0.5" style={{ background: "#3182f6" }} /> 현재 종목
-        </span>
-        <span className="flex items-center gap-1.5">
-          <span className="inline-block w-3 h-0.5" style={{ background: "#8b95a1" }} /> {caseName}
-        </span>
-        {caseForward.length > 0 && (
-          <span className="text-muted">· 점선 오른쪽 = 그때 이후</span>
+        {!loading && !error && (
+          <p className="px-3 py-1.5 text-[11px] text-muted" style={{ borderTop: "1px solid var(--c-border)" }}>
+            세로선 왼쪽이 현재 종목과 유사한 구간, 오른쪽이 실제로 흘러간 흐름입니다.
+          </p>
         )}
       </div>
     </div>
