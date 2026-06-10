@@ -350,6 +350,62 @@ export async function fetchChartAnalysis(code: string, days = 365): Promise<Char
   return (await response.json()) as ChartAnalysis;
 }
 
+// ── 차트 패턴 유사 사례 검색 ──────────────────────────────────────────────────
+
+export interface SimilarCase {
+  stock_code: string;
+  stock_name: string;
+  start_date: string;
+  end_date: string;
+  similarity: number;
+  forward_return: number | null;
+  window_closes: number[];
+  forward_closes: number[];
+}
+
+export interface PatternMatchStats {
+  count: number;
+  mean: number | null;
+  median: number | null;
+  max: number | null;
+  min: number | null;
+  positive_ratio: number | null;
+}
+
+export interface PatternMatchResult {
+  query_stock_code: string;
+  query_start: string;
+  query_end: string;
+  window_length: number;
+  horizon: number;
+  query_closes: number[];
+  cases: SimilarCase[];
+  stats: PatternMatchStats;
+}
+
+export async function fetchSimilarPatterns(
+  code: string,
+  start: string,
+  end: string,
+  horizon = 20,
+  topK = 10,
+): Promise<PatternMatchResult> {
+  const params = new URLSearchParams({
+    start, end, horizon: String(horizon), top_k: String(topK),
+  });
+  const url = `${API_BASE}/chart/${encodeURIComponent(code)}/similar?${params.toString()}`;
+  const response = await fetch(url, FETCH_OPTS);
+  if (!response.ok) {
+    let detail = `HTTP ${response.status}`;
+    try {
+      const payload = await response.json();
+      if (payload?.detail) detail = String(payload.detail);
+    } catch { /* ignore */ }
+    throw new Error(detail);
+  }
+  return (await response.json()) as PatternMatchResult;
+}
+
 // ── Ranking ──────────────────────────────────────────────────────────────────
 
 export interface RankItem {

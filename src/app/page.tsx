@@ -505,6 +505,7 @@ export default function Home() {
                   onNameResolved={(name) => setSelectedName((prev) => prev ?? name)}
                   onBarHover={setHoveredBar}
                   onBarClick={(bar) => { if (bar) setPinnedBar(bar); }}
+                  onSelectStock={handleSelectStock}
                   liveTick={liveTick}
                 />
                 {(pinnedBar ?? hoveredBar) && (
