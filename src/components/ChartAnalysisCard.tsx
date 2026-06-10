@@ -8,6 +8,7 @@ import { formatKRW } from "@/lib/format";
 
 // lightweight-charts uses window — load client-side only
 const StockPriceChart = dynamic(() => import("./StockPriceChart"), { ssr: false });
+const SimilarPatternsCard = dynamic(() => import("./SimilarPatternsCard"), { ssr: false });
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -242,6 +243,7 @@ interface Props {
   onNameResolved?: (name: string) => void;
   onBarHover?: (bar: OHLCVBar | null) => void;
   onBarClick?: (bar: OHLCVBar | null) => void;
+  onSelectStock?: (code: string, name: string) => void;
   chartOnly?: boolean;
   liveTick?: LiveTick | null;
 }
@@ -270,7 +272,7 @@ function buildTodayBarFromQuote(q: MarketQuote): OHLCVBar | null {
   return { date: todayKST(), open, high: q.high, low: q.low, close: q.price, volume: q.volume ?? 0 };
 }
 
-export default function ChartAnalysisCard({ stockCode, stockName, onNameResolved, onBarHover, onBarClick, chartOnly, liveTick }: Props) {
+export default function ChartAnalysisCard({ stockCode, stockName, onNameResolved, onBarHover, onBarClick, onSelectStock, chartOnly, liveTick }: Props) {
   const [data, setData] = useState<ChartAnalysis | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -369,6 +371,10 @@ export default function ChartAnalysisCard({ stockCode, stockName, onNameResolved
 
           <div className="px-5 pb-4">
             <LevelsTable data={data} livePrice={livePrice} />
+          </div>
+
+          <div className="px-5 pb-4">
+            <SimilarPatternsCard stockCode={stockCode} ohlcv={data.ohlcv} onSelect={onSelectStock} />
           </div>
 
         </div>
