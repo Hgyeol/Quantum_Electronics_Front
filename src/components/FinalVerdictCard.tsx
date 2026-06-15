@@ -63,17 +63,17 @@ export default function FinalVerdictCard({ score, ai, autoSummary }: Props) {
   return (
     <section className={`bg-white rounded-[24px] border border-[var(--c-border)] ${meta.border} overflow-hidden`}>
       {/* 상단 버딕트 바 (크게 강조) */}
-      <div className={`${meta.bg} px-6 py-8 md:px-8 md:py-10 flex flex-col md:flex-row md:items-center justify-between gap-6`}>
-        <div className="flex flex-col gap-2">
+      <div className={`${meta.bg} px-6 py-7 md:px-8 md:py-10 flex items-center justify-between gap-4`}>
+        <div className="min-w-0 flex flex-col gap-1.5">
           <div className="flex items-center gap-3">
-            <span className={`text-[32px] md:text-[40px] font-bold leading-tight tracking-tight ${meta.text}`}>{meta.label}</span>
+            <span className={`text-[28px] md:text-[40px] font-bold leading-tight tracking-tight ${meta.text}`}>{meta.label}</span>
           </div>
-          <span className="text-[15px] md:text-[18px] font-medium text-muted-strong">{meta.sub}</span>
+          <span className="whitespace-nowrap text-[14px] md:text-[18px] font-medium text-muted-strong">{meta.sub}</span>
         </div>
         
-        <div className="text-left md:text-right">
-          <div className="text-[13px] md:text-[15px] font-medium text-muted mb-1">합산 점수</div>
-          <div className={`font-mono tabular-nums text-[56px] md:text-[72px] font-bold leading-none tracking-tight ${meta.text}`}>
+        <div className="shrink-0 flex items-baseline gap-2 text-right md:block">
+          <div className="whitespace-nowrap text-[12px] md:text-[15px] font-medium text-muted md:mb-1">합산 점수</div>
+          <div className={`font-mono tabular-nums text-[42px] md:text-[72px] font-bold leading-none tracking-tight ${meta.text}`}>
             {score.total_score > 0 ? `+${score.total_score}` : score.total_score}
           </div>
         </div>

@@ -495,19 +495,23 @@ export default function Home() {
             <div className="mx-auto w-full max-w-[1200px] px-4 py-6 md:px-8 space-y-5">
 
               {/* 종목 헤더 + 가격 */}
-              <div className="bg-white rounded-[24px] border border-[var(--c-border)] overflow-hidden p-6 md:p-8">
+              <div className="px-1 py-2 md:px-0 md:py-4">
                 <div className="flex flex-wrap sm:flex-nowrap justify-between items-start gap-4">
                   <div className="flex items-center gap-4">
                     <StockLogo code={selectedCode} name={displayName} size={56} rounded="full" />
-                    <div>
-                      <div className="flex items-center gap-2">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
                         <h1 className="text-[22px] md:text-[26px] font-bold text-ink leading-tight tracking-tight">{displayName}</h1>
                         <span className="text-[14px] md:text-[15px] text-muted-strong font-medium">{selectedCode}</span>
+                        <button type="button" onClick={() => watchlist.toggle(selectedCode)}
+                          className="inline-flex h-8 items-center rounded-full bg-[var(--c-bg-subtle)] px-3 text-[12px] font-semibold text-body transition-colors hover:bg-[var(--c-border)] sm:hidden">
+                          {inWatchlist ? "★ 관심 해제" : "☆ 관심 추가"}
+                        </button>
                       </div>
                     </div>
                   </div>
                   {/* CTA 버튼 */}
-                  <div className="flex gap-2 w-full sm:w-auto">
+                  <div className="hidden gap-2 w-full sm:flex sm:w-auto">
                     <button type="button" onClick={() => watchlist.toggle(selectedCode)}
                       className="h-10 px-4 rounded-xl flex-1 sm:flex-none text-[14px] font-semibold transition-colors bg-[var(--c-bg-subtle)] hover:bg-[var(--c-border)] text-body">
                       {inWatchlist ? "★ 관심 해제" : "☆ 관심 추가"}
