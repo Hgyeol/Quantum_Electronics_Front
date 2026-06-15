@@ -15,17 +15,17 @@ const KIND_LABEL: Record<Evidence["kind"], string> = {
 export default function EvidenceList({ evidence }: Props) {
   if (evidence.length === 0) {
     return (
-      <section className="rounded-xl bg-surface-card-dark border border-hairline-on-dark shadow-card p-6">
-        <h2 className="text-sm uppercase tracking-widest text-muted mb-3">Evidence</h2>
+      <section className="rounded-2xl bg-white border border-[var(--c-border)] p-6">
+        <h2 className="text-[15px] font-bold text-ink mb-3">근거 자료</h2>
         <p className="text-sm text-muted-strong">수집된 evidence가 없습니다.</p>
       </section>
     );
   }
 
   return (
-    <section className="rounded-xl bg-surface-card-dark border border-hairline-on-dark shadow-card overflow-hidden">
+    <section className="rounded-2xl bg-white border border-[var(--c-border)] overflow-hidden">
       <header className="px-6 py-4 border-b border-hairline-on-dark flex items-baseline justify-between">
-        <h2 className="text-sm uppercase tracking-widest text-muted">Evidence</h2>
+        <h2 className="text-[15px] font-bold text-ink">근거 자료</h2>
         <span className="text-xs text-muted font-mono tabular">
           {evidence.length}건
         </span>

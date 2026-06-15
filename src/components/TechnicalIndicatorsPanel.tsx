@@ -140,12 +140,12 @@ export default function TechnicalIndicatorsPanel({ stockCode }: Props) {
   }
 
   return (
-    <section className="rounded-xl bg-surface-card-dark border border-hairline-on-dark shadow-card overflow-hidden">
+    <section className="rounded-2xl bg-white border border-[var(--c-border)] overflow-hidden">
       <header className="px-6 py-4 border-b border-hairline-on-dark">
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
           <div>
-            <h2 className="text-sm uppercase tracking-widest text-muted">
-              Technical Indicators
+            <h2 className="text-[15px] font-bold text-ink">
+              기술적 지표
             </h2>
             <p className="text-xs text-muted-strong mt-1">
               KIS strategy_builder 지표 전체 · {stockCode}

@@ -61,44 +61,51 @@ export default function FinalVerdictCard({ score, ai, autoSummary }: Props) {
   const meta = verdictMeta(score.direction);
 
   return (
-    <section className={`bg-surface-card-dark rounded-xl shadow-card border ${meta.border} overflow-hidden`}>
-      {/* 상단 버딕트 바 */}
-      <div className={`${meta.bg} px-6 py-5 flex items-center justify-between`}>
-        <div className="flex items-center gap-3">
-          <span className={`text-2xl font-bold ${meta.text}`}>{meta.label}</span>
-          <span className="text-sm text-muted">{meta.sub}</span>
+    <section className={`bg-white rounded-[24px] border border-[var(--c-border)] ${meta.border} overflow-hidden`}>
+      {/* 상단 버딕트 바 (크게 강조) */}
+      <div className={`${meta.bg} px-6 py-8 md:px-8 md:py-10 flex flex-col md:flex-row md:items-center justify-between gap-6`}>
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-3">
+            <span className={`text-[32px] md:text-[40px] font-bold leading-tight tracking-tight ${meta.text}`}>{meta.label}</span>
+          </div>
+          <span className="text-[15px] md:text-[18px] font-medium text-muted-strong">{meta.sub}</span>
         </div>
-        <div className="text-right">
-          <div className="text-xs text-muted mb-0.5">합산 점수</div>
-          <div className={`font-mono tabular text-4xl font-bold ${meta.text}`}>
+        
+        <div className="text-left md:text-right">
+          <div className="text-[13px] md:text-[15px] font-medium text-muted mb-1">합산 점수</div>
+          <div className={`font-mono tabular-nums text-[56px] md:text-[72px] font-bold leading-none tracking-tight ${meta.text}`}>
             {score.total_score > 0 ? `+${score.total_score}` : score.total_score}
           </div>
         </div>
       </div>
 
-      {/* 점수 바 */}
-      <div className="px-6 py-5 space-y-4 border-t border-hairline-on-dark">
+      {/* AI 요약 (크게 강조) */}
+      {(ai?.summary || autoSummary) && (
+        <div className="px-6 py-8 md:px-8 md:py-10 border-t border-[var(--c-border)] space-y-3">
+          {ai?.summary && (
+            <p className="text-[17px] md:text-[20px] font-medium text-ink leading-relaxed break-keep">
+              {ai.summary}
+            </p>
+          )}
+          {autoSummary && (
+            <p className="text-[15px] text-body leading-relaxed break-keep">{autoSummary}</p>
+          )}
+          {ai && (
+            <div className="pt-2">
+              <span className="text-[13px] text-muted font-mono font-medium px-3 py-1.5 rounded-lg bg-[var(--c-bg-subtle)]">
+                gpt-5.2 · confidence {(ai.confidence * 100).toFixed(0)}%
+              </span>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 점수 바 (하단에 배치) */}
+      <div className="px-6 py-6 md:px-8 md:py-8 space-y-5 border-t border-[var(--c-border)] bg-[var(--c-bg-subtle)]/50">
         <ScoreBar label="Quant · 가격·수급 신호" score={score.quant_score} max={8} />
         <ScoreBar label="LLM · 공시·뉴스 해석" score={score.ai_score} max={8} />
         <ScoreBar label="Financial · 재무지표" score={score.financial_score} max={7} />
       </div>
-
-      {/* AI 요약 */}
-      {(ai?.summary || autoSummary) && (
-        <div className="px-6 pb-5 pt-1 border-t border-hairline-on-dark space-y-2">
-          {ai?.summary && (
-            <p className="text-[15px] text-ink leading-relaxed">{ai.summary}</p>
-          )}
-          {autoSummary && (
-            <p className="text-sm text-body leading-relaxed">{autoSummary}</p>
-          )}
-          {ai && (
-            <span className="text-xs text-muted font-mono">
-              gpt-5.2 · confidence {(ai.confidence * 100).toFixed(0)}%
-            </span>
-          )}
-        </div>
-      )}
     </section>
   );
 }

@@ -265,9 +265,9 @@ export default function QuantSignalsTable({
   ];
 
   return (
-    <section className="rounded-xl bg-surface-card-dark border border-hairline-on-dark shadow-card overflow-hidden">
+    <section className="rounded-2xl bg-white border border-[var(--c-border)] overflow-hidden">
       <header className="px-6 py-4 border-b border-hairline-on-dark">
-        <h2 className="text-sm uppercase tracking-widest text-muted">Signals</h2>
+        <h2 className="text-[15px] font-bold text-ink">신호 상세 표</h2>
         <p className="text-xs text-muted-strong mt-1">
           행을 클릭하면 계산 근거 / 원본 evidence를 펼쳐볼 수 있습니다.
         </p>

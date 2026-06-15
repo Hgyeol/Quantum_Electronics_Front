@@ -34,7 +34,7 @@ export default function LoginPage() {
           <p className="text-muted text-sm mt-1">관리자 로그인</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="bg-surface-card-dark rounded-2xl shadow-card p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="bg-surface-card-dark rounded-2xl border border-[var(--c-border)] p-6 space-y-4">
           <div className="space-y-1">
             <label className="text-xs font-semibold text-muted uppercase tracking-widest" htmlFor="username">
               사용자명

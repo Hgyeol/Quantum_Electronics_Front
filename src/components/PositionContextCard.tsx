@@ -31,9 +31,9 @@ export default function PositionContextCard({ ctx }: Props) {
         : "text-on-dark";
 
   return (
-    <section className="rounded-xl bg-surface-card-dark border border-hairline-on-dark shadow-card p-6">
+    <section className="rounded-2xl bg-white border border-[var(--c-border)] p-6">
       <header className="flex items-baseline justify-between mb-4">
-        <h2 className="text-sm uppercase tracking-widest text-muted">Position Context</h2>
+        <h2 className="text-[15px] font-bold text-ink">보유 현황</h2>
         <span className="text-xs text-muted-strong">
           {ctx.quantity.toLocaleString()}주 @ {formatKRW(ctx.avg_price)}
         </span>

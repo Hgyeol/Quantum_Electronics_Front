@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { fetchChartAnalysis, fetchMarketQuote } from "@/lib/api";
 import type { ChartAnalysis, MarketQuote, OHLCVBar } from "@/lib/api";
@@ -53,13 +53,10 @@ function SignalSummary({ data, livePrice }: { data: ChartAnalysis; livePrice?: n
   const cur = livePrice ?? data.current_price;
 
   return (
-    <div
-      className="bg-white"
-      style={{ border: "1px solid var(--c-border)", borderRadius: 12 }}
-    >
+    <div className="bg-white rounded-[24px] border border-[var(--c-border)] overflow-hidden">
       {/* Header */}
       <div className="flex items-center gap-2.5 px-5 py-3.5" style={{ borderBottom: "1px solid var(--c-border)" }}>
-        <h3 className="text-[11px] uppercase tracking-widest text-muted font-semibold">매매 시그널</h3>
+        <h3 className="text-[15px] font-bold text-ink">매매 시그널</h3>
         <span className="text-muted">·</span>
         <span className={`text-[12px] font-bold px-2 py-0.5 rounded-[6px] ${badge.bg} ${badge.text}`}>
           {actionKo(signal.action)}
@@ -69,9 +66,9 @@ function SignalSummary({ data, livePrice }: { data: ChartAnalysis; livePrice?: n
       </div>
 
       {/* Price grid */}
-      <div className="grid grid-cols-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3">
         {/* 매수 구간 */}
-        <div className="px-5 py-4" style={{ borderRight: "1px solid var(--c-border)" }}>
+        <div className="px-5 py-4 border-b border-hairline-on-dark sm:border-b-0 sm:border-r">
           <div className="text-[11px] text-trading-up font-semibold mb-1.5">매수 구간</div>
           {signal.entry_zone_low && signal.entry_zone_high ? (
             <>
@@ -89,7 +86,7 @@ function SignalSummary({ data, livePrice }: { data: ChartAnalysis; livePrice?: n
         </div>
 
         {/* 현재가 */}
-        <div className="px-5 py-4 flex flex-col justify-center items-center text-center" style={{ borderRight: "1px solid var(--c-border)" }}>
+        <div className="px-5 py-4 flex flex-col justify-center items-center text-center border-b border-hairline-on-dark sm:border-b-0 sm:border-r">
           <div className="text-[11px] text-muted font-semibold mb-1.5">현재가</div>
           <div className="font-mono tabular text-[18px] text-ink font-bold leading-none">{formatKRW(cur)}</div>
         </div>
@@ -152,13 +149,10 @@ function LevelsTable({ data, livePrice }: { data: ChartAnalysis; livePrice?: num
   if (supports.length === 0 && resistances.length === 0) return null;
 
   return (
-    <div
-      className="bg-white grid grid-cols-2"
-      style={{ border: "1px solid var(--c-border)", borderRadius: 12 }}
-    >
+    <div className="bg-white rounded-[24px] border border-[var(--c-border)] overflow-hidden grid grid-cols-2">
       <div style={{ borderRight: "1px solid var(--c-border)" }}>
         <div
-          className="px-4 py-2.5 text-[11px] uppercase tracking-widest text-muted font-semibold flex items-center gap-1.5"
+          className="px-4 py-2.5 text-[13px] font-bold text-ink flex items-center gap-1.5"
           style={{ borderBottom: "1px solid var(--c-border)" }}
         >
           <span className="w-1.5 h-1.5 rounded-full bg-trading-up" />
@@ -191,7 +185,7 @@ function LevelsTable({ data, livePrice }: { data: ChartAnalysis; livePrice?: num
       </div>
       <div>
         <div
-          className="px-4 py-2.5 text-[11px] uppercase tracking-widest text-muted font-semibold flex items-center gap-1.5"
+          className="px-4 py-2.5 text-[13px] font-bold text-ink flex items-center gap-1.5"
           style={{ borderBottom: "1px solid var(--c-border)" }}
         >
           <span className="w-1.5 h-1.5 rounded-full bg-trading-down" />
@@ -246,6 +240,9 @@ interface Props {
   onSelectStock?: (code: string, name: string) => void;
   chartOnly?: boolean;
   liveTick?: LiveTick | null;
+  outlookSlotMain?: ReactNode;
+  outlookSlotSidebar?: ReactNode;
+  onRequestOutlook?: () => void;
 }
 
 function todayKST(): string {
@@ -272,8 +269,9 @@ function buildTodayBarFromQuote(q: MarketQuote): OHLCVBar | null {
   return { date: todayKST(), open, high: q.high, low: q.low, close: q.price, volume: q.volume ?? 0 };
 }
 
-export default function ChartAnalysisCard({ stockCode, stockName, onNameResolved, onBarHover, onBarClick, onSelectStock, chartOnly, liveTick }: Props) {
+export default function ChartAnalysisCard({ stockCode, stockName, onNameResolved, onBarHover, onBarClick, onSelectStock, chartOnly, liveTick, outlookSlotMain, outlookSlotSidebar, onRequestOutlook }: Props) {
   const [data, setData] = useState<ChartAnalysis | null>(null);
+  const [activeTab, setActiveTab] = useState<'chart' | 'similar' | 'outlook'>('chart');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [liveQuote, setLiveQuote] = useState<MarketQuote | null>(null);
@@ -336,49 +334,96 @@ export default function ChartAnalysisCard({ stockCode, stockName, onNameResolved
   }
 
   return (
-    <section className="space-y-0">
-      <header className="flex items-baseline justify-between px-5 pt-5 pb-0">
-        <h2 className="text-[11px] uppercase tracking-widest text-muted font-semibold">Chart Analysis</h2>
-        <span className="text-[11px] text-muted">저점 · 고점 · 진입·이탈 시점</span>
-      </header>
-
-      {loading && (
-        <div className="flex items-center justify-center gap-2 py-16 text-muted text-sm px-5">
-          <span className="w-4 h-4 border-2 border-muted border-t-primary rounded-full animate-spin" />
-          차트 분석 중…
+    <div className="flex flex-col xl:flex-row items-start gap-6 relative">
+      
+      {/* ── 좌측 메인 영역 ── */}
+      <div className="flex-1 min-w-0 flex flex-col gap-6 w-full">
+        {/* 탭 네비게이션 */}
+        <div className="flex gap-6 px-2 border-b border-[var(--c-border)]">
+          {[
+            { id: 'chart', label: '차트 분석' },
+            { id: 'similar', label: '유사 패턴' },
+            { id: 'outlook', label: '전망 분석' }
+          ].map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => {
+                setActiveTab(tab.id as 'chart' | 'similar' | 'outlook');
+                if (tab.id === 'outlook') onRequestOutlook?.();
+              }}
+              className={`pb-3 text-[16px] md:text-[18px] font-bold transition-colors relative ${
+                activeTab === tab.id ? 'text-ink' : 'text-muted hover:text-body'
+              }`}
+            >
+              {tab.label}
+              {activeTab === tab.id && (
+                <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-ink rounded-t-full" />
+              )}
+            </button>
+          ))}
         </div>
-      )}
 
-      {error && !loading && (
-        <p className="text-trading-down text-sm py-4 px-5">{error}</p>
-      )}
-
-      {data && !loading && (
-        <div className="space-y-0">
-          <StockPriceChart
-            ohlcv={data.ohlcv}
-            todayBar={todayBar(data.ohlcv)}
-            supports={data.support_levels}
-            resistances={data.resistance_levels}
-            currentPrice={livePrice ?? data.current_price}
-            onBarHover={onBarHover}
-            onBarClick={onBarClick}
-          />
-
-          <div className="px-5 pt-4 pb-3">
-            <SignalSummary data={data} livePrice={livePrice} />
+        {loading && (
+          <div className="bg-white rounded-[24px] border border-[var(--c-border)] overflow-hidden flex items-center justify-center gap-2 py-24 text-muted text-sm px-5">
+            <span className="w-4 h-4 border-2 border-muted border-t-primary rounded-full animate-spin" />
+            데이터를 불러오는 중…
           </div>
+        )}
 
-          <div className="px-5 pb-4">
+        {error && !loading && (
+          <div className="bg-white rounded-[24px] border border-[var(--c-border)] overflow-hidden">
+            <p className="text-trading-down text-[15px] font-medium py-6 px-6">{error}</p>
+          </div>
+        )}
+
+        {data && !loading && (
+          <>
+            {activeTab === 'chart' && (
+              <div className="bg-white rounded-[24px] border border-[var(--c-border)] flex flex-col overflow-hidden h-[460px] md:h-[540px] w-full">
+                <div className="px-6 pt-6 pb-2 flex justify-between items-center">
+                  <h3 className="text-[18px] font-bold text-ink tracking-tight">차트</h3>
+                </div>
+                <div className="px-6 pb-6 flex-1 min-h-0 relative">
+                  <StockPriceChart
+                    ohlcv={data.ohlcv}
+                    todayBar={todayBar(data.ohlcv)}
+                    supports={data.support_levels}
+                    resistances={data.resistance_levels}
+                    currentPrice={livePrice ?? data.current_price}
+                    onBarHover={onBarHover}
+                    onBarClick={onBarClick}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* 전망 분석 (메인 영역 슬롯) */}
+            {activeTab === 'outlook' && outlookSlotMain}
+
+            {activeTab === 'similar' && (
+              <SimilarPatternsCard stockCode={stockCode} ohlcv={data.ohlcv} onSelect={onSelectStock} />
+            )}
+          </>
+        )}
+      </div>
+
+      {/* ── 우측 사이드바 영역 ── */}
+      <div className="w-full xl:w-[340px] shrink-0 flex flex-col gap-6 xl:sticky xl:top-6">
+        {data && !loading && (activeTab !== 'outlook' || !outlookSlotSidebar) && (
+          <div className="flex flex-col gap-6">
+            <SignalSummary data={data} livePrice={livePrice} />
             <LevelsTable data={data} livePrice={livePrice} />
           </div>
+        )}
 
-          <div className="px-5 pb-4">
-            <SimilarPatternsCard stockCode={stockCode} ohlcv={data.ohlcv} onSelect={onSelectStock} />
+        {/* 전망 분석 (사이드바 슬롯) */}
+        {activeTab === 'outlook' && outlookSlotSidebar && (
+          <div className="flex flex-col gap-6">
+            {outlookSlotSidebar}
           </div>
+        )}
+      </div>
 
-        </div>
-      )}
-    </section>
+    </div>
   );
 }

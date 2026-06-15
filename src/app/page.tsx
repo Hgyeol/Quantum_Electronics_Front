@@ -10,7 +10,6 @@ import { useWatchlist } from "@/lib/watchlist";
 import WatchlistTable from "@/components/WatchlistTable";
 import FinalVerdictCard from "@/components/FinalVerdictCard";
 import SignalBreakdownPanel from "@/components/SignalBreakdownPanel";
-import TechnicalIndicatorsPanel from "@/components/TechnicalIndicatorsPanel";
 import QuantSignalsTable from "@/components/QuantSignalsTable";
 import PositionContextCard from "@/components/PositionContextCard";
 import EvidenceList from "@/components/EvidenceList";
@@ -462,7 +461,7 @@ export default function Home() {
       {selectedCode ? (
 
         /* ── 종목 상세 (전체화면) ────────────────────────── */
-        <div className="flex-1 flex flex-col overflow-hidden bg-white">
+        <div className="flex-1 flex flex-col overflow-hidden bg-canvas-dark">
 
           {/* 상세 헤더 */}
           <header
@@ -493,64 +492,49 @@ export default function Home() {
 
           {/* 상세 컨텐츠 */}
           <div ref={detailScrollRef} className="flex-1 overflow-y-auto">
-            <div className="mx-auto w-full max-w-[900px]">
+            <div className="mx-auto w-full max-w-[1200px] px-4 py-6 md:px-8 space-y-5">
 
               {/* 종목 헤더 + 가격 */}
-              <div className="px-5 pt-3 pb-6 md:pt-8" style={{ borderBottom: "1px solid var(--c-border)" }}>
-                <div className="mb-5 flex flex-wrap items-start gap-4 sm:flex-nowrap sm:items-center">
-                  <StockLogo code={selectedCode} name={displayName} size={52} rounded="xl" />
-                  <div className="min-w-0 flex-1">
-                    <h1 className="text-[24px] font-bold text-ink leading-tight sm:text-[28px]">{displayName}</h1>
-                    <span className="text-[13px] text-muted font-mono">{selectedCode}</span>
+              <div className="bg-white rounded-[24px] border border-[var(--c-border)] overflow-hidden p-6 md:p-8">
+                <div className="flex flex-wrap sm:flex-nowrap justify-between items-start gap-4">
+                  <div className="flex items-center gap-4">
+                    <StockLogo code={selectedCode} name={displayName} size={56} rounded="full" />
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h1 className="text-[22px] md:text-[26px] font-bold text-ink leading-tight tracking-tight">{displayName}</h1>
+                        <span className="text-[14px] md:text-[15px] text-muted-strong font-medium">{selectedCode}</span>
+                      </div>
+                    </div>
                   </div>
                   {/* CTA 버튼 */}
-                  <div className="flex w-full flex-wrap gap-2 shrink-0 sm:w-auto">
+                  <div className="flex gap-2 w-full sm:w-auto">
                     <button type="button" onClick={() => watchlist.toggle(selectedCode)}
-                      className={`h-[44px] flex-1 sm:flex-none px-5 rounded-xl text-[14px] font-bold transition-colors cursor-pointer border ${
-                        inWatchlist
-                          ? "border-primary/30 text-primary bg-primary/5 hover:bg-primary/10"
-                          : "text-body hover:text-ink"
-                      }`}
-                      style={inWatchlist ? {} : { border: "1px solid var(--c-border-strong)", background: "var(--c-bg-subtle)" }}>
+                      className="h-10 px-4 rounded-xl flex-1 sm:flex-none text-[14px] font-semibold transition-colors bg-[var(--c-bg-subtle)] hover:bg-[var(--c-border)] text-body">
                       {inWatchlist ? "★ 관심 해제" : "☆ 관심 추가"}
                     </button>
-                    {!report && (
-                      <button type="button" onClick={() => handleLoadOutlook()} disabled={outlookLoading}
-                        className="h-[44px] flex-1 sm:flex-none px-5 rounded-xl bg-primary hover:bg-primary-active disabled:bg-primary-disabled text-white text-[14px] font-bold transition-colors cursor-pointer flex items-center justify-center gap-2">
-                        {outlookLoading ? (
-                          <>
-                            <span className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
-                            분석 중
-                          </>
-                        ) : "전망 분석"}
-                      </button>
-                    )}
                   </div>
                 </div>
 
-                {tick ? (
-                  <div className="flex flex-wrap items-baseline gap-2 sm:gap-3">
-                    <span className="font-mono tabular text-[36px] sm:text-[48px] font-bold text-ink leading-none tracking-tight">
-                      {tick.price.toLocaleString("ko-KR")}
-                    </span>
-                    <span className="text-[16px] text-muted">원</span>
-                    <span className={`font-mono tabular text-[15px] font-semibold ${priceColor}`}>
-                      {tick.change > 0 ? "+" : ""}{tick.change.toLocaleString("ko-KR")}
-                    </span>
-                    <span className={`font-mono tabular text-[14px] font-bold px-3 py-1.5 rounded-full ${badgeBg}`} style={badgeStyle}>
-                      {tick.change_rate > 0 ? "+" : ""}{tick.change_rate.toFixed(2)}%
-                    </span>
-                  </div>
-                ) : (
-                  <div className="space-y-2 animate-pulse">
-                    <div className="h-12 w-48 rounded-lg" style={{ background: "var(--c-bg-muted)" }} />
-                    <div className="h-6 w-28 rounded-full" style={{ background: "var(--c-bg-muted)" }} />
-                  </div>
-                )}
+                <div className="mt-6 flex items-baseline gap-2">
+                  {tick ? (
+                    <>
+                      <span className="text-[40px] md:text-[52px] font-bold font-mono tabular-nums text-ink leading-none tracking-tight">
+                        {tick.price.toLocaleString("ko-KR")}
+                      </span>
+                      <span className="text-[18px] md:text-[20px] text-muted font-medium ml-1">원</span>
+                      <span className={`text-[16px] md:text-[18px] font-semibold ml-2 ${priceColor}`}>
+                        {tick.change > 0 ? "+" : ""}{tick.change.toLocaleString("ko-KR")} ({tick.change_rate > 0 ? "+" : ""}{tick.change_rate.toFixed(2)}%)
+                      </span>
+                    </>
+                  ) : (
+                    <div className="h-12 w-64 bg-[var(--c-bg-muted)] rounded-lg animate-pulse" />
+                  )}
+                </div>
               </div>
 
-              {/* 차트 */}
-              <div className="relative" style={{ borderBottom: "1px solid var(--c-border)" }}>
+              {/* 차트 및 메인 분석 영역 */}
+              <div className="relative">
+                {/* 메인 2컬럼 레이아웃 (ChartAnalysisCard 내부에서 좌/우 분리) */}
                 <ChartAnalysisCard
                   stockCode={selectedCode}
                   stockName={report?.stock_name ?? selectedName ?? null}
@@ -559,9 +543,51 @@ export default function Home() {
                   onBarClick={(bar) => { if (bar) setPinnedBar(bar); }}
                   onSelectStock={handleSelectStock}
                   liveTick={liveTick}
+                  onRequestOutlook={() => {
+                    if (!report && !outlookLoading) handleLoadOutlook();
+                  }}
+                  outlookSlotMain={
+                    <>
+                      {outlookError && (
+                        <div className="bg-white rounded-[24px] border border-[var(--c-border)] overflow-hidden p-6 text-[15px] font-medium text-trading-down">
+                          {outlookError}
+                        </div>
+                      )}
+                      {outlookLoading && !report && (
+                        <div className="bg-white rounded-[24px] border border-[var(--c-border)] overflow-hidden p-6 space-y-4 animate-pulse">
+                          <div className="h-4 w-20 rounded-lg bg-[var(--c-bg-muted)]" />
+                          <div className="h-8 w-36 rounded-lg bg-[var(--c-bg-muted)]" />
+                          <div className="h-3 w-52 rounded-lg bg-[var(--c-bg-muted)]" />
+                        </div>
+                      )}
+                      {report && (
+                        <div className="space-y-6 mt-6">
+                          <FinalVerdictCard score={report.score} ai={report.ai_signals[0]} autoSummary={report.summary} />
+                          <QuantSignalsTable
+                            quant={report.quant_signals}
+                            financial={report.financial_signals}
+                            ai={report.ai_signals}
+                            evidence={report.evidence}
+                          />
+                          <EvidenceList evidence={report.evidence} />
+                          {report.errors && report.errors.length > 0 && <ErrorsBanner errors={report.errors} />}
+                        </div>
+                      )}
+                    </>
+                  }
+                  outlookSlotSidebar={
+                    report && (
+                      <div className="space-y-6 mt-6">
+                        <SignalBreakdownPanel quant={report.quant_signals} ai={report.ai_signals} />
+                        {report.position_context && <PositionContextCard ctx={report.position_context} />}
+                      </div>
+                    )
+                  }
                 />
+                
+                {/* OHLC 툴팁 */}
                 {(pinnedBar ?? hoveredBar) && (
-                  <div className="absolute top-3 right-3 z-10 w-36 rounded-xl bg-white px-3.5 py-3 text-xs font-mono space-y-1.5 pointer-events-auto"
+                  <div className="absolute top-3 left-3 z-10 w-36 rounded-xl bg-white px-3.5 py-3 text-xs font-mono space-y-1.5 pointer-events-auto"
                     style={{ border: "1px solid var(--c-border-md)", boxShadow: "0 4px 20px var(--c-shadow)" }}>
                     <div className="flex items-center justify-between pb-1.5" style={{ borderBottom: "1px solid var(--c-border)" }}>
                       <span className="text-muted text-[10px] font-sans">{(pinnedBar ?? hoveredBar)!.date}</span>
@@ -589,60 +615,7 @@ export default function Home() {
                   </div>
                 )}
               </div>
-
-              {/* 에러 */}
-              {outlookError && (
-                <div className="px-5 py-4 text-[14px] text-trading-down border-l-4 border-trading-down"
-                  style={{ borderBottom: "1px solid var(--c-border)" }}>
-                  {outlookError}
-                </div>
-              )}
-
-              {/* 로딩 스켈레톤 */}
-              {outlookLoading && !report && (
-                <div className="px-5 py-6 space-y-3 animate-pulse">
-                  <div className="h-4 w-20 rounded-lg" style={{ background: "var(--c-bg-muted)" }} />
-                  <div className="h-8 w-36 rounded-lg" style={{ background: "var(--c-bg-muted)" }} />
-                  <div className="h-3 w-52 rounded-lg" style={{ background: "var(--c-bg-muted)" }} />
-                </div>
-              )}
-
-              {/* 전망 결과 */}
-              {report && (
-                <>
-                  <div className="px-5 py-6" style={{ borderBottom: "1px solid var(--c-border)" }}>
-                    <FinalVerdictCard score={report.score} ai={report.ai_signals[0]} autoSummary={report.summary} />
-                  </div>
-                  <div className="px-5 py-6" style={{ borderBottom: "1px solid var(--c-border)" }}>
-                    <SignalBreakdownPanel quant={report.quant_signals} ai={report.ai_signals} />
-                  </div>
-                  <div className="px-5 py-6" style={{ borderBottom: "1px solid var(--c-border)" }}>
-                    <TechnicalIndicatorsPanel stockCode={report.stock_code} />
-                  </div>
-                  {report.position_context && (
-                    <div className="px-5 py-6" style={{ borderBottom: "1px solid var(--c-border)" }}>
-                      <PositionContextCard ctx={report.position_context} />
-                    </div>
-                  )}
-                  <div className="px-5 py-6" style={{ borderBottom: "1px solid var(--c-border)" }}>
-                    <QuantSignalsTable
-                      quant={report.quant_signals}
-                      financial={report.financial_signals}
-                      ai={report.ai_signals}
-                      evidence={report.evidence}
-                    />
-                  </div>
-                  <div className="px-5 py-6" style={{ borderBottom: "1px solid var(--c-border)" }}>
-                    <EvidenceList evidence={report.evidence} />
-                  </div>
-                  <ErrorsBanner errors={report.errors} />
-                </>
-              )}
-
-              <p
-                className="text-[11px] text-muted px-5 py-3 leading-relaxed"
-                style={{ borderTop: "1px solid var(--c-border)", background: "var(--c-bg-subtle)" }}
-              >
+              <p className="text-[11px] text-muted text-center py-4 leading-relaxed">
                 정보 제공용이며 투자 권유가 아닙니다. © Quantum Electronics
               </p>
 
@@ -730,7 +703,7 @@ export default function Home() {
               )}
               {homeTab === 3 && (
                 <section className="px-5 py-6">
-                  <div className="mx-auto w-full max-w-[560px] rounded-2xl bg-white p-6 shadow-card"
+                  <div className="mx-auto w-full max-w-[560px] rounded-2xl bg-white p-6 border border-[var(--c-border)]"
                     style={{ border: "1px solid var(--c-border)" }}>
                     <div className="mb-5">
                       <h2 className="text-[20px] font-bold text-ink">마이페이지</h2>

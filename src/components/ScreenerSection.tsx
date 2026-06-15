@@ -374,7 +374,7 @@ export default function ScreenerSection({ onSelect, onHover, onHoverEnd }: Props
   });
 
   return (
-    <section className="bg-surface-card-dark rounded-xl shadow-card">
+    <section className="bg-surface-card-dark rounded-xl border border-[var(--c-border)]">
       {/* 헤더 */}
       <header className="px-6 pt-4 pb-4 border-b border-hairline-on-dark">
         <div className="flex items-center justify-between mb-4">

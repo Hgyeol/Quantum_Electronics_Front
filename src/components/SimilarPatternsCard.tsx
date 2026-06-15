@@ -146,137 +146,132 @@ export default function SimilarPatternsCard({ stockCode, ohlcv, onSelect }: Prop
     : [];
 
   return (
-    <div className="bg-white" style={{ border: "1px solid var(--c-border)", borderRadius: 12 }}>
+    <div className="bg-white rounded-[24px] border border-[var(--c-border)] overflow-hidden">
       {/* 헤더 */}
-      <div className="px-5 py-3.5" style={{ borderBottom: "1px solid var(--c-border)" }}>
-        <h3 className="text-[14px] font-bold text-ink">유사 패턴 검색</h3>
-        <p className="text-[12px] text-muted-strong mt-0.5">
-          고른 구간과 모양이 비슷했던 과거 사례를 전 종목에서 찾아, 이후 수익률을 보여줍니다.
-        </p>
+      <div className="px-6 pt-6 pb-2">
+        <h3 className="text-[18px] font-bold text-ink tracking-tight">유사 패턴 분석</h3>
       </div>
 
       {/* 컨트롤 */}
-      <div className="px-5 py-4 space-y-3">
-        <div>
-          <span className="block text-[12px] font-semibold text-body-secondary mb-1.5">비교 구간</span>
-          <div className="flex flex-wrap gap-1.5">
-            {WINDOW_PRESETS.map((p) => (
-              <button
-                key={p.days}
-                type="button"
-                onClick={() => setWindowDays(p.days)}
-                className={`px-2.5 py-1 rounded-full text-[12px] font-semibold border transition-colors cursor-pointer ${
-                  windowDays === p.days
-                    ? "border-primary text-primary bg-primary/10"
-                    : "border-hairline-on-dark text-muted-strong hover:border-primary/40"
-                }`}
-              >
-                {p.label}
-              </button>
-            ))}
+      <div className="px-6 pb-6 pt-2 border-b border-[var(--c-border)]">
+        <div className="flex flex-wrap items-end gap-5">
+          <div>
+            <span className="block text-[13px] font-medium text-muted mb-2">비교 구간</span>
+            <div className="flex flex-wrap gap-1 p-1 bg-[var(--c-bg-subtle)] rounded-xl">
+              {WINDOW_PRESETS.map((p) => (
+                <button
+                  key={p.days}
+                  type="button"
+                  onClick={() => setWindowDays(p.days)}
+                  className={`px-3 py-1.5 rounded-lg text-[14px] font-semibold transition-colors cursor-pointer ${
+                    windowDays === p.days
+                      ? "bg-white text-ink shadow-[0_1px_3px_rgba(0,0,0,0.1)]"
+                      : "text-muted-strong hover:bg-white/50"
+                  }`}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
 
-        <div>
-          <span className="block text-[12px] font-semibold text-body-secondary mb-1.5">이후 수익률 기간</span>
-          <div className="flex gap-1.5">
-            {HORIZONS.map((h) => (
-              <button
-                key={h.days}
-                type="button"
-                onClick={() => setHorizon(h.days)}
-                className={`px-2.5 py-1 rounded-full text-[12px] font-semibold border transition-colors cursor-pointer ${
-                  horizon === h.days
-                    ? "border-primary text-primary bg-primary/10"
-                    : "border-hairline-on-dark text-muted-strong hover:border-primary/40"
-                }`}
-              >
-                {h.label}
-              </button>
-            ))}
+          <div>
+            <span className="block text-[13px] font-medium text-muted mb-2">이후 기간</span>
+            <div className="flex gap-1 p-1 bg-[var(--c-bg-subtle)] rounded-xl">
+              {HORIZONS.map((h) => (
+                <button
+                  key={h.days}
+                  type="button"
+                  onClick={() => setHorizon(h.days)}
+                  className={`px-3 py-1.5 rounded-lg text-[14px] font-semibold transition-colors cursor-pointer ${
+                    horizon === h.days
+                      ? "bg-white text-ink shadow-[0_1px_3px_rgba(0,0,0,0.1)]"
+                      : "text-muted-strong hover:bg-white/50"
+                  }`}
+                >
+                  {h.label}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
 
-        <div>
-          <span className="block text-[12px] font-semibold text-body-secondary mb-1.5">유사도 측정 방식</span>
-          <div className="flex flex-wrap gap-1.5">
-            {METRICS.map((m) => (
-              <button
-                key={m.id}
-                type="button"
-                title={m.help}
-                onClick={() => setMetric(m.id)}
-                className={`px-2.5 py-1 rounded-full text-[12px] font-semibold border transition-colors cursor-pointer ${
-                  metric === m.id
-                    ? "border-primary text-primary bg-primary/10"
-                    : "border-hairline-on-dark text-muted-strong hover:border-primary/40"
-                }`}
-              >
-                {m.label}
-              </button>
-            ))}
+          <div>
+            <span className="block text-[13px] font-medium text-muted mb-2">유사도 방식</span>
+            <div className="flex flex-wrap gap-1 p-1 bg-[var(--c-bg-subtle)] rounded-xl">
+              {METRICS.map((m) => (
+                <button
+                  key={m.id}
+                  type="button"
+                  title={m.help}
+                  onClick={() => setMetric(m.id)}
+                  className={`px-3 py-1.5 rounded-lg text-[14px] font-semibold transition-colors cursor-pointer ${
+                    metric === m.id
+                      ? "bg-white text-ink shadow-[0_1px_3px_rgba(0,0,0,0.1)]"
+                      : "text-muted-strong hover:bg-white/50"
+                  }`}
+                >
+                  {m.label}
+                </button>
+              ))}
+            </div>
           </div>
-          <p className="text-[11px] text-muted mt-1">{METRICS.find((m) => m.id === metric)?.help}</p>
-        </div>
 
-        <div className="flex gap-4">
-          <label className="flex flex-col gap-1">
-            <span className="text-[12px] font-semibold text-body-secondary">결과 개수</span>
-            <input
-              type="text" inputMode="numeric" placeholder="전체"
-              value={topK}
-              onChange={(e) => setTopK(e.target.value.replace(/[^0-9]/g, ""))}
-              className="w-24 h-8 px-2.5 rounded-lg text-[13px] font-mono tabular focus:outline-none focus:ring-2 focus:ring-primary/30"
-              style={{ border: "1px solid var(--c-border-strong)", background: "var(--c-bg-subtle)" }}
-            />
-          </label>
-          <label className="flex flex-col gap-1">
-            <span className="text-[12px] font-semibold text-body-secondary">최소 유사도 (%)</span>
-            <input
-              type="text" inputMode="decimal" placeholder="제한 없음"
-              value={minSimilarity}
-              onChange={(e) => setMinSimilarity(e.target.value.replace(/[^0-9.]/g, ""))}
-              className="w-24 h-8 px-2.5 rounded-lg text-[13px] font-mono tabular focus:outline-none focus:ring-2 focus:ring-primary/30"
-              style={{ border: "1px solid var(--c-border-strong)", background: "var(--c-bg-subtle)" }}
-            />
-          </label>
-        </div>
+          <div className="flex gap-4">
+            <label className="flex flex-col gap-2">
+              <span className="text-[13px] font-medium text-muted">결과 개수</span>
+              <input
+                type="text" inputMode="numeric" placeholder="전체"
+                value={topK}
+                onChange={(e) => setTopK(e.target.value.replace(/[^0-9]/g, ""))}
+                className="h-[36px] w-[72px] px-3 rounded-xl bg-[var(--c-bg-subtle)] text-[14px] font-mono font-semibold text-ink outline-none focus:ring-2 focus:ring-primary/30 transition-all"
+              />
+            </label>
 
-        <div className="flex items-center justify-end gap-3">
-          {error && <p className="text-[13px] text-trading-down mr-auto">{error}</p>}
+            <label className="flex flex-col gap-2">
+              <span className="text-[13px] font-medium text-muted">최소 유사도</span>
+              <input
+                type="text" inputMode="decimal" placeholder="없음"
+                value={minSimilarity}
+                onChange={(e) => setMinSimilarity(e.target.value.replace(/[^0-9.]/g, ""))}
+                className="h-[36px] w-[80px] px-3 rounded-xl bg-[var(--c-bg-subtle)] text-[14px] font-mono font-semibold text-ink outline-none focus:ring-2 focus:ring-primary/30 transition-all"
+              />
+            </label>
+          </div>
+
           <button
             type="button"
             onClick={handleSearch}
             disabled={loading}
-            className="h-9 px-5 rounded-lg bg-primary hover:bg-primary-active disabled:bg-primary-disabled disabled:text-muted-strong text-white text-sm font-semibold transition-colors cursor-pointer flex items-center gap-2"
+            className="h-[36px] px-6 rounded-xl bg-primary hover:bg-primary-active disabled:bg-primary-disabled disabled:text-white/50 text-white text-[14px] font-bold transition-colors cursor-pointer flex items-center gap-2 mt-auto"
           >
             {loading && <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin inline-block" />}
-            {loading ? "검색 중" : "유사 차트 찾기"}
+            {loading ? "검색 중" : "찾기"}
           </button>
         </div>
+        {error && <p className="text-[13px] text-trading-down mt-3">{error}</p>}
       </div>
 
       {/* 통계 요약 */}
       {stats && stats.count > 0 && (
         <div
-          className="px-5 py-4 grid grid-cols-3 gap-3"
+          className="px-6 py-5 grid grid-cols-3 gap-4"
           style={{ borderTop: "1px solid var(--c-border)", background: "var(--c-bg-subtle)" }}
         >
           <div>
-            <div className="text-[11px] text-muted mb-1">유사 사례 평균</div>
-            <div className={`font-mono tabular text-[18px] font-bold ${returnColor(stats.mean)}`}>
+            <div className="text-[13px] font-medium text-muted mb-1">유사 사례 평균</div>
+            <div className={`font-mono tabular-nums text-[20px] tracking-tight font-bold ${returnColor(stats.mean)}`}>
               {fmtPct(stats.mean)}
             </div>
           </div>
           <div>
-            <div className="text-[11px] text-muted mb-1">중앙값</div>
-            <div className={`font-mono tabular text-[18px] font-bold ${returnColor(stats.median)}`}>
+            <div className="text-[13px] font-medium text-muted mb-1">중앙값</div>
+            <div className={`font-mono tabular-nums text-[20px] tracking-tight font-bold ${returnColor(stats.median)}`}>
               {fmtPct(stats.median)}
             </div>
           </div>
           <div>
-            <div className="text-[11px] text-muted mb-1">상승 비율</div>
-            <div className="font-mono tabular text-[18px] font-bold text-ink">
+            <div className="text-[13px] font-medium text-muted mb-1">상승 비율</div>
+            <div className="font-mono tabular-nums text-[20px] tracking-tight font-bold text-ink">
               {stats.positive_ratio != null ? `${stats.positive_ratio}%` : "—"}
             </div>
           </div>

@@ -52,10 +52,10 @@ function quantInterpretation(label: string, value: number | null): string {
 
 export default function SignalBreakdownPanel({ quant, ai }: Props) {
   return (
-    <section className="rounded-xl bg-surface-card-dark border border-hairline-on-dark shadow-card overflow-hidden">
+    <section className="rounded-2xl bg-white border border-[var(--c-border)] overflow-hidden">
       <header className="px-6 py-4 border-b border-hairline-on-dark">
-        <h2 className="text-sm uppercase tracking-widest text-muted">
-          Signal Breakdown
+        <h2 className="text-[15px] font-bold text-ink">
+          시그널 상세
         </h2>
         <p className="text-xs text-muted-strong mt-1">
           Quant 5개 지표 · LLM 1개 해석. Final Verdict 점수 구성.
@@ -64,8 +64,8 @@ export default function SignalBreakdownPanel({ quant, ai }: Props) {
 
       <div className="px-6 py-5">
         <div className="flex items-baseline gap-3 mb-2">
-          <h3 className="text-[11px] uppercase tracking-[0.18em] text-muted">
-            Quant Signals
+          <h3 className="text-[13px] font-bold text-ink">
+            퀀트 지표
           </h3>
           <span className="text-[11px] text-muted-strong font-mono">
             가격·수급 · KIS
@@ -107,8 +107,8 @@ export default function SignalBreakdownPanel({ quant, ai }: Props) {
 
       <div className="px-6 py-5 border-t border-hairline-on-dark">
         <div className="flex items-baseline gap-3 mb-2">
-          <h3 className="text-[11px] uppercase tracking-[0.18em] text-muted">
-            LLM Signals
+          <h3 className="text-[13px] font-bold text-ink">
+            AI 해석
           </h3>
           <span className="text-[11px] text-muted-strong font-mono">
             gpt-5.2 · 공시·재무 해석
