@@ -66,29 +66,29 @@ function SignalSummary({ data, livePrice }: { data: ChartAnalysis; livePrice?: n
       </div>
 
       {/* Price grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-3">
+      <div className="grid grid-cols-1">
+        {/* 현재가 */}
+        <div className="px-5 py-4 flex flex-col justify-center items-center text-center border-b border-hairline-on-dark">
+          <div className="text-[11px] text-muted font-semibold mb-1.5">현재가</div>
+          <div className="font-mono tabular text-[18px] text-ink font-bold leading-none">{formatKRW(cur)}</div>
+        </div>
+
         {/* 매수 구간 */}
-        <div className="px-5 py-4 border-b border-hairline-on-dark sm:border-b-0 sm:border-r">
+        <div className="px-5 py-4 border-b border-hairline-on-dark">
           <div className="text-[11px] text-trading-up font-semibold mb-1.5">매수 구간</div>
           {signal.entry_zone_low && signal.entry_zone_high ? (
-            <>
-              <div className="font-mono tabular text-[14px] text-ink font-bold leading-tight">{formatKRW(signal.entry_zone_low)}</div>
-              <div className="font-mono tabular text-[13px] text-body-secondary leading-tight mt-0.5">~ {formatKRW(signal.entry_zone_high)}</div>
+            <div className="flex items-baseline gap-1.5 whitespace-nowrap leading-tight">
+              <span className="font-mono tabular text-[13px] text-ink font-bold">{formatKRW(signal.entry_zone_low)}</span>
+              <span className="font-mono tabular text-[12px] text-body-secondary">~ {formatKRW(signal.entry_zone_high)}</span>
               {signal.stop_loss && (
-                <div className="text-[11px] text-muted-strong mt-2">
+                <span className="text-[11px] text-muted-strong">
                   손절 <span className="font-mono tabular text-body">{formatKRW(signal.stop_loss)}</span>
-                </div>
+                </span>
               )}
-            </>
+            </div>
           ) : (
             <div className="text-[12px] text-muted">현재 매수 구간 없음</div>
           )}
-        </div>
-
-        {/* 현재가 */}
-        <div className="px-5 py-4 flex flex-col justify-center items-center text-center border-b border-hairline-on-dark sm:border-b-0 sm:border-r">
-          <div className="text-[11px] text-muted font-semibold mb-1.5">현재가</div>
-          <div className="font-mono tabular text-[18px] text-ink font-bold leading-none">{formatKRW(cur)}</div>
         </div>
 
         {/* 매도 목표 */}
@@ -149,8 +149,8 @@ function LevelsTable({ data, livePrice }: { data: ChartAnalysis; livePrice?: num
   if (supports.length === 0 && resistances.length === 0) return null;
 
   return (
-    <div className="bg-white rounded-[24px] border border-[var(--c-border)] overflow-hidden grid grid-cols-2">
-      <div style={{ borderRight: "1px solid var(--c-border)" }}>
+    <div className="bg-white rounded-[24px] border border-[var(--c-border)] overflow-hidden flex flex-col">
+      <div style={{ borderBottom: "1px solid var(--c-border)" }}>
         <div
           className="px-4 py-2.5 text-[13px] font-bold text-ink flex items-center gap-1.5"
           style={{ borderBottom: "1px solid var(--c-border)" }}
