@@ -565,7 +565,7 @@ export default function Home() {
                         </div>
                       )}
                       {report && (
-                        <div className="space-y-6 mt-6">
+                        <div className="space-y-6">
                           <FinalVerdictCard score={report.score} ai={report.ai_signals[0]} autoSummary={report.summary} />
                           <QuantSignalsTable
                             quant={report.quant_signals}
