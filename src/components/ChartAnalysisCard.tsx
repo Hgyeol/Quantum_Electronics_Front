@@ -396,7 +396,7 @@ export default function ChartAnalysisCard({ stockCode, stockName, onNameResolved
         {data && !loading && (
           <>
             {activeTab === 'chart' && (
-              <div className="bg-white rounded-[24px] border border-[var(--c-border)] flex flex-col overflow-hidden h-[460px] md:h-[540px] w-full">
+              <div className="bg-white rounded-[24px] border border-[var(--c-border)] flex flex-col overflow-hidden h-[460px] md:h-[540px] xl:h-[583px] w-full">
                 <div className="px-6 pt-6 pb-2 flex justify-between items-center">
                   <h3 className="text-[18px] font-bold text-ink tracking-tight">차트</h3>
                 </div>

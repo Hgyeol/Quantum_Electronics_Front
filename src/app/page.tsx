@@ -461,7 +461,7 @@ export default function Home() {
       {selectedCode ? (
 
         /* ── 종목 상세 (전체화면) ────────────────────────── */
-        <div className="flex-1 flex flex-col overflow-hidden bg-canvas-dark">
+        <div className="flex-1 flex flex-col overflow-hidden bg-[#f6f7f9]">
 
           {/* 상세 헤더 */}
           <header
@@ -491,7 +491,7 @@ export default function Home() {
           </header>
 
           {/* 상세 컨텐츠 */}
-          <div ref={detailScrollRef} className="flex-1 overflow-y-auto">
+          <div ref={detailScrollRef} className="flex-1 overflow-y-auto bg-[#f6f7f9]">
             <div className="mx-auto w-full max-w-[1200px] px-4 py-6 md:px-8 space-y-5">
 
               {/* 종목 헤더 + 가격 */}
