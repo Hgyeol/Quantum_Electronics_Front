@@ -425,8 +425,8 @@ export default function ChartAnalysisCard({ stockCode, stockName, onNameResolved
       </div>
 
       {/* ── 우측 사이드바 영역 ── */}
-      <div className={`${activeTab === 'chart' ? 'flex' : 'hidden xl:flex'} w-full xl:w-[340px] shrink-0 flex-col gap-6 xl:sticky xl:top-6 ${activeTab === 'outlook' ? 'xl:pt-[39px]' : 'xl:pt-[63px]'}`}>
-        {data && !loading && (activeTab !== 'outlook' || !outlookSlotSidebar) && (
+      <div className={`${activeTab === 'chart' ? 'flex' : 'hidden xl:flex'} w-full xl:w-[340px] shrink-0 flex-col gap-6 ${activeTab === 'outlook' ? 'xl:pt-[39px]' : 'xl:pt-[63px]'}`}>
+        {data && !loading && (activeTab === 'chart' || activeTab === 'similar') && (
           <div className="flex flex-col gap-6">
             <SignalSummary data={data} livePrice={livePrice} />
             <LevelsTable data={data} livePrice={livePrice} />
