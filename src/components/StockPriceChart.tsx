@@ -337,9 +337,9 @@ export default function StockPriceChart({ ohlcv, todayBar, supports, resistances
     <div className="space-y-0">
       {/* 기간 탭 (TDS Segmented Control) */}
       {!minimal && (
-        <div className="flex items-center px-5 pt-4 pb-3">
+        <div className="flex items-center pt-4 pb-3">
           <div
-            className="flex gap-0 p-[3px] rounded-[10px]"
+            className="flex gap-0 py-[3px] rounded-[10px]"
             style={{ background: "var(--c-bg-muted)" }}
           >
             {PERIODS.map(({ id, label }) => (
