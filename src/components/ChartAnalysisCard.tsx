@@ -55,58 +55,68 @@ function SignalSummary({ data, livePrice }: { data: ChartAnalysis; livePrice?: n
   return (
     <div className="bg-white rounded-[24px] border border-[var(--c-border)] overflow-hidden">
       {/* Header */}
-      <div className="flex items-center gap-2.5 px-5 py-3.5" style={{ borderBottom: "1px solid var(--c-border)" }}>
-        <h3 className="text-[15px] font-bold text-ink">매매 시그널</h3>
-        <span className="text-muted">·</span>
-        <span className={`text-[12px] font-bold px-2 py-0.5 rounded-[6px] ${badge.bg} ${badge.text}`}>
-          {actionKo(signal.action)}
-        </span>
-        <span className="text-[12px] text-muted-strong">{confidenceKo(signal.confidence)}</span>
-        <span className="ml-auto text-[11px] text-muted font-mono tabular">{data.analysis_period_days}일 분석</span>
+      <div className="px-5 py-3.5 space-y-2.5" style={{ borderBottom: "1px solid var(--c-border)" }}>
+        <h3 className="text-[15px] font-bold text-ink leading-none">매매 시그널</h3>
+        <div className="flex items-center gap-2.5">
+          <span className={`text-[12px] font-bold px-2 py-0.5 rounded-[6px] ${badge.bg} ${badge.text}`}>
+            {actionKo(signal.action)}
+          </span>
+          <span className="text-[12px] text-muted-strong">{confidenceKo(signal.confidence)}</span>
+          <span className="ml-auto text-[11px] text-muted font-mono tabular">{data.analysis_period_days}일 분석</span>
+        </div>
       </div>
 
       {/* Price grid */}
       <div className="grid grid-cols-1">
-        {/* 현재가 */}
-        <div className="px-5 py-4 flex flex-col justify-center items-center text-center border-b border-hairline-on-dark">
-          <div className="text-[11px] text-muted font-semibold mb-1.5">현재가</div>
-          <div className="font-mono tabular text-[18px] text-ink font-bold leading-none">{formatKRW(cur)}</div>
-        </div>
-
         {/* 매수 구간 */}
-        <div className="px-5 py-4 border-b border-hairline-on-dark">
-          <div className="text-[11px] text-trading-up font-semibold mb-1.5">매수 구간</div>
+        <div className="px-5 py-4 border-b border-hairline-on-dark space-y-2">
           {signal.entry_zone_low && signal.entry_zone_high ? (
-            <div className="flex items-baseline gap-1.5 whitespace-nowrap leading-tight">
-              <span className="font-mono tabular text-[13px] text-ink font-bold">{formatKRW(signal.entry_zone_low)}</span>
-              <span className="font-mono tabular text-[12px] text-body-secondary">~ {formatKRW(signal.entry_zone_high)}</span>
-              {signal.stop_loss && (
-                <span className="text-[11px] text-muted-strong">
-                  손절 <span className="font-mono tabular text-body">{formatKRW(signal.stop_loss)}</span>
-                </span>
-              )}
-            </div>
+            <>
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-1.5 text-[12px] font-bold text-trading-up">
+                  <span className="w-1.5 h-1.5 rounded-full bg-trading-up" />
+                  매수 구간
+                </div>
+                {signal.stop_loss && (
+                  <div className="shrink-0 text-[11px] text-muted-strong">
+                    손절 <span className="font-mono tabular text-body">{formatKRW(signal.stop_loss)}</span>
+                  </div>
+                )}
+              </div>
+              <div className="flex items-baseline gap-1.5 whitespace-nowrap leading-none">
+                <span className="font-mono tabular text-[17px] text-ink font-bold">{formatKRW(signal.entry_zone_low)}</span>
+                <span className="font-mono tabular text-[13px] text-muted-strong">~</span>
+                <span className="font-mono tabular text-[17px] text-ink font-bold">{formatKRW(signal.entry_zone_high)}</span>
+              </div>
+            </>
           ) : (
             <div className="text-[12px] text-muted">현재 매수 구간 없음</div>
           )}
         </div>
 
         {/* 매도 목표 */}
-        <div className="px-5 py-4">
-          <div className="text-[11px] text-trading-down font-semibold mb-1.5">매도 목표</div>
+        <div className="px-5 py-4 space-y-2">
           {signal.primary_target ? (
             <>
-              <div className="font-mono tabular text-[14px] text-ink font-bold leading-tight">
-                {formatKRW(signal.primary_target)}
-              </div>
-              <div className="text-[11px] text-muted-strong leading-tight mt-0.5">
-                1차 <span className="font-mono tabular">{pct(signal.primary_target, cur)}</span>
-              </div>
-              {signal.secondary_target && (
-                <div className="text-[11px] text-muted mt-2">
-                  2차 <span className="font-mono tabular text-body">{formatKRW(signal.secondary_target)}</span>
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-1.5 text-[12px] font-bold text-trading-down">
+                  <span className="w-1.5 h-1.5 rounded-full bg-trading-down" />
+                  매도 목표
                 </div>
-              )}
+                <div className="shrink-0 text-[11px] text-muted-strong">
+                  1차 <span className="font-mono tabular">{pct(signal.primary_target, cur)}</span>
+                </div>
+              </div>
+              <div className="flex items-end justify-between gap-3 whitespace-nowrap">
+                <span className="font-mono tabular text-[20px] text-ink font-bold leading-none">
+                  {formatKRW(signal.primary_target)}
+                </span>
+                {signal.secondary_target && (
+                  <span className="text-[11px] text-muted">
+                    2차 <span className="font-mono tabular text-body">{formatKRW(signal.secondary_target)}</span>
+                  </span>
+                )}
+              </div>
             </>
           ) : (
             <div className="text-[12px] text-muted">저항선 없음</div>
@@ -116,22 +126,29 @@ function SignalSummary({ data, livePrice }: { data: ChartAnalysis; livePrice?: n
 
       {/* R/R + Reasoning footer */}
       {(signal.risk_reward_ratio || signal.reasoning.length > 0) && (
-        <div className="px-5 py-3" style={{ borderTop: "1px solid var(--c-border)", background: "var(--c-bg-subtle)" }}>
+        <div className="px-5 py-4 space-y-3" style={{ borderTop: "1px solid var(--c-border)" }}>
           {signal.risk_reward_ratio && (
-            <div className="flex items-center gap-1.5 text-[12px] mb-2">
-              <span className="text-muted-strong">리스크 대비 수익</span>
-              <span className="font-mono tabular text-ink font-bold">1 : {signal.risk_reward_ratio}</span>
+            <div className="flex items-end justify-between gap-3">
+              <span className="text-[13px] font-semibold text-muted-strong">리스크 대비 수익</span>
+              <span className="font-mono tabular text-[18px] leading-none text-ink font-bold">1 : {signal.risk_reward_ratio}</span>
             </div>
           )}
           {signal.reasoning.length > 0 && (
-            <ul className="space-y-1">
-              {signal.reasoning.map((r, i) => (
-                <li key={i} className="flex gap-2 text-[12px] text-body-secondary leading-snug">
-                  <span className="text-muted mt-[1px] flex-shrink-0">·</span>
-                  <span>{r}</span>
-                </li>
-              ))}
-            </ul>
+            <div className="space-y-2">
+              <div className="text-[13px] font-semibold text-muted-strong">판단 근거</div>
+              <div className="space-y-2">
+                {signal.reasoning.map((r, i) => {
+                  const [title, detail] = r.split(/\s+—\s+/, 2);
+
+                  return (
+                    <div key={i} className="space-y-1.5 break-keep">
+                      <div className="text-[14px] font-bold leading-snug text-body">{title}</div>
+                      {detail ? <div className="text-[13px] leading-relaxed text-body-secondary">{detail}</div> : null}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
           )}
         </div>
       )}
