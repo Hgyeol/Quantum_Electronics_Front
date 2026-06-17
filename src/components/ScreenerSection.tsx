@@ -412,7 +412,7 @@ export default function ScreenerSection({ onSelect, onHover, onHoverEnd }: Props
   });
 
   return (
-    <section className="bg-surface-card-dark rounded-xl border border-[var(--c-border)]">
+    <section className="bg-surface-card-dark border border-[var(--c-border)]">
       {/* 헤더 */}
       <header className="px-6 pt-4 pb-4 border-b border-hairline-on-dark">
         <div className="flex items-center justify-between mb-4">
@@ -431,8 +431,9 @@ export default function ScreenerSection({ onSelect, onHover, onHoverEnd }: Props
         </div>
 
         {/* 프리셋 빠른 선택 */}
-        <div className="flex flex-wrap items-center gap-2 mb-3">
-          <span className="text-[10px] uppercase tracking-widest text-muted font-semibold shrink-0">빠른 선택</span>
+        <div className="flex flex-col gap-1.5 mb-3">
+          <span className="text-[10px] uppercase tracking-widest text-muted font-semibold">빠른 선택</span>
+          <div className="flex flex-wrap gap-2">
           {PRESETS.map((preset) => {
             const active = preset.conditions.every((c) => selected.has(c)) && selected.size === preset.conditions.length;
             return (
@@ -459,6 +460,7 @@ export default function ScreenerSection({ onSelect, onHover, onHoverEnd }: Props
               </div>
             );
           })}
+          </div>
         </div>
 
         {/* 조건 칩 (카테고리 그룹 + 플렉스 랩) */}
