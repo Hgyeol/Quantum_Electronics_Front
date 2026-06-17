@@ -146,7 +146,7 @@ export function StockList<T>({
               }}
             >
               {visibleColumns.map((c) => (
-                <span key={c.key} className={alignClass(c.align)}>
+                <span key={c.key} className={`min-w-0 ${alignClass(c.align)}`}>
                   {c.render(item, idx)}
                 </span>
               ))}
