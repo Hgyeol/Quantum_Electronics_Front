@@ -465,7 +465,7 @@ export default function Home() {
 
           {/* 상세 헤더 */}
           <header
-            className="shrink-0 flex flex-wrap items-center gap-3 border-b border-transparent px-4 py-3 bg-white md:h-[52px] md:relative md:flex-nowrap md:gap-0 md:border-[var(--c-border)] md:px-5 md:py-0"
+            className="shrink-0 flex flex-wrap items-center gap-3 px-4 py-3 bg-canvas-dark md:h-[52px] md:relative md:flex-nowrap md:gap-0 md:px-5 md:py-0"
           >
             <button
               type="button"
@@ -634,8 +634,7 @@ export default function Home() {
 
           {/* 공통 헤더 (center + right 패널 전체 너비) */}
           <header
-            className="shrink-0 flex flex-wrap items-center gap-3 px-4 py-3 bg-white md:h-[52px] md:relative md:flex-nowrap md:gap-0 md:px-5 md:py-0"
-            style={{ borderBottom: "1px solid var(--c-border)" }}
+            className="shrink-0 flex flex-wrap items-center gap-3 px-4 py-3 bg-canvas-dark md:h-[52px] md:relative md:flex-nowrap md:gap-0 md:px-5 md:py-0"
           >
             <span className="text-[15px] font-bold text-ink">{HOME_TABS[homeTab]}</span>
             <div className="w-full order-3 md:w-auto md:order-none md:absolute search-center-wrapper md:left-[calc(50vw-72px)] md:-translate-x-1/2">
