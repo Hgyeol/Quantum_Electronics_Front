@@ -133,23 +133,6 @@ function SignalSummary({ data, livePrice }: { data: ChartAnalysis; livePrice?: n
               <span className="font-mono tabular text-[18px] leading-none text-ink font-bold">1 : {signal.risk_reward_ratio}</span>
             </div>
           )}
-          {signal.reasoning.length > 0 && (
-            <div className="space-y-2">
-              <div className="text-[13px] font-semibold text-muted-strong">판단 근거</div>
-              <div className="space-y-2">
-                {signal.reasoning.map((r, i) => {
-                  const [title, detail] = r.split(/\s+—\s+/, 2);
-
-                  return (
-                    <div key={i} className="space-y-1.5 break-keep">
-                      <div className="text-[14px] font-bold leading-snug text-body">{title}</div>
-                      {detail ? <div className="text-[13px] leading-relaxed text-body-secondary">{detail}</div> : null}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
         </div>
       )}
     </div>
