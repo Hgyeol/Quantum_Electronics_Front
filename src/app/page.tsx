@@ -16,6 +16,7 @@ import EvidenceList from "@/components/EvidenceList";
 import ErrorsBanner from "@/components/ErrorsBanner";
 import ChartAnalysisCard from "@/components/ChartAnalysisCard";
 import { noteSimNav } from "@/components/SimilarPatternsCard";
+import { isETF } from "@/lib/isETF";
 import StockPreviewStats from "@/components/StockPreviewStats";
 import RankingSection, { type TabId as RankTabId } from "@/components/RankingSection";
 import ScreenerSection from "@/components/ScreenerSection";
@@ -546,6 +547,7 @@ export default function Home() {
                   onBarHover={setHoveredBar}
                   onBarClick={(bar) => { if (bar) setPinnedBar(bar); }}
                   onSelectStock={handleSelectStock}
+                  isETF={isETF(selectedCode)}
                   liveTick={liveTick}
                   onRequestOutlook={() => {
                     if (!report && !outlookLoading) handleLoadOutlook();

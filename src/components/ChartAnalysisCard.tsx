@@ -239,6 +239,7 @@ interface Props {
   onBarClick?: (bar: OHLCVBar | null) => void;
   onSelectStock?: (code: string, name: string) => void;
   chartOnly?: boolean;
+  isETF?: boolean;
   liveTick?: LiveTick | null;
   outlookSlotMain?: ReactNode;
   outlookSlotSidebar?: ReactNode;
@@ -269,7 +270,7 @@ function buildTodayBarFromQuote(q: MarketQuote): OHLCVBar | null {
   return { date: todayKST(), open, high: q.high, low: q.low, close: q.price, volume: q.volume ?? 0 };
 }
 
-export default function ChartAnalysisCard({ stockCode, stockName, onNameResolved, onBarHover, onBarClick, onSelectStock, chartOnly, liveTick, outlookSlotMain, outlookSlotSidebar, onRequestOutlook }: Props) {
+export default function ChartAnalysisCard({ stockCode, stockName, onNameResolved, onBarHover, onBarClick, onSelectStock, chartOnly, isETF, liveTick, outlookSlotMain, outlookSlotSidebar, onRequestOutlook }: Props) {
   const [data, setData] = useState<ChartAnalysis | null>(null);
   const [activeTab, setActiveTab] = useState<'chart' | 'similar' | 'outlook'>('chart');
   const [loading, setLoading] = useState(true);
@@ -285,6 +286,10 @@ export default function ChartAnalysisCard({ stockCode, stockName, onNameResolved
     if (base.length > 0 && base[base.length - 1].date >= bar.date) return undefined;
     return bar;
   }
+
+  useEffect(() => {
+    if (isETF) setActiveTab('chart');
+  }, [isETF]);
 
   useEffect(() => {
     setLoading(true);
@@ -342,8 +347,10 @@ export default function ChartAnalysisCard({ stockCode, stockName, onNameResolved
         <div className="flex gap-6 px-2 border-b border-[var(--c-border)]">
           {[
             { id: 'chart', label: '차트 분석' },
-            { id: 'similar', label: '유사 패턴' },
-            { id: 'outlook', label: '전망 분석' }
+            ...(!isETF ? [
+              { id: 'similar', label: '유사 패턴' },
+              { id: 'outlook', label: '전망 분석' },
+            ] : []),
           ].map(tab => (
             <button
               key={tab.id}
