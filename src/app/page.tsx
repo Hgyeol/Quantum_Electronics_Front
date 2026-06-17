@@ -31,7 +31,7 @@ const AUTH_RETRY_COUNT = 12;
 const AUTH_RETRY_DELAY_MS = 250;
 
 type HomeTab = 0 | 1 | 2 | 3 | 4;
-const HOME_TABS = ["관심종목", "시장현황", "스크리너", "업종 추천", "마이페이지"] as const;
+const HOME_TABS = ["관심종목", "시장현황", "조건 검색식", "업종 추천", "마이페이지"] as const;
 
 interface LiveTick {
   price: number;
@@ -449,11 +449,11 @@ export default function Home() {
           <IconBarChart active={homeTab === 1} />
           <span className={`text-[10px] leading-none font-semibold ${homeTab === 1 ? "text-ink" : "text-muted"}`}>시장현황</span>
         </button>
-        <button type="button" onClick={() => handleSelectHomeTab(2)} title="스크리너"
+        <button type="button" onClick={() => handleSelectHomeTab(2)} title="조건 검색식"
           className="min-w-0 flex-1 h-12 px-2 flex flex-col items-center justify-center gap-1 rounded-xl transition-colors cursor-pointer md:w-14 md:h-14 md:flex-none"
           style={{ background: homeTab === 2 ? "var(--c-hover-md)" : undefined }}>
           <IconFilter active={homeTab === 2} />
-          <span className={`text-[10px] leading-none font-semibold ${homeTab === 2 ? "text-ink" : "text-muted"}`}>스크리너</span>
+          <span className={`text-[10px] leading-none font-semibold ${homeTab === 2 ? "text-ink" : "text-muted"}`}>검색식</span>
         </button>
         <button type="button" onClick={() => handleSelectHomeTab(3)} title="업종 추천"
           className="min-w-0 flex-1 h-12 px-2 flex flex-col items-center justify-center gap-1 rounded-xl transition-colors cursor-pointer md:w-14 md:h-14 md:flex-none"
@@ -654,7 +654,8 @@ export default function Home() {
 
           {/* 공통 헤더 (center + right 패널 전체 너비) */}
           <header
-            className="shrink-0 flex flex-wrap items-center gap-3 px-4 py-3 bg-canvas-dark md:h-[52px] md:relative md:flex-nowrap md:gap-0 md:px-5 md:py-0"
+            className="shrink-0 flex flex-wrap items-center gap-3 px-4 py-3 bg-white md:h-[52px] md:relative md:flex-nowrap md:gap-0 md:px-5 md:py-0"
+            style={{ borderBottom: "1px solid var(--c-border)" }}
           >
             <span className="text-[15px] font-bold text-ink">{HOME_TABS[homeTab]}</span>
             <div className="w-full order-3 md:w-auto md:order-none md:absolute search-center-wrapper md:left-[calc(50vw-72px)] md:-translate-x-1/2">
@@ -768,7 +769,7 @@ export default function Home() {
                 const previewBadgeStyle = flat ? { background: "var(--c-bg-muted)" } : {};
                 return (
                   <div className="flex-1 flex flex-col overflow-y-auto">
-                    <div className="px-5 pt-5 pb-4">
+                    <div className="px-5 pt-5 pb-4" style={{ borderBottom: "1px solid var(--c-border)" }}>
                       <div className="flex items-center gap-3 mb-4">
                         <StockLogo code={hoveredStock.code} name={hoveredStock.name} size={40} rounded="xl" />
                         <div className="min-w-0 flex-1">
@@ -786,7 +787,6 @@ export default function Home() {
                         {flat ? "0.00%" : `${up ? "+" : ""}${previewChangeRate.toFixed(2)}%`}
                       </span>
                     </div>
-                    <div className="ml-5 mr-[72px]" style={{ borderTop: "1px solid var(--c-border)" }} />
                     <ChartAnalysisCard
                       stockCode={hoveredStock.code}
                       chartOnly
