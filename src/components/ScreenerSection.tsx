@@ -132,6 +132,40 @@ const CONDITION_GROUPS: ConditionGroup[] = [
   },
 ];
 
+interface Preset {
+  id: string;
+  label: string;
+  desc: string;
+  conditions: ScreenerCondition[];
+}
+
+const PRESETS: Preset[] = [
+  {
+    id: "volume_burst",
+    label: "거래량 폭발",
+    desc: "거래량 급등 + 연속 양봉 + 전일 고가 돌파",
+    conditions: ["volume_surge", "consecutive_bull", "break_prev_high"],
+  },
+  {
+    id: "golden_cross",
+    label: "골든크로스",
+    desc: "MA5/MA20 골든크로스 + 거래량 동반",
+    conditions: ["golden_cross", "volume_surge"],
+  },
+  {
+    id: "pullback",
+    label: "눌림목 반등",
+    desc: "이동평균 정배열 + MACD 시그널 크로스",
+    conditions: ["ma_alignment", "macd_signal_cross"],
+  },
+  {
+    id: "supply_led",
+    label: "수급 주도",
+    desc: "외인 + 기관 동시 순매수 + 연속 상승",
+    conditions: ["frgn_buy", "orgn_buy", "consecutive_up"],
+  },
+];
+
 // 빠른 조회용 평탄화 맵
 const PARAM_DEFS: Record<string, ConditionParam[]> = Object.fromEntries(
   CONDITION_GROUPS.flatMap((g) => g.items.filter((c) => c.params).map((c) => [c.id, c.params!])),
@@ -287,6 +321,10 @@ export default function ScreenerSection({ onSelect, onHover, onHoverEnd }: Props
     return () => window.removeEventListener("mousedown", handler);
   }, [openPopover, openHelp]);
 
+  function applyPreset(conditions: ScreenerCondition[]) {
+    setSelected(new Set(conditions));
+  }
+
   function toggleCondition(id: ScreenerCondition) {
     setSelected((prev) => {
       const next = new Set(prev);
@@ -390,6 +428,37 @@ export default function ScreenerSection({ onSelect, onHover, onHoverEnd }: Props
               </span>
             </span>
           )}
+        </div>
+
+        {/* 프리셋 빠른 선택 */}
+        <div className="flex flex-wrap items-center gap-2 mb-3">
+          <span className="text-[10px] uppercase tracking-widest text-muted font-semibold shrink-0">빠른 선택</span>
+          {PRESETS.map((preset) => {
+            const active = preset.conditions.every((c) => selected.has(c)) && selected.size === preset.conditions.length;
+            return (
+              <div key={preset.id} className="relative group">
+                <button
+                  type="button"
+                  onClick={() => applyPreset(preset.conditions)}
+                  className={`h-7 px-3 rounded-full text-[12px] font-semibold border transition-colors cursor-pointer ${
+                    active
+                      ? "bg-primary/10 border-primary text-primary"
+                      : "border-hairline-on-dark text-muted-strong hover:border-primary/40 hover:text-body"
+                  }`}
+                >
+                  {preset.label}
+                </button>
+                <div className="pointer-events-none absolute bottom-full left-0 mb-1.5 hidden group-hover:block z-20">
+                  <div
+                    className="whitespace-nowrap text-[11px] px-2.5 py-1.5 rounded-lg text-white"
+                    style={{ background: "var(--c-ink)", boxShadow: "0 4px 12px var(--c-shadow)" }}
+                  >
+                    {preset.desc}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
 
         {/* 조건 칩 (카테고리 그룹 + 플렉스 랩) */}
