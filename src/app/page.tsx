@@ -20,6 +20,7 @@ import { isETF } from "@/lib/isETF";
 import StockPreviewStats from "@/components/StockPreviewStats";
 import RankingSection, { type TabId as RankTabId } from "@/components/RankingSection";
 import ScreenerSection from "@/components/ScreenerSection";
+import SectorSection from "@/components/SectorSection";
 import StockLogo from "@/components/StockLogo";
 import StockSearchBox from "@/components/StockSearchBox";
 import ThemeToggle from "@/components/ThemeToggle";
@@ -29,8 +30,8 @@ const WS_BASE = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000").rep
 const AUTH_RETRY_COUNT = 12;
 const AUTH_RETRY_DELAY_MS = 250;
 
-type HomeTab = 0 | 1 | 2 | 3;
-const HOME_TABS = ["관심종목", "시장현황", "스크리너", "마이페이지"] as const;
+type HomeTab = 0 | 1 | 2 | 3 | 4;
+const HOME_TABS = ["관심종목", "시장현황", "스크리너", "업종 추천", "마이페이지"] as const;
 
 interface LiveTick {
   price: number;
@@ -88,6 +89,17 @@ function IconUser({ active }: { active: boolean }) {
     <svg width="22" height="22" viewBox="0 0 22 22" fill="none" className={active ? "text-ink" : "text-muted"}>
       <path d="M11 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Z" stroke="currentColor" strokeWidth="1.6" />
       <path d="M4.5 18.2a6.8 6.8 0 0 1 13 0" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function IconGrid({ active }: { active: boolean }) {
+  return (
+    <svg width="22" height="22" viewBox="0 0 22 22" fill="none" className={active ? "text-ink" : "text-muted"}>
+      <rect x="3" y="3" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.6" />
+      <rect x="12" y="3" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.6" />
+      <rect x="3" y="12" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.6" />
+      <rect x="12" y="12" width="7" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.6" />
     </svg>
   );
 }
@@ -287,7 +299,7 @@ export default function Home() {
   useEffect(() => {
     const media = window.matchMedia("(min-width: 768px)");
     const sync = () => {
-      if (media.matches && homeTab === 3) {
+      if (media.matches && homeTab === 4) {
         setHomeTab(0);
       }
     };
@@ -443,11 +455,17 @@ export default function Home() {
           <IconFilter active={homeTab === 2} />
           <span className={`text-[10px] leading-none font-semibold ${homeTab === 2 ? "text-ink" : "text-muted"}`}>스크리너</span>
         </button>
-        <button type="button" onClick={() => handleSelectHomeTab(3)} title="마이페이지"
-          className="min-w-0 flex-1 h-12 px-2 flex flex-col items-center justify-center gap-1 rounded-xl transition-colors cursor-pointer md:hidden"
+        <button type="button" onClick={() => handleSelectHomeTab(3)} title="업종 추천"
+          className="min-w-0 flex-1 h-12 px-2 flex flex-col items-center justify-center gap-1 rounded-xl transition-colors cursor-pointer md:w-14 md:h-14 md:flex-none"
           style={{ background: homeTab === 3 ? "var(--c-hover-md)" : undefined }}>
-          <IconUser active={homeTab === 3} />
-          <span className={`text-[10px] leading-none font-semibold ${homeTab === 3 ? "text-ink" : "text-muted"}`}>마이</span>
+          <IconGrid active={homeTab === 3} />
+          <span className={`text-[10px] leading-none font-semibold ${homeTab === 3 ? "text-ink" : "text-muted"}`}>업종</span>
+        </button>
+        <button type="button" onClick={() => handleSelectHomeTab(4)} title="마이페이지"
+          className="min-w-0 flex-1 h-12 px-2 flex flex-col items-center justify-center gap-1 rounded-xl transition-colors cursor-pointer md:hidden"
+          style={{ background: homeTab === 4 ? "var(--c-hover-md)" : undefined }}>
+          <IconUser active={homeTab === 4} />
+          <span className={`text-[10px] leading-none font-semibold ${homeTab === 4 ? "text-ink" : "text-muted"}`}>마이</span>
         </button>
       </div>
 
@@ -707,6 +725,13 @@ export default function Home() {
                 />
               )}
               {homeTab === 3 && (
+                <SectorSection
+                  onSelect={(code, name) => handleSelectStock(code, name)}
+                  onHover={setHoveredStock}
+                  onHoverEnd={() => setHoveredStock(null)}
+                />
+              )}
+              {homeTab === 4 && (
                 <section className="px-5 py-6">
                   <div className="mx-auto w-full max-w-[560px] rounded-2xl bg-white p-6 border border-[var(--c-border)]"
                     style={{ border: "1px solid var(--c-border)" }}>
@@ -728,7 +753,7 @@ export default function Home() {
 
             {/* 우측 프리뷰 패널 */}
             <aside
-              className={`${homeTab === 3 ? "hidden" : "hidden lg:flex"} shrink-0 bg-white lg:h-full lg:w-[420px] lg:flex-col lg:overflow-hidden lg:border-l`}
+              className={`${homeTab === 4 ? "hidden" : "hidden lg:flex"} shrink-0 bg-white lg:h-full lg:w-[420px] lg:flex-col lg:overflow-hidden lg:border-l`}
               style={{ borderColor: "var(--c-border)" }}
             >
             {hoveredStock ? (

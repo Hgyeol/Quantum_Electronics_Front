@@ -5,7 +5,7 @@ const backendOrigin = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"
 
 const nextConfig: NextConfig = {
   outputFileTracingRoot: path.join(__dirname),
-  allowedDevOrigins: ["127.0.0.1", "localhost"],
+  allowedDevOrigins: ["127.0.0.1", "localhost", "10.129.59.166"],
   async rewrites() {
     return [
       {
