@@ -232,8 +232,7 @@ export default function WatchlistTable({
       {/* Header */}
       <header className="px-5 pt-4 pb-0 bg-white" style={{ borderBottom: "1px solid var(--c-border)" }}>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-[15px] font-bold text-ink">관심종목</h2>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 ml-auto">
             <span className="text-xs text-muted font-mono">{codes.length}개 종목</span>
             {wsConnected ? (
               <span className="flex items-center gap-1 text-xs text-trading-up font-semibold">

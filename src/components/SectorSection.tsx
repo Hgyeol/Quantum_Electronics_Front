@@ -125,8 +125,7 @@ export default function SectorSection({ onSelect, onHover, onHoverEnd }: Props) 
       {/* 헤더 */}
       <header className="px-6 pt-4 pb-4 border-b border-hairline-on-dark">
         <div className="mb-4">
-          <h2 className="text-sm font-semibold text-on-dark">업종별 추천</h2>
-          <p className="mt-0.5 text-[11px] text-muted">업종을 선택하면 모멘텀 상위 3종목을 보여드려요.</p>
+          <p className="text-[11px] text-muted">업종을 선택하면 모멘텀 상위 3종목을 보여드려요.</p>
         </div>
 
         {/* 업종 칩 그룹 */}

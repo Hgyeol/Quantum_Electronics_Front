@@ -416,7 +416,6 @@ export default function ScreenerSection({ onSelect, onHover, onHoverEnd }: Props
       {/* 헤더 */}
       <header className="px-6 pt-4 pb-4 border-b border-hairline-on-dark">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-sm font-semibold text-on-dark">조건 검색식</h2>
           {lastCollected && (
             <span className="text-[11px] text-muted">
               DB 업데이트:{" "}

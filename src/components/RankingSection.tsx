@@ -158,8 +158,7 @@ export default function RankingSection({ onSelect, onHover, onHoverEnd, activeTa
       {/* 헤더 */}
       <header className="px-5 pt-4 pb-0 bg-white" style={{ borderBottom: "1px solid var(--c-border)" }}>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-[15px] font-bold text-ink">시장 현황</h2>
-          <div className="flex items-center gap-2 text-xs">
+          <div className="flex items-center gap-2 text-xs ml-auto">
             {REALTIME_TABS.has(activeTab) && (
               refreshing ? (
                 <span className="flex items-center gap-1 text-muted">
