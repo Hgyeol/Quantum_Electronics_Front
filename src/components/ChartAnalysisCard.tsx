@@ -276,6 +276,8 @@ export default function ChartAnalysisCard({ stockCode, stockName, onNameResolved
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [liveQuote, setLiveQuote] = useState<MarketQuote | null>(null);
+  const [hoveredBar, setHoveredBar] = useState<OHLCVBar | null>(null);
+  const [pinnedBar, setPinnedBar] = useState<OHLCVBar | null>(null);
 
   const livePrice = liveTick?.price ?? liveQuote?.price ?? null;
 
@@ -296,6 +298,8 @@ export default function ChartAnalysisCard({ stockCode, stockName, onNameResolved
     setError(null);
     setData(null);
     setLiveQuote(null);
+    setHoveredBar(null);
+    setPinnedBar(null);
     onBarClick?.(null);
     fetchChartAnalysis(stockCode)
       .then((d) => {
@@ -397,9 +401,43 @@ export default function ChartAnalysisCard({ stockCode, stockName, onNameResolved
                     supports={data.support_levels}
                     resistances={data.resistance_levels}
                     currentPrice={livePrice ?? data.current_price}
-                    onBarHover={onBarHover}
-                    onBarClick={onBarClick}
+                    onBarHover={(bar) => { setHoveredBar(bar); onBarHover?.(bar); }}
+                    onBarClick={(bar) => { if (bar) setPinnedBar(bar); onBarClick?.(bar); }}
                   />
+                  {/* OHLC 툴팁 — 차트 오른쪽 상단 */}
+                  {(pinnedBar ?? hoveredBar) && (
+                    <div
+                      className="absolute top-3 right-3 z-10 w-36 rounded-xl bg-white px-3.5 py-3 text-xs font-mono space-y-1.5 pointer-events-auto"
+                      style={{ border: "1px solid var(--c-border-md)", boxShadow: "0 4px 20px var(--c-shadow)" }}
+                    >
+                      <div className="flex items-center justify-between pb-1.5" style={{ borderBottom: "1px solid var(--c-border)" }}>
+                        <span className="text-muted text-[10px] font-sans">{(pinnedBar ?? hoveredBar)!.date}</span>
+                        {pinnedBar && (
+                          <button
+                            type="button"
+                            onClick={() => setPinnedBar(null)}
+                            className="text-muted hover:text-body w-4 h-4 flex items-center justify-center rounded cursor-pointer"
+                            style={{ background: "var(--c-bg-muted)" }}
+                          >✕</button>
+                        )}
+                      </div>
+                      {[
+                        { label: "시가", value: (pinnedBar ?? hoveredBar)!.open.toLocaleString(), color: "text-body" },
+                        { label: "고가", value: (pinnedBar ?? hoveredBar)!.high.toLocaleString(), color: "text-trading-up" },
+                        { label: "저가", value: (pinnedBar ?? hoveredBar)!.low.toLocaleString(), color: "text-trading-down" },
+                        { label: "종가", value: (pinnedBar ?? hoveredBar)!.close.toLocaleString(), color: "text-ink" },
+                      ].map(({ label, value, color }) => (
+                        <div key={label} className="flex justify-between gap-2">
+                          <span className="text-muted font-sans">{label}</span>
+                          <span className={color}>{value}</span>
+                        </div>
+                      ))}
+                      <div className="flex justify-between gap-2 pt-1.5" style={{ borderTop: "1px solid var(--c-border)" }}>
+                        <span className="text-muted font-sans">거래량</span>
+                        <span className="text-body">{((pinnedBar ?? hoveredBar)!.volume / 1000).toFixed(0)}K</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}

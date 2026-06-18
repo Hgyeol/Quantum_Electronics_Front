@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   fetchOutlook, fetchMarketQuote, checkAuth, logout,
-  type OutlookQueryInput, type OutlookReport, type MarketQuote, type OHLCVBar,
+  type OutlookQueryInput, type OutlookReport, type MarketQuote,
 } from "@/lib/api";
 import { useWatchlist } from "@/lib/watchlist";
 import WatchlistTable from "@/components/WatchlistTable";
@@ -122,8 +122,6 @@ export default function Home() {
   const [outlookError, setOutlookError] = useState<string | null>(null);
   const [liveTick, setLiveTick] = useState<LiveTick | null>(null);
   const [marketQuote, setMarketQuote] = useState<MarketQuote | null>(null);
-  const [hoveredBar, setHoveredBar] = useState<OHLCVBar | null>(null);
-  const [pinnedBar, setPinnedBar] = useState<OHLCVBar | null>(null);
   const [hoveredStock, setHoveredStock] = useState<HoveredStock | null>(null);
   const [hoveredQuote, setHoveredQuote] = useState<MarketQuote | null>(null);
   const [rankActiveTab, setRankActiveTab] = useState<RankTabId>("volume");
@@ -343,8 +341,6 @@ export default function Home() {
     setReport(null);
     setMarketQuote(null);
     setOutlookError(null);
-    setHoveredBar(null);
-    setPinnedBar(null);
     setHoveredStock(null);
   }
 
@@ -354,8 +350,6 @@ export default function Home() {
     setReport(null);
     setMarketQuote(null);
     setOutlookError(null);
-    setHoveredBar(null);
-    setPinnedBar(null);
     if (typeof window !== "undefined" && new URL(window.location.href).searchParams.has("code")) {
       window.history.pushState({}, "", "/");
     }
@@ -562,8 +556,6 @@ export default function Home() {
                   stockCode={selectedCode}
                   stockName={report?.stock_name ?? selectedName ?? null}
                   onNameResolved={(name) => setSelectedName((prev) => prev ?? name)}
-                  onBarHover={setHoveredBar}
-                  onBarClick={(bar) => { if (bar) setPinnedBar(bar); }}
                   onSelectStock={handleSelectStock}
                   isETF={isETF(selectedCode)}
                   liveTick={liveTick}
@@ -609,35 +601,6 @@ export default function Home() {
                   }
                 />
                 
-                {/* OHLC 툴팁 */}
-                {(pinnedBar ?? hoveredBar) && (
-                  <div className="absolute top-3 left-3 z-10 w-36 rounded-xl bg-white px-3.5 py-3 text-xs font-mono space-y-1.5 pointer-events-auto"
-                    style={{ border: "1px solid var(--c-border-md)", boxShadow: "0 4px 20px var(--c-shadow)" }}>
-                    <div className="flex items-center justify-between pb-1.5" style={{ borderBottom: "1px solid var(--c-border)" }}>
-                      <span className="text-muted text-[10px] font-sans">{(pinnedBar ?? hoveredBar)!.date}</span>
-                      {pinnedBar && (
-                        <button type="button" onClick={() => setPinnedBar(null)}
-                          className="text-muted hover:text-body w-4 h-4 flex items-center justify-center rounded cursor-pointer"
-                          style={{ background: "var(--c-bg-muted)" }}>✕</button>
-                      )}
-                    </div>
-                    {[
-                      { label: "시가", value: (pinnedBar ?? hoveredBar)!.open.toLocaleString(), color: "text-body" },
-                      { label: "고가", value: (pinnedBar ?? hoveredBar)!.high.toLocaleString(), color: "text-trading-up" },
-                      { label: "저가", value: (pinnedBar ?? hoveredBar)!.low.toLocaleString(), color: "text-trading-down" },
-                      { label: "종가", value: (pinnedBar ?? hoveredBar)!.close.toLocaleString(), color: "text-ink" },
-                    ].map(({ label, value, color }) => (
-                      <div key={label} className="flex justify-between gap-2">
-                        <span className="text-muted font-sans">{label}</span>
-                        <span className={color}>{value}</span>
-                      </div>
-                    ))}
-                    <div className="flex justify-between gap-2 pt-1.5" style={{ borderTop: "1px solid var(--c-border)" }}>
-                      <span className="text-muted font-sans">거래량</span>
-                      <span className="text-body">{((pinnedBar ?? hoveredBar)!.volume / 1000).toFixed(0)}K</span>
-                    </div>
-                  </div>
-                )}
               </div>
               <p className="text-[11px] text-muted text-center py-2 leading-relaxed">
                 정보 제공용이며 투자 권유가 아닙니다. © Quantum Electronics
