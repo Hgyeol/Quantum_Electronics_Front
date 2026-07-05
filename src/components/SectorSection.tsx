@@ -97,12 +97,15 @@ export default function SectorSection({ onSelect, onHover, onHoverEnd }: Props) 
   useEffect(() => {
     fetch(`${API_BASE}/sectors`, { credentials: "include" })
       .then((r) => r.json())
-      .then(setAllSectors)
+      .then((data) => { if (Array.isArray(data) && data.length > 0) setAllSectors(data); })
       .catch(() => {})
       .finally(() => setLoadingSectors(false));
   }, []);
 
-  const sectorSet = new Set(allSectors.map((s) => s.sector));
+  const allKeys = SECTOR_GROUPS.flatMap((g) => g.keys);
+  const sectorSet = allSectors.length > 0
+    ? new Set(allSectors.map((s) => s.sector))
+    : new Set(allKeys);
 
   function handleSelect(sector: string) {
     if (selected === sector) { setSelected(null); setPicks([]); return; }
